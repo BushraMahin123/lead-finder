@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUserId, unauthorizedResponse } from "@/lib/auth";
+import {
+  getCampaignColumnValues,
+  listCampaignColumns,
+} from "@/lib/campaign-columns";
 import { getCampaignWithContacts } from "@/lib/campaigns";
 
 interface RouteContext {
@@ -14,13 +18,23 @@ export async function GET(_request: NextRequest, context: RouteContext) {
     }
 
     const { id } = await context.params;
-    const campaign = await getCampaignWithContacts(id, userId);
+    const [campaign, columns, columnValues] = await Promise.all([
+      getCampaignWithContacts(id, userId),
+      listCampaignColumns(id, userId),
+      getCampaignColumnValues(id, userId),
+    ]);
 
     if (!campaign) {
       return NextResponse.json({ error: "Campaign not found" }, { status: 404 });
     }
 
-    return NextResponse.json({ campaign });
+    return NextResponse.json({
+      campaign: {
+        ...campaign,
+        columns,
+        columnValues,
+      },
+    });
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to load campaign";

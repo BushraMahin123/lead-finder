@@ -11,7 +11,7 @@ export default async function DashboardPage() {
     typeof data?.claims?.email === "string" ? data.claims.email : null;
 
   return (
-    <main className="min-h-screen bg-gradient-to-b from-slate-50 to-white">
+    <main className="min-h-screen page-gradient">
       <AppHeader />
       <DashboardContent userEmail={email} />
     </main>

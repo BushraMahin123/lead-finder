@@ -3,6 +3,10 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ApiError, fetchJson } from "@/lib/fetch-json";
+import type {
+  CampaignColumn,
+  CampaignColumnValue,
+} from "@/types/campaign";
 import type { EnrichContactResult, EnrichType, LeadPerson, SearchFilters } from "@/types/lead";
 
 interface LeadResultsProps {
@@ -14,6 +18,13 @@ interface LeadResultsProps {
   campaignId?: string | null;
   onPeopleUpdate: (people: LeadPerson[]) => void;
   enableEnrichment?: boolean;
+  aiColumns?: CampaignColumn[];
+  columnValues?: Record<string, Record<string, CampaignColumnValue>>;
+  runningColumnId?: string | null;
+  onAddColumn?: () => void;
+  onRunColumn?: (columnId: string, personIds: string[]) => void;
+  onEditColumn?: (column: CampaignColumn) => void;
+  onDeleteColumn?: (columnId: string) => void;
 }
 
 function displayName(person: LeadPerson): string {
@@ -66,6 +77,13 @@ export default function LeadResults({
   campaignId,
   onPeopleUpdate,
   enableEnrichment = true,
+  aiColumns = [],
+  columnValues = {},
+  runningColumnId = null,
+  onAddColumn,
+  onRunColumn,
+  onEditColumn,
+  onDeleteColumn,
 }: LeadResultsProps) {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -225,10 +243,25 @@ export default function LeadResults({
 
           {enableEnrichment && someSelected && (
             <div className="flex flex-wrap items-center gap-2">
+              {aiColumns.map((column) => (
+                <button
+                  key={column.id}
+                  type="button"
+                  onClick={() =>
+                    onRunColumn?.(column.id, [...selectedIds])
+                  }
+                  disabled={enrichingType !== null || runningColumnId !== null}
+                  className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-800 transition hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {runningColumnId === column.id
+                    ? `Running ${column.name}…`
+                    : `Run ${column.name} (${selectedIds.size})`}
+                </button>
+              ))}
               <button
                 type="button"
                 onClick={() => handleExtract("email")}
-                disabled={enrichingType !== null}
+                disabled={enrichingType !== null || runningColumnId !== null}
                 className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {enrichingType === "email"
@@ -238,7 +271,7 @@ export default function LeadResults({
               <button
                 type="button"
                 onClick={() => handleExtract("phone")}
-                disabled={enrichingType !== null}
+                disabled={enrichingType !== null || runningColumnId !== null}
                 className="rounded-lg border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {enrichingType === "phone"
@@ -284,6 +317,50 @@ export default function LeadResults({
               <th className="px-4 py-3 font-medium">Phone</th>
               <th className="px-4 py-3 font-medium">Location</th>
               <th className="px-4 py-3 font-medium">LinkedIn</th>
+              {aiColumns.map((column) => (
+                <th
+                  key={column.id}
+                  className="min-w-[10rem] px-4 py-3 font-medium text-violet-800"
+                >
+                  <div className="flex items-center gap-1.5">
+                    <span className="truncate">{column.name}</span>
+                    <span className="rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-violet-700">
+                      AI
+                    </span>
+                    {onEditColumn && (
+                      <button
+                        type="button"
+                        onClick={() => onEditColumn(column)}
+                        className="ml-auto text-xs font-medium text-slate-400 hover:text-slate-600"
+                        title="Edit column"
+                      >
+                        Edit
+                      </button>
+                    )}
+                    {onDeleteColumn && (
+                      <button
+                        type="button"
+                        onClick={() => onDeleteColumn(column.id)}
+                        className="text-xs font-medium text-slate-400 hover:text-red-600"
+                        title="Delete column"
+                      >
+                        ×
+                      </button>
+                    )}
+                  </div>
+                </th>
+              ))}
+              {onAddColumn && (
+                <th className="px-4 py-3 font-medium">
+                  <button
+                    type="button"
+                    onClick={onAddColumn}
+                    className="inline-flex items-center gap-1 rounded-lg border border-dashed border-slate-300 px-2.5 py-1 text-xs font-medium text-slate-600 transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+                  >
+                    + Add AI column
+                  </button>
+                </th>
+              )}
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
@@ -354,6 +431,37 @@ export default function LeadResults({
                     "—"
                   )}
                 </td>
+                {aiColumns.map((column) => {
+                  const cell = columnValues[person.id]?.[column.id];
+                  const isRunning =
+                    runningColumnId === column.id || cell?.status === "running";
+
+                  return (
+                    <td
+                      key={column.id}
+                      className="max-w-xs px-4 py-3 text-slate-700"
+                    >
+                      {isRunning ? (
+                        <span className="inline-flex items-center gap-2 text-xs text-violet-600">
+                          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
+                          Running…
+                        </span>
+                      ) : cell?.status === "error" ? (
+                        <span
+                          className="text-xs text-red-600"
+                          title={cell.error ?? undefined}
+                        >
+                          {cell.error ?? "Error"}
+                        </span>
+                      ) : cell?.value ? (
+                        <span className="line-clamp-3 text-sm">{cell.value}</span>
+                      ) : (
+                        <span className="text-xs text-slate-400">—</span>
+                      )}
+                    </td>
+                  );
+                })}
+                {onAddColumn && <td className="px-4 py-3" />}
               </tr>
             ))}
           </tbody>

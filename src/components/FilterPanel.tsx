@@ -32,6 +32,9 @@ interface FilterPanelProps {
   aiQuery?: string | null;
   onAISearch?: (query: string) => void | Promise<void>;
   onClearFilters?: () => void;
+  collapsed?: boolean;
+  onToggleCollapse?: () => void;
+  aiAdjusting?: boolean;
 }
 
 const EMPTY_LIST_FILTERS = {
@@ -66,6 +69,9 @@ export default function FilterPanel({
   aiQuery,
   onAISearch,
   onClearFilters,
+  collapsed = false,
+  onToggleCollapse,
+  aiAdjusting = false,
 }: FilterPanelProps) {
   const [activeFilter, setActiveFilter] = useState<FilterId | null>(null);
   const [filterSearch, setFilterSearch] = useState("");
@@ -478,8 +484,31 @@ export default function FilterPanel({
     }
   }
 
+  if (collapsed) {
+    return (
+      <div className="flex h-full w-12 flex-col items-center border-r border-slate-200 bg-slate-50 py-4">
+        <button
+          type="button"
+          onClick={onToggleCollapse}
+          className="btn btn-ghost rounded-lg p-2"
+          aria-label="Expand filters"
+          title="Expand filters"
+        >
+          <svg viewBox="0 0 20 20" fill="none" className="h-5 w-5" aria-hidden>
+            <path d="M7 5l6 5-6 5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+        {activeFilterCount > 0 && (
+          <span className="mt-3 flex h-6 w-6 items-center justify-center rounded-full bg-indigo-600 text-[10px] font-bold text-white">
+            {activeFilterCount}
+          </span>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <form onSubmit={handleSubmit} className="flex h-full flex-col bg-white">
+    <div className="flex h-full flex-col bg-white">
       {aiQuery && onAISearch && onClearFilters && (
         <AISearchSidebar
           query={aiQuery}
@@ -493,15 +522,30 @@ export default function FilterPanel({
       <div className="border-b border-slate-200 px-4 py-4">
         <div className="flex items-center justify-between gap-2">
           <h2 className="text-base font-semibold text-slate-900">Filters</h2>
-          {onBack && (
-            <button
-              type="button"
-              onClick={onBack}
-              className="text-xs font-medium text-slate-500 hover:text-slate-700"
-            >
-              ← Back
-            </button>
-          )}
+          <div className="flex items-center gap-1">
+            {onToggleCollapse && (
+              <button
+                type="button"
+                onClick={onToggleCollapse}
+                className="btn btn-ghost rounded-lg p-1.5"
+                aria-label="Collapse filters"
+                title="Collapse filters"
+              >
+                <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden>
+                  <path d="M13 5l-6 5 6 5" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+              </button>
+            )}
+            {onBack && (
+              <button
+                type="button"
+                onClick={onBack}
+                className="text-xs font-medium text-slate-500 hover:text-slate-700"
+              >
+                ← Back
+              </button>
+            )}
+          </div>
         </div>
 
         <label className="relative mt-3 block">
@@ -534,6 +578,7 @@ export default function FilterPanel({
               filter={filter}
               active={activeFilter === filter.id}
               hasValue={filterHasValue[filter.id]}
+              highlight={aiAdjusting}
               onToggle={() =>
                 setActiveFilter((current) =>
                   current === filter.id ? null : filter.id,
@@ -546,7 +591,10 @@ export default function FilterPanel({
         )}
       </div>
 
-      <div className="space-y-3 border-t border-slate-200 bg-white px-4 py-4">
+      <form
+        onSubmit={handleSubmit}
+        className="space-y-3 border-t border-slate-200 bg-white px-4 py-4"
+      >
         {activeFilterCount > 0 && (
           <p className="text-xs text-slate-500">
             {activeFilterCount} filter{activeFilterCount === 1 ? "" : "s"} applied
@@ -570,7 +618,7 @@ export default function FilterPanel({
         >
           {loading ? "Searching…" : "Apply filters"}
         </button>
-      </div>
-    </form>
+      </form>
+    </div>
   );
 }

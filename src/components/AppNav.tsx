@@ -2,6 +2,15 @@
 
 import Link from "next/link";
 import { usePathname, useSearchParams } from "next/navigation";
+import BrandLogo from "@/components/BrandLogo";
+
+function navItemClass(active: boolean) {
+  return `rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+    active
+      ? "bg-slate-100 text-slate-900"
+      : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+  }`;
+}
 
 export default function AppNav() {
   const pathname = usePathname();
@@ -12,41 +21,21 @@ export default function AppNav() {
     pathname === "/dashboard" || pathname.startsWith("/campaigns/");
 
   return (
-    <div className="flex items-center gap-6">
-      <Link href="/" className="text-sm font-semibold text-slate-900">
-        Lead Finder
-      </Link>
-      <nav className="hidden items-center gap-4 sm:flex">
-        <Link
-          href="/dashboard"
-          className={`text-sm font-medium transition ${
-            isTablesView
-              ? "text-slate-900"
-              : "text-slate-500 hover:text-slate-700"
-          }`}
-        >
+    <div className="flex min-w-0 items-center gap-6">
+      <BrandLogo href="/" />
+      <nav className="hidden items-center gap-1 sm:flex">
+        <Link href="/dashboard" className={navItemClass(isTablesView)}>
           Tables
         </Link>
+        <Link href="/?view=search" className={navItemClass(isSearchView)}>
+          Lead search
+        </Link>
         <Link
-          href="/?view=search"
-          className={`text-sm font-medium transition ${
-            isSearchView
-              ? "text-slate-900"
-              : "text-slate-500 hover:text-slate-700"
-          }`}
-            >
-              Lead search
-            </Link>
-            <Link
-              href="/pricing"
-              className={`text-sm font-medium transition ${
-                pathname === "/pricing"
-                  ? "text-slate-900"
-                  : "text-slate-500 hover:text-slate-700"
-              }`}
-            >
-              Pricing
-            </Link>
+          href="/pricing"
+          className={navItemClass(pathname === "/pricing")}
+        >
+          Pricing
+        </Link>
       </nav>
     </div>
   );

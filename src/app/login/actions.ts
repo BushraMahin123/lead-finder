@@ -24,5 +24,10 @@ export async function login(
   }
 
   revalidatePath("/", "layout");
-  redirect("/");
+
+  const next = String(formData.get("next") ?? "").trim();
+  const destination =
+    next.startsWith("/") && !next.startsWith("//") ? next : "/?view=search";
+
+  redirect(destination);
 }

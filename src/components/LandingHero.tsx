@@ -1,98 +1,180 @@
 "use client";
 
+import Link from "next/link";
+import { useState } from "react";
+import DashboardMockup from "@/components/DashboardMockup";
+import { AISearchIconBadge } from "@/components/AISearchIcon";
+import { useBillingBalance } from "@/hooks/useBillingBalance";
+import { SEARCH_TEMPLATES } from "@/lib/search-templates";
+import { displayNameFromEmail, greetingForTime } from "@/lib/user-display";
+
 interface LandingHeroProps {
+  userEmail?: string | null;
   onStart: () => void;
+  onAISearch: (query: string) => void | Promise<void>;
 }
 
-export default function LandingHero({ onStart }: LandingHeroProps) {
-  return (
-    <div className="mx-auto flex h-full min-h-0 w-full max-w-6xl flex-col items-center justify-center gap-10 overflow-hidden px-4 py-8 sm:px-6 lg:flex-row lg:gap-16 lg:px-8">
-      <div className="max-w-xl space-y-6 text-center lg:text-left">
-        <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600">
-          B2B Lead Finder
-        </p>
-        <h1 className="text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
-          Find the right people at the right companies
-        </h1>
-        <p className="text-lg leading-relaxed text-slate-600">
-          Search millions of professional profiles. Filter by job title,
-          location, seniority, department, industry, company size, and more —
-          then reveal emails and phone numbers for your top matches.
-        </p>
-        <ul className="space-y-2 text-left text-sm text-slate-600">
-          <li className="flex items-center gap-2">
-            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-xs text-indigo-700">
-              ✓
-            </span>
-            Checkbox filters for location, seniority, and department
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-xs text-indigo-700">
-              ✓
-            </span>
-            Company domain, industry, and headcount targeting
-          </li>
-          <li className="flex items-center gap-2">
-            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-indigo-100 text-xs text-indigo-700">
-              ✓
-            </span>
-            Export-ready contact details for outreach
-          </li>
-        </ul>
-        <button
-          type="button"
-          onClick={onStart}
-          className="rounded-xl bg-indigo-600 px-8 py-3.5 text-base font-semibold text-white shadow-lg shadow-indigo-200 transition hover:bg-indigo-700"
-        >
-          Start searching
-        </button>
-      </div>
+export default function LandingHero({
+  userEmail = null,
+  onStart,
+  onAISearch,
+}: LandingHeroProps) {
+  const { balance } = useBillingBalance();
+  const [query, setQuery] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
-      <div className="relative w-full max-w-md shrink-0">
-        <div className="absolute -inset-4 rounded-3xl bg-gradient-to-br from-indigo-100 via-violet-50 to-sky-100 blur-2xl" />
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-xl">
-          <svg
-            viewBox="0 0 400 320"
-            className="h-auto w-full"
-            aria-hidden
-          >
-            <rect width="400" height="320" fill="#f8fafc" rx="16" />
-            <circle cx="200" cy="120" r="48" fill="#4f46e5" opacity="0.15" />
-            <circle cx="200" cy="120" r="32" fill="#4f46e5" />
-            <text
-              x="200"
-              y="128"
-              textAnchor="middle"
-              fill="white"
-              fontSize="20"
-              fontWeight="600"
-            >
-              CEO
-            </text>
-            <line x1="200" y1="152" x2="100" y2="220" stroke="#c7d2fe" strokeWidth="2" />
-            <line x1="200" y1="152" x2="200" y2="230" stroke="#c7d2fe" strokeWidth="2" />
-            <line x1="200" y1="152" x2="300" y2="220" stroke="#c7d2fe" strokeWidth="2" />
-            <rect x="52" y="220" width="96" height="56" rx="12" fill="#eef2ff" stroke="#c7d2fe" />
-            <text x="100" y="252" textAnchor="middle" fill="#4338ca" fontSize="12" fontWeight="600">
-              VP Sales
-            </text>
-            <rect x="152" y="230" width="96" height="56" rx="12" fill="#eef2ff" stroke="#c7d2fe" />
-            <text x="200" y="262" textAnchor="middle" fill="#4338ca" fontSize="12" fontWeight="600">
-              Marketing
-            </text>
-            <rect x="252" y="220" width="96" height="56" rx="12" fill="#eef2ff" stroke="#c7d2fe" />
-            <text x="300" y="252" textAnchor="middle" fill="#4338ca" fontSize="12" fontWeight="600">
-              Engineering
-            </text>
-            <rect x="24" y="24" width="140" height="36" rx="8" fill="white" stroke="#e2e8f0" />
-            <text x="40" y="47" fill="#64748b" fontSize="11">
-              📍 United States
-            </text>
-            <rect x="236" y="24" width="140" height="36" rx="8" fill="white" stroke="#e2e8f0" />
-            <text x="252" y="47" fill="#64748b" fontSize="11">
-              🏢 SaaS · 51–200
-            </text>
-          </svg>
+  const firstName = displayNameFromEmail(userEmail);
+  const greeting = greetingForTime();
+
+  async function handleSearchSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const trimmed = query.trim();
+    if (!trimmed || submitting) return;
+
+    setSubmitting(true);
+    try {
+      await onAISearch(trimmed);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  async function runTemplate(templateQuery: string) {
+    if (submitting) return;
+    setQuery(templateQuery);
+    setSubmitting(true);
+    try {
+      await onAISearch(templateQuery);
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="relative flex h-full min-h-0 flex-col overflow-y-auto">
+      <div
+        className="pointer-events-none absolute inset-x-0 top-0 h-72 bg-gradient-to-b from-indigo-50/80 via-white/40 to-transparent"
+        aria-hidden
+      />
+
+      <div className="relative mx-auto flex w-full max-w-6xl flex-1 flex-col px-4 py-8 sm:px-6 lg:px-8 lg:py-10">
+        <div className="grid flex-1 items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.05fr)] lg:gap-14">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="badge">{greeting}</span>
+              {balance && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs text-slate-600 shadow-sm">
+                  <span className="font-semibold text-slate-900">
+                    {balance.balance.toLocaleString()}
+                  </span>
+                  tokens · {balance.planName}
+                </span>
+              )}
+            </div>
+
+            <h1 className="mt-4 text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl lg:text-[2.65rem] lg:leading-[1.15]">
+              {greeting}, {firstName}.
+              <span className="mt-1 block text-[0.72em] font-medium text-slate-500">
+                Who do you want to reach today?
+              </span>
+            </h1>
+
+            <form onSubmit={handleSearchSubmit} className="mt-7">
+              <label htmlFor="workspace-ai-query" className="sr-only">
+                Describe your ideal lead
+              </label>
+              <div className="ai-search-bar flex items-center gap-3 px-4 py-3.5 shadow-md shadow-indigo-100/50">
+                <AISearchIconBadge size="lg" />
+                <input
+                  id="workspace-ai-query"
+                  type="text"
+                  value={query}
+                  onChange={(event) => setQuery(event.target.value)}
+                  disabled={submitting}
+                  placeholder="VP Sales at SaaS companies in the US, 51–200 employees"
+                  className="min-w-0 flex-1 border-0 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 sm:text-base"
+                />
+                <button
+                  type="submit"
+                  disabled={submitting || !query.trim()}
+                  className="btn btn-primary shrink-0 px-5 py-2.5 disabled:opacity-50"
+                >
+                  {submitting ? "Searching…" : "Search"}
+                </button>
+              </div>
+              <p className="mt-2.5 text-xs text-slate-500">
+                AI builds your filters instantly.{" "}
+                <button
+                  type="button"
+                  onClick={onStart}
+                  className="font-medium text-indigo-600 hover:text-indigo-700"
+                >
+                  Or browse filters manually
+                </button>
+              </p>
+            </form>
+
+            <div className="mt-8">
+              <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
+                Quick starts
+              </p>
+              <div className="mt-3 grid gap-2.5 sm:grid-cols-3">
+                {SEARCH_TEMPLATES.map((template) => (
+                  <button
+                    key={template.id}
+                    type="button"
+                    disabled={submitting}
+                    onClick={() => void runTemplate(template.query)}
+                    className="card-flat group p-3.5 text-left transition hover:border-indigo-200 hover:shadow-md disabled:opacity-60"
+                  >
+                    <p className="text-sm font-semibold text-slate-900 group-hover:text-indigo-700">
+                      {template.label}
+                    </p>
+                    <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-slate-500">
+                      {template.description}
+                    </p>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-8 flex flex-wrap items-center gap-4 border-t border-slate-200/80 pt-6 text-sm">
+              <Link
+                href="/dashboard"
+                className="inline-flex items-center gap-2 font-medium text-slate-700 transition hover:text-indigo-600"
+              >
+                <svg viewBox="0 0 20 20" fill="none" className="h-4 w-4" aria-hidden>
+                  <path
+                    d="M4 6h12v9H4V6zm2 2v2m4-2v2m4-2v5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                </svg>
+                View saved tables
+              </Link>
+              <Link
+                href="/pricing"
+                className="text-slate-500 transition hover:text-slate-700"
+              >
+                Buy tokens
+              </Link>
+            </div>
+          </div>
+
+          <div className="relative hidden min-w-0 lg:block">
+            <div className="pointer-events-none absolute -right-6 -top-6 h-48 w-48 rounded-full bg-indigo-200/30 blur-3xl" aria-hidden />
+            <div className="relative rotate-1 transition hover:rotate-0">
+              <DashboardMockup />
+            </div>
+            <p className="mt-4 text-center text-xs text-slate-400">
+              Preview of your search workspace
+            </p>
+          </div>
+        </div>
+
+        <div className="mt-10 lg:hidden">
+          <DashboardMockup />
         </div>
       </div>
     </div>

@@ -3,6 +3,8 @@ export const TOKEN_RATES = {
   lead: 1,
   email: 3,
   phone: 25,
+  aiParse: 1,
+  aiColumn: 2,
 } as const;
 
 export function calculateSaveTokenCost(

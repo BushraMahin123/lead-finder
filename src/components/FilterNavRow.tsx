@@ -7,6 +7,7 @@ interface FilterNavRowProps {
   filter: FilterDefinition;
   active: boolean;
   hasValue: boolean;
+  highlight?: boolean;
   onToggle: () => void;
   children?: ReactNode;
 }
@@ -15,11 +16,12 @@ export default function FilterNavRow({
   filter,
   active,
   hasValue,
+  highlight = false,
   onToggle,
   children,
 }: FilterNavRowProps) {
   return (
-    <div className="border-b border-slate-100">
+    <div className={`border-b border-slate-100 ${highlight && hasValue ? "filter-pulse" : ""}`}>
       <button
         type="button"
         onClick={onToggle}
@@ -36,7 +38,7 @@ export default function FilterNavRow({
           {filter.label}
         </span>
         {hasValue && (
-          <span className="h-2 w-2 shrink-0 rounded-full bg-indigo-500" />
+          <span className="h-2 w-2 shrink-0 rounded-full bg-indigo-500 ring-2 ring-indigo-200" />
         )}
         <svg
           viewBox="0 0 20 20"

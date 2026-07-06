@@ -1,5 +1,7 @@
 "use client";
 
+import { useEffect, useState } from "react";
+import { AISearchHeading, AISearchSubmitButton } from "@/components/AISearchIcon";
 import { getPrimaryFilterTags } from "@/lib/applied-filter-tags";
 import type { SearchFilters } from "@/types/lead";
 
@@ -18,48 +20,51 @@ export default function AISearchSidebar({
   onSearch,
   onClear,
 }: AISearchSidebarProps) {
+  const [draft, setDraft] = useState(query);
   const tags = getPrimaryFilterTags(appliedFilters);
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const nextQuery = String(formData.get("aiQuery") ?? "").trim();
+  useEffect(() => {
+    setDraft(query);
+  }, [query]);
+
+  async function submitQuery() {
+    const nextQuery = draft.trim();
     if (!nextQuery || loading) return;
     await onSearch(nextQuery);
   }
 
+  function handleKeyDown(event: React.KeyboardEvent<HTMLTextAreaElement>) {
+    if (event.key === "Enter" && !event.shiftKey) {
+      event.preventDefault();
+      void submitQuery();
+    }
+  }
+
   return (
     <div className="border-b border-slate-200 bg-white px-4 py-4">
-      <div className="mb-3 flex items-center gap-2">
-        <span aria-hidden>✨</span>
-        <h3 className="text-sm font-semibold text-slate-900">Search with AI</h3>
+      <div className="mb-3">
+        <AISearchHeading />
       </div>
 
-      <form onSubmit={handleSubmit} className="relative">
+      <div className="relative">
         <textarea
           name="aiQuery"
-          defaultValue={query}
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={handleKeyDown}
           rows={3}
           disabled={loading}
           className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 pr-12 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 disabled:opacity-60"
         />
-        <button
-          type="submit"
-          disabled={loading}
-          className="absolute bottom-3 right-3 flex h-8 w-8 items-center justify-center rounded-full bg-slate-900 text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-40"
-          aria-label="Search again with AI"
-        >
-          <svg viewBox="0 0 20 20" fill="none" className="h-3.5 w-3.5" aria-hidden>
-            <path
-              d="M10 15V5M6 9l4-4 4 4"
-              stroke="currentColor"
-              strokeWidth="1.75"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-      </form>
+        <div className="absolute bottom-3 right-3">
+          <AISearchSubmitButton
+            size="sm"
+            disabled={loading || !draft.trim()}
+            onClick={() => void submitQuery()}
+            ariaLabel="Search again with AI"
+          />
+        </div>
+      </div>
 
       <div className="mt-3 flex flex-wrap gap-2">
         {tags.map((tag) => (

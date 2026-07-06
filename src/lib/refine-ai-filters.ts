@@ -2,6 +2,10 @@ import {
   mapNumericRangeToEmployeeBuckets,
   parseNumericEmployeeRange,
 } from "@/lib/filter-options";
+import {
+  PERSON_LOCATION_REGIONS,
+  REMOTE_LOCATION,
+} from "@/lib/location-regions";
 import type { SearchFilters } from "@/types/lead";
 
 const JOB_TITLE_PATTERNS = [
@@ -28,6 +32,60 @@ const INDUSTRY_PHRASES: Array<{ pattern: RegExp; value: string }> = [
   { pattern: /\bconsulting\b/i, value: "management consulting" },
 ];
 
+const LOCATION_PHRASES: Array<{ pattern: RegExp; value: string }> = [
+  {
+    pattern: /\b(?:in|from)\s+the\s+us\b|\bunited states\b|\bu\.s\.a?\.?\b|\bin\s+us\b/i,
+    value: "United States",
+  },
+  {
+    pattern: /\b(?:in|from)\s+(?:the\s+)?uk\b|\bunited kingdom\b|\bbritain\b/i,
+    value: "United Kingdom",
+  },
+  { pattern: /\b(?:in|from)\s+canada\b/i, value: "Canada" },
+  { pattern: /\b(?:in|from)\s+germany\b/i, value: "Germany" },
+  { pattern: /\b(?:in|from)\s+france\b/i, value: "France" },
+  { pattern: /\b(?:in|from)\s+australia\b/i, value: "Australia" },
+  { pattern: /\b(?:in|from)\s+india\b/i, value: "India" },
+  { pattern: /\b(?:in|from)\s+singapore\b/i, value: "Singapore" },
+  {
+    pattern: /\b(?:in|from)\s+(?:the\s+)?uae\b|\bunited arab emirates\b/i,
+    value: "United Arab Emirates",
+  },
+  { pattern: /\b(?:in|from)\s+netherlands\b|\bholland\b/i, value: "Netherlands" },
+  { pattern: /\bsilicon\s+valley\b/i, value: "San Francisco" },
+  { pattern: /\bbay\s+area\b/i, value: "San Francisco" },
+];
+
+const LOCATION_MULTI_PHRASES: Array<{ pattern: RegExp; values: string[] }> = [
+  {
+    pattern: /\bsilicon\s+valley\b/i,
+    values: ["San Francisco", "San Jose", "California"],
+  },
+  {
+    pattern: /\bbay\s+area\b/i,
+    values: ["San Francisco", "Oakland", "California"],
+  },
+];
+
+const EXECUTIVE_ACRONYMS = new Map<string, string>([
+  ["ceo", "CEO"],
+  ["cfo", "CFO"],
+  ["cto", "CTO"],
+  ["coo", "COO"],
+  ["cmo", "CMO"],
+]);
+
+const MAX_EMPLOYEE_PATTERNS = [
+  /\b(?:less|fewer|under|below)\s+than\s+(\d{1,5})\s+employees?\b/i,
+  /\b(?:less|fewer|under|below)\s+(\d{1,5})\s+employees?\b/i,
+  /\bat\s+most\s+(\d{1,5})\s+employees?\b/i,
+  /\b(?:max|maximum)\s+of\s+(\d{1,5})\s+employees?\b/i,
+];
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
 const NOISE_KEYWORD_PATTERN =
   /^(?:-?\d+|employees?|employee|companies?|company|saas|software|with|of|at|in|for|and|the|a|an)$/i;
 
@@ -39,14 +97,35 @@ function titleCase(value: string): string {
     .join(" ");
 }
 
+function formatExtractedTitle(value: string): string {
+  const normalized = value.trim().toLowerCase();
+  return EXECUTIVE_ACRONYMS.get(normalized) ?? titleCase(value);
+}
+
 export function extractJobTitleFromQuery(query: string): string | undefined {
   for (const pattern of JOB_TITLE_PATTERNS) {
     const match = query.match(pattern);
     if (match?.[1]) {
-      return titleCase(match[1].replace(/\s+of\s+employees?.*$/i, "").trim());
+      return formatExtractedTitle(
+        match[1].replace(/\s+of\s+employees?.*$/i, "").trim(),
+      );
     }
   }
   return undefined;
+}
+
+function extractMaxEmployeeCountFromQuery(query: string): number | null {
+  for (const pattern of MAX_EMPLOYEE_PATTERNS) {
+    const match = query.match(pattern);
+    if (!match?.[1]) continue;
+
+    const limit = Number(match[1]);
+    if (!Number.isFinite(limit) || limit <= 0) continue;
+
+    return Math.max(1, limit - 1);
+  }
+
+  return null;
 }
 
 export function extractEmployeeCountRangeFromQuery(
@@ -83,12 +162,19 @@ export function extractEmployeeCountRangeFromQuery(
 export function extractEmployeeSizesFromQuery(query: string): string[] {
   const sizes = new Set<string>();
   const numericRange = extractEmployeeCountRangeFromQuery(query);
+  const maxEmployees = extractMaxEmployeeCountFromQuery(query);
 
   if (numericRange) {
     for (const bucket of mapNumericRangeToEmployeeBuckets(
       numericRange.start,
       numericRange.end,
     )) {
+      sizes.add(bucket);
+    }
+  }
+
+  if (maxEmployees !== null) {
+    for (const bucket of mapNumericRangeToEmployeeBuckets(1, maxEmployees)) {
       sizes.add(bucket);
     }
   }
@@ -117,6 +203,61 @@ export function extractIndustriesFromQuery(query: string): string[] {
     if (pattern.test(query)) industries.add(value);
   }
   return [...industries];
+}
+
+export function extractLocationsFromQuery(query: string): string[] {
+  const locations = new Set<string>();
+
+  for (const { pattern, values } of LOCATION_MULTI_PHRASES) {
+    if (pattern.test(query)) {
+      for (const value of values) locations.add(value);
+    }
+  }
+
+  for (const { pattern, value } of LOCATION_PHRASES) {
+    if (pattern.test(query)) locations.add(value);
+  }
+
+  for (const region of PERSON_LOCATION_REGIONS) {
+    if (new RegExp(`\\b${escapeRegExp(region.value)}\\b`, "i").test(query)) {
+      locations.add(region.value);
+    }
+
+    for (const city of region.cities ?? []) {
+      if (new RegExp(`\\b${escapeRegExp(city.value)}\\b`, "i").test(query)) {
+        locations.add(city.value);
+      }
+    }
+
+    for (const state of region.states ?? []) {
+      if (new RegExp(`\\b${escapeRegExp(state.value)}\\b`, "i").test(query)) {
+        locations.add(state.value);
+      }
+
+      for (const city of state.cities ?? []) {
+        if (new RegExp(`\\b${escapeRegExp(city.value)}\\b`, "i").test(query)) {
+          locations.add(city.value);
+        }
+      }
+    }
+  }
+
+  if (/\bremote\b/i.test(query)) {
+    locations.add(REMOTE_LOCATION.value);
+  }
+
+  return [...locations];
+}
+
+export function extractTopicKeywordsFromQuery(query: string): string[] {
+  const keywords = new Set<string>();
+
+  if (/\bstartups?\b/i.test(query)) keywords.add("startup");
+  if (/\benterprise\b/i.test(query)) keywords.add("enterprise");
+  if (/\bb2b\b/i.test(query)) keywords.add("B2B");
+  if (/\bb2c\b/i.test(query)) keywords.add("B2C");
+
+  return [...keywords];
 }
 
 function cleanJobTitle(value: string | undefined): string | undefined {
@@ -216,6 +357,21 @@ export function refineFiltersFromQuery(
     ];
   }
 
+  const extractedLocations = extractLocationsFromQuery(query);
+  if (extractedLocations.length > 0) {
+    refined.locations = [
+      ...new Set([...(refined.locations ?? []), ...extractedLocations]),
+    ];
+  }
+
+  const topicKeywords = extractTopicKeywordsFromQuery(query);
+  if (topicKeywords.length > 0) {
+    const existing = refined.keywords
+      ? refined.keywords.split(/,\s*/).filter(Boolean)
+      : [];
+    refined.keywords = [...new Set([...existing, ...topicKeywords])].join(", ");
+  }
+
   const cleanedKeywords = cleanKeywords(refined.keywords, refined);
   if (cleanedKeywords) {
     refined.keywords = cleanedKeywords;
@@ -225,6 +381,7 @@ export function refineFiltersFromQuery(
 
   if (refined.seniorities?.length === 0) delete refined.seniorities;
   if (refined.industries?.length === 0) delete refined.industries;
+  if (refined.locations?.length === 0) delete refined.locations;
   if (refined.employeeSizes?.length === 0) delete refined.employeeSizes;
 
   return refined;

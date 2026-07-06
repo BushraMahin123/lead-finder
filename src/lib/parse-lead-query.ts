@@ -3,6 +3,7 @@ import {
   extractEmployeeSizesFromQuery,
   extractIndustriesFromQuery,
   extractJobTitleFromQuery,
+  extractLocationsFromQuery,
   refineFiltersFromQuery,
 } from "@/lib/refine-ai-filters";
 
@@ -17,6 +18,7 @@ export function parseLeadQuery(query: string): Partial<SearchFilters> {
     jobTitle: extractJobTitleFromQuery(trimmed),
     employeeSizes: extractEmployeeSizesFromQuery(trimmed),
     industries: extractIndustriesFromQuery(trimmed),
+    locations: extractLocationsFromQuery(trimmed),
   };
 
   return refineFiltersFromQuery(
