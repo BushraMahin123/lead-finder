@@ -29,7 +29,7 @@ export default function AuthForm({ action, message, next }: AuthFormProps) {
       subtitle="Sign in to search leads, enrich contacts, and manage your campaigns."
     >
       <div className="space-y-6">
-        <OAuthButtons />
+        <OAuthButtons next={next} />
 
         {message && <div className="alert-success">{message}</div>}
         {state.error && <div className="alert-error">{state.error}</div>}

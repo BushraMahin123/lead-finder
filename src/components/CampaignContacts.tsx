@@ -175,15 +175,17 @@ export default function CampaignContacts() {
     setColumnValues((current) => {
       const next = { ...current };
       for (const personId of personIds) {
-        if (!next[personId]) next[personId] = {};
-        next[personId][columnId] = {
-          columnId,
-          personId,
-          value: null,
-          status: "running",
-          error: null,
-          promptHash: "",
-          updatedAt: new Date().toISOString(),
+        next[personId] = {
+          ...(next[personId] ?? {}),
+          [columnId]: {
+            columnId,
+            personId,
+            value: null,
+            status: "running",
+            error: null,
+            promptHash: "",
+            updatedAt: new Date().toISOString(),
+          },
         };
       }
       return next;
@@ -215,15 +217,17 @@ export default function CampaignContacts() {
       setColumnValues((current) => {
         const next = { ...current };
         for (const result of results) {
-          if (!next[result.personId]) next[result.personId] = {};
-          next[result.personId][columnId] = {
-            columnId,
-            personId: result.personId,
-            value: result.value,
-            status: result.status,
-            error: result.error ?? null,
-            promptHash: column?.promptHash ?? "",
-            updatedAt: new Date().toISOString(),
+          next[result.personId] = {
+            ...(next[result.personId] ?? {}),
+            [columnId]: {
+              columnId,
+              personId: result.personId,
+              value: result.value,
+              status: result.status,
+              error: result.error ?? null,
+              promptHash: column?.promptHash ?? "",
+              updatedAt: new Date().toISOString(),
+            },
           };
         }
         return next;
@@ -239,6 +243,22 @@ export default function CampaignContacts() {
       } else {
         setError(err instanceof Error ? err.message : "AI column run failed");
       }
+
+      setColumnValues((current) => {
+        const next = { ...current };
+        for (const personId of personIds) {
+          const personValues = next[personId];
+          if (!personValues?.[columnId]) continue;
+
+          const { [columnId]: _removed, ...rest } = personValues;
+          if (Object.keys(rest).length === 0) {
+            delete next[personId];
+          } else {
+            next[personId] = rest;
+          }
+        }
+        return next;
+      });
     } finally {
       setRunningColumnId(null);
     }
@@ -256,46 +276,53 @@ export default function CampaignContacts() {
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)] bg-slate-50">
-      <div className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
-          <div>
-            <Link
-              href="/dashboard"
-              className="mb-2 inline-block text-sm font-medium text-slate-500 hover:text-slate-700"
-            >
-              ← Back to tables
-            </Link>
-            <h1 className="text-2xl font-bold tracking-tight text-slate-900">
-              {campaign?.name ?? "Table"}
-            </h1>
-            <p className="mt-1 text-sm text-slate-600">
-              {loading
-                ? "Loading contacts…"
-                : `${allPeople.length.toLocaleString()} saved contacts`}
-              {aiColumns.length > 0 && (
-                <span className="text-slate-500">
-                  {" "}
-                  · {aiColumns.length} AI column{aiColumns.length === 1 ? "" : "s"}
-                </span>
-              )}
+      <div className="border-b border-slate-200 bg-white px-3 py-4 sm:px-4 lg:px-6">
+        <div className="mx-auto max-w-screen-2xl">
+          <Link
+            href="/dashboard"
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-500 transition hover:text-indigo-600"
+          >
+            <span aria-hidden>←</span>
+            Back to tables
+          </Link>
+
+          <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+                <h1 className="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+                  {campaign?.name ?? "Table"}
+                </h1>
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-medium text-slate-600">
+                    {loading
+                      ? "Loading…"
+                      : `${allPeople.length.toLocaleString()} contacts`}
+                  </span>
+                  {aiColumns.length > 0 && (
+                    <span className="inline-flex items-center rounded-full bg-violet-50 px-2.5 py-1 text-xs font-medium text-violet-700 ring-1 ring-violet-100">
+                      {aiColumns.length} AI column{aiColumns.length === 1 ? "" : "s"}
+                    </span>
+                  )}
+                </div>
+              </div>
               {campaign?.aiQuery && (
-                <span className="text-slate-500">
-                  {" "}
-                  · From AI search: “{campaign.aiQuery}”
-                </span>
+                <p className="mt-1.5 text-sm text-slate-500">
+                  From AI search: “{campaign.aiQuery}”
+                </p>
               )}
-            </p>
+            </div>
+
+            {campaign?.aiQuery && (
+              <span className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+                <AISearchIconBadge size="sm" className="!h-5 !w-5 !rounded-md" />
+                AI Search
+              </span>
+            )}
           </div>
-          {campaign?.aiQuery && (
-            <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
-              <AISearchIconBadge size="sm" className="!h-5 !w-5 !rounded-md" />
-              AI Search
-            </span>
-          )}
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-screen-2xl px-3 py-6 sm:px-4 lg:px-6">
         {error && (
           <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}

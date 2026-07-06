@@ -22,6 +22,16 @@ export interface TopUpPack {
 
 export const FREE_LIFETIME_TOKENS = 100;
 
+/** Display helper — keep feature copy in sync with monthlyTokens. */
+export function formatTokenGrant(tokens: number): string {
+  return tokens.toLocaleString("en-US");
+}
+
+/**
+ * Token grants sized for ~25% net margin per plan (worst case: all tokens on phones)
+ * after API COGS (~$0.006/token), Stripe (~2.9% + $0.30), infra (~$0.40/user), and
+ * platform overhead (~5% of revenue). Prices unchanged — margin via token volume.
+ */
 export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
   {
     id: "free",
@@ -40,10 +50,10 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     id: "starter",
     name: "Starter",
     priceMonthly: 29,
-    monthlyTokens: 3_000,
+    monthlyTokens: 2_500,
     description: "For solo SDRs getting started with outbound.",
     features: [
-      "3,000 tokens / month",
+      `${formatTokenGrant(2_500)} tokens / month`,
       "Email & phone enrichment",
       "Saved contact tables",
       "Overage available",
@@ -54,10 +64,10 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     id: "pro",
     name: "Pro",
     priceMonthly: 79,
-    monthlyTokens: 10_000,
+    monthlyTokens: 8_500,
     description: "For active reps running daily prospecting.",
     features: [
-      "10,000 tokens / month",
+      `${formatTokenGrant(8_500)} tokens / month`,
       "Priority enrichment",
       "Saved contact tables",
       "Overage available",
@@ -69,10 +79,10 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     id: "growth",
     name: "Growth",
     priceMonthly: 199,
-    monthlyTokens: 30_000,
+    monthlyTokens: 22_000,
     description: "For teams with heavy outbound volume.",
     features: [
-      "30,000 tokens / month",
+      `${formatTokenGrant(22_000)} tokens / month`,
       "Team-ready usage",
       "Saved contact tables",
       "Overage available",
@@ -83,10 +93,10 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     id: "agency",
     name: "Agency",
     priceMonthly: 499,
-    monthlyTokens: 100_000,
+    monthlyTokens: 55_000,
     description: "For agencies managing multiple clients.",
     features: [
-      "100,000 tokens / month",
+      `${formatTokenGrant(55_000)} tokens / month`,
       "High-volume enrichment",
       "Saved contact tables",
       "Overage available",
@@ -114,7 +124,7 @@ export const TOP_UP_PACKS: TopUpPack[] = [
     id: "large",
     name: "Large pack",
     price: 149,
-    tokens: 20_000,
+    tokens: 16_000,
     stripePriceEnvKey: "STRIPE_PRICE_TOPUP_LARGE",
   },
 ];

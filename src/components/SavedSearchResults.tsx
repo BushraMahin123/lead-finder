@@ -94,8 +94,8 @@ export default function SavedSearchResults() {
 
   return (
     <div className="min-h-[calc(100vh-3.5rem)] bg-slate-50">
-      <div className="border-b border-slate-200 bg-white px-4 py-4 sm:px-6 lg:px-8">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3">
+      <div className="border-b border-slate-200 bg-white px-3 py-4 sm:px-4 lg:px-6">
+        <div className="mx-auto flex max-w-screen-2xl flex-wrap items-center justify-between gap-3">
           <div>
             <button
               type="button"
@@ -135,7 +135,7 @@ export default function SavedSearchResults() {
         </div>
       </div>
 
-      <div className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-screen-2xl px-3 py-6 sm:px-4 lg:px-6">
         {error && (
           <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}

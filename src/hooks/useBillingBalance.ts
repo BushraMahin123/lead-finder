@@ -24,6 +24,11 @@ export function useBillingBalance() {
       const data = await response.json();
 
       if (!response.ok) {
+        if (response.status === 401) {
+          setBalance(null);
+          return;
+        }
+
         throw new Error(String(data.error ?? "Failed to load token balance"));
       }
 

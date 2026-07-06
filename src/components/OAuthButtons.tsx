@@ -1,37 +1,64 @@
 "use client";
 
+import { useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 
-type OAuthProvider = "google" | "azure";
+type OAuthButtonsProps = {
+  next?: string | null;
+};
 
-async function signInWithProvider(provider: OAuthProvider) {
-  const supabase = createClient();
-  const redirectTo = `${window.location.origin}/auth/callback`;
-
-  await supabase.auth.signInWithOAuth({
-    provider,
-    options: { redirectTo },
-  });
+function buildCallbackUrl(next?: string | null): string {
+  const redirectTo = new URL(`${window.location.origin}/auth/callback`);
+  const safeNext =
+    next && next.startsWith("/") && !next.startsWith("//")
+      ? next
+      : "/?view=search";
+  redirectTo.searchParams.set("next", safeNext);
+  return redirectTo.toString();
 }
 
-export default function OAuthButtons() {
+export default function OAuthButtons({ next }: OAuthButtonsProps) {
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function signInWithGoogle() {
+    setLoading(true);
+    setError(null);
+
+    try {
+      const supabase = createClient();
+      const { error: oauthError } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: buildCallbackUrl(next),
+          queryParams: {
+            prompt: "select_account",
+          },
+        },
+      });
+
+      if (oauthError) {
+        setError(oauthError.message);
+        setLoading(false);
+      }
+    } catch {
+      setError("Could not start Google sign in. Please try again.");
+      setLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-3">
+      {error && <div className="alert-error">{error}</div>}
+
       <button
         type="button"
-        onClick={() => void signInWithProvider("google")}
-        className="btn btn-oauth"
+        onClick={() => void signInWithGoogle()}
+        disabled={loading}
+        className="btn btn-oauth w-full disabled:cursor-not-allowed disabled:opacity-60"
       >
         <GoogleIcon />
-        Continue with Google
-      </button>
-      <button
-        type="button"
-        onClick={() => void signInWithProvider("azure")}
-        className="btn btn-oauth"
-      >
-        <MicrosoftIcon />
-        Continue with Microsoft
+        {loading ? "Redirecting to Google…" : "Continue with Google"}
       </button>
 
       <div className="relative py-2">
@@ -65,17 +92,6 @@ function GoogleIcon() {
         fill="#EA4335"
         d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
       />
-    </svg>
-  );
-}
-
-function MicrosoftIcon() {
-  return (
-    <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden>
-      <path fill="#F25022" d="M1 1h10v10H1z" />
-      <path fill="#7FBA00" d="M13 1h10v10H13z" />
-      <path fill="#00A4EF" d="M1 13h10v10H1z" />
-      <path fill="#FFB900" d="M13 13h10v10H13z" />
     </svg>
   );
 }

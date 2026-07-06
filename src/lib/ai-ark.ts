@@ -1,4 +1,9 @@
 import { parseEmployeeSizeRange } from "@/lib/filter-options";
+import {
+  enqueueAiArk,
+  isRetryableHttpStatus,
+  RetryableQueueError,
+} from "@/lib/api-queue";
 import { SEARCH_RESULTS_PER_PAGE } from "@/lib/paginated-search-client";
 import type { LeadPerson, SearchFilters } from "@/types/lead";
 
@@ -92,29 +97,38 @@ async function arkRequest(
   path: string,
   options: RequestInit = {},
 ): Promise<{ response: Response; data: Record<string, unknown> }> {
-  const response = await fetch(`${AI_ARK_API}${path}`, {
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      "X-TOKEN": getApiKey(),
-      ...options.headers,
-    },
-  });
+  return enqueueAiArk(async () => {
+    const response = await fetch(`${AI_ARK_API}${path}`, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        "X-TOKEN": getApiKey(),
+        ...options.headers,
+      },
+    });
 
-  const text = await response.text();
-  let data: Record<string, unknown> = {};
+    const text = await response.text();
+    let data: Record<string, unknown> = {};
 
-  if (text) {
-    try {
-      data = JSON.parse(text) as Record<string, unknown>;
-    } catch {
-      throw new Error(
-        `Search returned an invalid response (${response.status}).`,
+    if (text) {
+      try {
+        data = JSON.parse(text) as Record<string, unknown>;
+      } catch {
+        throw new Error(
+          `Search returned an invalid response (${response.status}).`,
+        );
+      }
+    }
+
+    if (isRetryableHttpStatus(response.status)) {
+      throw new RetryableQueueError(
+        formatAiArkError(response.status, data),
+        response.status,
       );
     }
-  }
 
-  return { response, data };
+    return { response, data };
+  });
 }
 
 async function arkFetch<T>(

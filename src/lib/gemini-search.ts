@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { enqueueGemini } from "@/lib/api-queue";
 import { AI_PARSE_CONFIG } from "@/lib/ai-parse-config";
 import type { AiParseSource } from "@/lib/ai-parse-config";
 import { deleteCachedAiParse, getCachedAiParse, setCachedAiParse } from "@/lib/ai-parse-cache";
@@ -25,7 +26,7 @@ import {
 } from "@/lib/rule-based-parse";
 import type { SearchFilters } from "@/types/lead";
 
-const GEMINI_MODEL = "gemini-2.0-flash";
+const GEMINI_MODEL = process.env.GEMINI_MODEL ?? "gemini-3.5-flash";
 
 export type GeminiParseResult = {
   filters: Partial<SearchFilters>;
@@ -94,41 +95,43 @@ function isGeminiUnavailableError(error: unknown): boolean {
 }
 
 async function callGemini(query: string): Promise<Partial<SearchFilters>> {
-  const ai = new GoogleGenAI({ apiKey: getGeminiApiKey() });
-  const response = await ai.models.generateContent({
-    model: GEMINI_MODEL,
-    contents: [
-      {
-        role: "user",
-        parts: [
-          {
-            text: `${buildGeminiSystemPrompt()}\n\nUser query:\n${query}`,
-          },
-        ],
+  return enqueueGemini(async () => {
+    const ai = new GoogleGenAI({ apiKey: getGeminiApiKey() });
+    const response = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: [
+        {
+          role: "user",
+          parts: [
+            {
+              text: `${buildGeminiSystemPrompt()}\n\nUser query:\n${query}`,
+            },
+          ],
+        },
+      ],
+      config: {
+        temperature: 0.2,
+        responseMimeType: "application/json",
       },
-    ],
-    config: {
-      temperature: 0.2,
-      responseMimeType: "application/json",
-    },
+    });
+
+    const text = response.text?.trim();
+    if (!text) {
+      throw new Error("Gemini returned an empty response.");
+    }
+
+    const raw = extractJsonObject(text);
+    let filters = normalizeGeminiFilters(raw);
+    filters = refineFiltersFromQuery(query, filters);
+
+    if (!hasAnySearchFilters(filters)) {
+      throw new Error(
+        "Could not map that description to search filters. Try adding a job title, location, industry, or company detail.",
+      );
+    }
+
+    return filters;
   });
-
-  const text = response.text?.trim();
-  if (!text) {
-    throw new Error("Gemini returned an empty response.");
-  }
-
-  const raw = extractJsonObject(text);
-  let filters = normalizeGeminiFilters(raw);
-  filters = refineFiltersFromQuery(query, filters);
-
-  if (!hasAnySearchFilters(filters)) {
-    throw new Error(
-      "Could not map that description to search filters. Try adding a job title, location, industry, or company detail.",
-    );
-  }
-
-  return filters;
 }
 
 async function maybeRecordUsage(

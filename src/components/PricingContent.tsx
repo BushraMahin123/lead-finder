@@ -92,49 +92,52 @@ export default function PricingContent() {
             One token ≈ $0.01.
           </p>
 
-          <div className="mt-8 inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
-            <button
-              type="button"
-              onClick={() => setAnnual(false)}
-              className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
-                !annual ? "bg-white text-slate-900 shadow-sm" : "text-slate-600"
-              }`}
-            >
-              Monthly
-            </button>
-            <button
-              type="button"
-              onClick={() => setAnnual(true)}
-              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${
-                annual ? "bg-white text-slate-900 shadow-sm" : "text-slate-600"
-              }`}
-            >
-              Annually
-              <span className="badge-success text-[10px]">
-                Save {Math.round(ANNUAL_DISCOUNT * 100)}%
-              </span>
-            </button>
-          </div>
+          <div className="mt-8 flex flex-col items-start gap-4">
+            <div className="inline-flex items-center rounded-xl border border-slate-200 bg-slate-50 p-1">
+              <button
+                type="button"
+                onClick={() => setAnnual(false)}
+                className={`rounded-lg px-4 py-2 text-sm font-medium transition ${
+                  !annual ? "bg-white text-slate-900 shadow-sm" : "text-slate-600"
+                }`}
+              >
+                Monthly
+              </button>
+              <button
+                type="button"
+                onClick={() => setAnnual(true)}
+                className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium transition ${
+                  annual ? "bg-white text-slate-900 shadow-sm" : "text-slate-600"
+                }`}
+              >
+                Annually
+                <span className="badge-success text-[10px]">
+                  Save {Math.round(ANNUAL_DISCOUNT * 100)}%
+                </span>
+              </button>
+            </div>
 
-          {balance && (
-            <p className="mt-4 text-sm text-slate-700">
-              Current balance:{" "}
-              <span className="font-semibold">
-                {balance.balance.toLocaleString()} tokens
-              </span>{" "}
-              · {balance.planName} plan
-            </p>
-          )}
-          {balance?.planId !== "free" && (
-            <button
-              type="button"
-              onClick={() => void openPortal()}
-              disabled={loadingCheckout === "portal"}
-              className="btn btn-secondary mt-4 disabled:opacity-50"
-            >
-              Manage subscription
-            </button>
-          )}
+            {balance && (
+              <p className="text-sm text-slate-700">
+                Current balance:{" "}
+                <span className="font-semibold">
+                  {balance.balance.toLocaleString()} tokens
+                </span>{" "}
+                · {balance.planName} plan
+              </p>
+            )}
+
+            {balance?.planId !== "free" && (
+              <button
+                type="button"
+                onClick={() => void openPortal()}
+                disabled={loadingCheckout === "portal"}
+                className="btn btn-secondary disabled:opacity-50"
+              >
+                Manage subscription
+              </button>
+            )}
+          </div>
         </div>
       </section>
 

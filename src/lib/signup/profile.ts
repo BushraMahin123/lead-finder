@@ -38,10 +38,12 @@ function isValidOption<T extends string>(
   return allowed.has(value as T);
 }
 
-export function parseSignupProfile(formData: FormData):
+function parseProfileFields(
+  formData: FormData,
+  email: string,
+):
   | { ok: true; profile: SignupProfileInput }
   | { ok: false; error: string } {
-  const email = readText(formData, "email").toLowerCase();
   const firstName = readText(formData, "first_name");
   const lastName = readText(formData, "last_name");
   const companyName = readText(formData, "company_name");
@@ -51,16 +53,7 @@ export function parseSignupProfile(formData: FormData):
   const phone = readText(formData, "phone") || null;
   const country = readText(formData, "country") || null;
   const useCase = readText(formData, "use_case");
-  const password = String(formData.get("password") ?? "");
   const marketingOptIn = formData.get("marketing_opt_in") === "on";
-
-  if (!email || !password) {
-    return { ok: false, error: "Email and password are required." };
-  }
-
-  if (password.length < 6) {
-    return { ok: false, error: "Password must be at least 6 characters." };
-  }
 
   if (!firstName || !lastName) {
     return { ok: false, error: "First and last name are required." };
@@ -98,6 +91,83 @@ export function parseSignupProfile(formData: FormData):
       marketingOptIn,
     },
   };
+}
+
+export function parseSignupProfile(formData: FormData):
+  | { ok: true; profile: SignupProfileInput }
+  | { ok: false; error: string } {
+  const email = readText(formData, "email").toLowerCase();
+  const password = String(formData.get("password") ?? "");
+
+  if (!email || !password) {
+    return { ok: false, error: "Email and password are required." };
+  }
+
+  if (password.length < 6) {
+    return { ok: false, error: "Password must be at least 6 characters." };
+  }
+
+  return parseProfileFields(formData, email);
+}
+
+export function parseOnboardingProfile(
+  formData: FormData,
+  email: string,
+):
+  | { ok: true; profile: SignupProfileInput }
+  | { ok: false; error: string } {
+  const normalizedEmail = email.trim().toLowerCase();
+  if (!normalizedEmail) {
+    return { ok: false, error: "A valid email is required." };
+  }
+
+  return parseProfileFields(formData, normalizedEmail);
+}
+
+export function getOAuthNameDefaults(
+  metadata: Record<string, unknown> | null | undefined,
+): { firstName: string; lastName: string } {
+  const record = metadata ?? {};
+  const first = String(
+    record.given_name ?? record.first_name ?? "",
+  ).trim();
+  const last = String(
+    record.family_name ?? record.last_name ?? "",
+  ).trim();
+
+  if (first && last) {
+    return { firstName: first, lastName: last };
+  }
+
+  const fullName = String(record.full_name ?? record.name ?? "").trim();
+  if (!fullName) {
+    return { firstName: "", lastName: "" };
+  }
+
+  const parts = fullName.split(/\s+/);
+  return {
+    firstName: parts[0] ?? "",
+    lastName: parts.slice(1).join(" "),
+  };
+}
+
+export async function hasUserProfile(userId: string): Promise<boolean> {
+  const { getSupabaseAdmin } = await import("@/lib/supabase");
+  const admin = getSupabaseAdmin();
+  if (!admin) return false;
+
+  const { data, error } = await admin
+    .from("user_profiles")
+    .select("user_id")
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("[hasUserProfile]", error.message);
+    return false;
+  }
+
+  return Boolean(data);
 }
 
 export async function saveUserProfile(

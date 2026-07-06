@@ -1,20 +1,33 @@
-import type { PlanId } from "@/lib/billing/plans";
+import {
+  FREE_LIFETIME_TOKENS,
+  SUBSCRIPTION_PLANS,
+  type PlanId,
+} from "@/lib/billing/plans";
 
 export type ComparisonFeature = {
   label: string;
   values: Record<PlanId, string | boolean>;
 };
 
+function monthlyTokenLabel(planId: PlanId): string {
+  if (planId === "free") {
+    return `${FREE_LIFETIME_TOKENS.toLocaleString("en-US")} (lifetime)`;
+  }
+
+  const plan = SUBSCRIPTION_PLANS.find((entry) => entry.id === planId);
+  return plan?.monthlyTokens
+    ? plan.monthlyTokens.toLocaleString("en-US")
+    : "—";
+}
+
+const planIds: PlanId[] = ["free", "starter", "pro", "growth", "agency"];
+
 export const PLAN_COMPARISON: ComparisonFeature[] = [
   {
     label: "Monthly tokens",
-    values: {
-      free: "100 (lifetime)",
-      starter: "3,000",
-      pro: "10,000",
-      growth: "30,000",
-      agency: "100,000",
-    },
+    values: Object.fromEntries(
+      planIds.map((planId) => [planId, monthlyTokenLabel(planId)]),
+    ) as Record<PlanId, string | boolean>,
   },
   {
     label: "Lead search",

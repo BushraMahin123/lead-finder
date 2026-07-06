@@ -8,6 +8,7 @@ import type {
   CampaignColumnValue,
 } from "@/types/campaign";
 import type { EnrichContactResult, EnrichType, LeadPerson, SearchFilters } from "@/types/lead";
+import AiColumnErrorIndicator from "@/components/AiColumnErrorIndicator";
 
 interface LeadResultsProps {
   people: LeadPerson[];
@@ -66,6 +67,27 @@ function applyEnrichment(
       phone_numbers: update.phone_numbers ?? person.phone_numbers,
     };
   });
+}
+
+const STICKY_SHADOW =
+  "shadow-[4px_0_8px_-4px_rgba(15,23,42,0.08)]";
+
+const STICKY_HEADER_CLASSES = [
+  "sticky left-0 z-30 w-12 min-w-12 bg-slate-50",
+  "sticky left-12 z-30 w-44 min-w-44 bg-slate-50",
+  `sticky left-56 z-30 w-52 min-w-52 bg-slate-50 ${STICKY_SHADOW}`,
+] as const;
+
+function stickyBodyClass(index: 0 | 1 | 2, selected: boolean): string {
+  const bg = selected
+    ? "bg-indigo-50 group-hover:bg-indigo-50"
+    : "bg-white group-hover:bg-slate-50";
+  const bases = [
+    `sticky left-0 z-10 w-12 min-w-12 ${bg}`,
+    `sticky left-12 z-10 w-44 min-w-44 ${bg}`,
+    `sticky left-56 z-10 w-52 min-w-52 ${bg} ${STICKY_SHADOW}`,
+  ];
+  return bases[index];
 }
 
 export default function LeadResults({
@@ -226,7 +248,7 @@ export default function LeadResults({
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="border-b border-slate-100 px-6 py-4">
+      <div className="border-b border-slate-100 px-4 py-4 sm:px-5">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h2 className="text-lg font-semibold text-slate-900">Results</h2>
@@ -296,10 +318,15 @@ export default function LeadResults({
       </div>
 
       <div className="overflow-x-auto">
-        <table className="min-w-full text-left text-sm">
+        <table className="min-w-full border-separate border-spacing-0 text-left text-sm">
+          <colgroup>
+            <col className="w-12" />
+            <col className="w-44" />
+            <col className="w-52" />
+          </colgroup>
           <thead className="bg-slate-50 text-slate-600">
             <tr>
-              <th className="px-4 py-3 font-medium">
+              <th className={`px-3 py-3 font-medium ${STICKY_HEADER_CLASSES[0]}`}>
                 {enableEnrichment && (
                   <input
                     type="checkbox"
@@ -310,17 +337,21 @@ export default function LeadResults({
                   />
                 )}
               </th>
-              <th className="px-4 py-3 font-medium">Name</th>
-              <th className="px-4 py-3 font-medium">Title</th>
-              <th className="px-4 py-3 font-medium">Company</th>
-              <th className="px-4 py-3 font-medium">Email</th>
-              <th className="px-4 py-3 font-medium">Phone</th>
-              <th className="px-4 py-3 font-medium">Location</th>
-              <th className="px-4 py-3 font-medium">LinkedIn</th>
+              <th className={`px-3 py-3 font-medium ${STICKY_HEADER_CLASSES[1]}`}>
+                Name
+              </th>
+              <th className={`px-3 py-3 font-medium ${STICKY_HEADER_CLASSES[2]}`}>
+                Title
+              </th>
+              <th className="px-3 py-3 font-medium">Company</th>
+              <th className="px-3 py-3 font-medium">Email</th>
+              <th className="px-3 py-3 font-medium">Phone</th>
+              <th className="px-3 py-3 font-medium">Location</th>
+              <th className="px-3 py-3 font-medium">LinkedIn</th>
               {aiColumns.map((column) => (
                 <th
                   key={column.id}
-                  className="min-w-[10rem] px-4 py-3 font-medium text-violet-800"
+                  className="min-w-[10rem] px-3 py-3 font-medium text-violet-800"
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="truncate">{column.name}</span>
@@ -351,7 +382,7 @@ export default function LeadResults({
                 </th>
               ))}
               {onAddColumn && (
-                <th className="px-4 py-3 font-medium">
+                <th className="px-3 py-3 font-medium">
                   <button
                     type="button"
                     onClick={onAddColumn}
@@ -364,16 +395,19 @@ export default function LeadResults({
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100">
-            {people.map((person) => (
+            {people.map((person) => {
+              const selected = selectedIds.has(person.id);
+
+              return (
               <tr
                 key={person.id}
                 className={
-                  selectedIds.has(person.id)
-                    ? "bg-indigo-50/60 hover:bg-indigo-50"
-                    : "hover:bg-slate-50/80"
+                  selected
+                    ? "group bg-indigo-50/60 hover:bg-indigo-50"
+                    : "group hover:bg-slate-50/80"
                 }
               >
-                <td className="px-4 py-3">
+                <td className={`px-3 py-3 ${stickyBodyClass(0, selected)}`}>
                   {enableEnrichment && (
                     <input
                       type="checkbox"
@@ -384,11 +418,17 @@ export default function LeadResults({
                     />
                   )}
                 </td>
-                <td className="px-4 py-3 font-medium text-slate-900">
+                <td
+                  className={`max-w-44 truncate px-3 py-3 font-medium text-slate-900 ${stickyBodyClass(1, selected)}`}
+                >
                   {displayName(person)}
                 </td>
-                <td className="px-4 py-3 text-slate-700">{person.title ?? "—"}</td>
-                <td className="px-4 py-3 text-slate-700">
+                <td
+                  className={`max-w-52 truncate px-3 py-3 text-slate-700 ${stickyBodyClass(2, selected)}`}
+                >
+                  {person.title ?? "—"}
+                </td>
+                <td className="px-3 py-3 text-slate-700">
                   <div>{person.organization?.name ?? "—"}</div>
                   {person.organization?.primary_domain && (
                     <div className="text-xs text-slate-500">
@@ -396,7 +436,7 @@ export default function LeadResults({
                     </div>
                   )}
                 </td>
-                <td className="px-4 py-3 text-slate-700">
+                <td className="px-3 py-3 text-slate-700">
                   {person.email ? (
                     <div>
                       <a
@@ -415,9 +455,9 @@ export default function LeadResults({
                     "—"
                   )}
                 </td>
-                <td className="px-4 py-3 text-slate-700">{displayPhone(person)}</td>
-                <td className="px-4 py-3 text-slate-700">{displayLocation(person)}</td>
-                <td className="px-4 py-3">
+                <td className="px-3 py-3 text-slate-700">{displayPhone(person)}</td>
+                <td className="px-3 py-3 text-slate-700">{displayLocation(person)}</td>
+                <td className="px-3 py-3">
                   {person.linkedin_url ? (
                     <a
                       href={person.linkedin_url}
@@ -434,12 +474,12 @@ export default function LeadResults({
                 {aiColumns.map((column) => {
                   const cell = columnValues[person.id]?.[column.id];
                   const isRunning =
-                    runningColumnId === column.id || cell?.status === "running";
+                    cell?.status === "running" && cell.columnId === column.id;
 
                   return (
                     <td
                       key={column.id}
-                      className="max-w-xs px-4 py-3 text-slate-700"
+                      className="max-w-xs px-3 py-3 text-slate-700"
                     >
                       {isRunning ? (
                         <span className="inline-flex items-center gap-2 text-xs text-violet-600">
@@ -447,12 +487,9 @@ export default function LeadResults({
                           Running…
                         </span>
                       ) : cell?.status === "error" ? (
-                        <span
-                          className="text-xs text-red-600"
-                          title={cell.error ?? undefined}
-                        >
-                          {cell.error ?? "Error"}
-                        </span>
+                        <AiColumnErrorIndicator
+                          message={cell.error ?? "AI enrichment failed"}
+                        />
                       ) : cell?.value ? (
                         <span className="line-clamp-3 text-sm">{cell.value}</span>
                       ) : (
@@ -461,9 +498,10 @@ export default function LeadResults({
                     </td>
                   );
                 })}
-                {onAddColumn && <td className="px-4 py-3" />}
+                {onAddColumn && <td className="px-3 py-3" />}
               </tr>
-            ))}
+            );
+            })}
           </tbody>
         </table>
       </div>

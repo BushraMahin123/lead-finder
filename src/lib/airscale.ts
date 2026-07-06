@@ -1,3 +1,8 @@
+import {
+  enqueueAirscale,
+  isRetryableHttpStatus,
+  RetryableQueueError,
+} from "@/lib/api-queue";
 import type { EnrichContactResult, LeadPerson } from "@/types/lead";
 
 const AIRSCALE_API = "https://api.airscale.io/v1";
@@ -31,32 +36,39 @@ async function airscalePost<T>(
   path: string,
   body: Record<string, string>,
 ): Promise<T> {
-  const response = await fetch(`${AIRSCALE_API}${path}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${getApiKey()}`,
-    },
-    body: JSON.stringify(body),
-  });
+  return enqueueAirscale(async () => {
+    const response = await fetch(`${AIRSCALE_API}${path}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${getApiKey()}`,
+      },
+      body: JSON.stringify(body),
+    });
 
-  const text = await response.text();
-  let data: AirscaleEmailResponse & AirscalePhoneResponse = {};
+    const text = await response.text();
+    let data: AirscaleEmailResponse & AirscalePhoneResponse = {};
 
-  if (text) {
-    try {
-      data = JSON.parse(text) as AirscaleEmailResponse & AirscalePhoneResponse;
-    } catch {
-      throw new Error(`Extraction returned an invalid response (${response.status}).`);
+    if (text) {
+      try {
+        data = JSON.parse(text) as AirscaleEmailResponse & AirscalePhoneResponse;
+      } catch {
+        throw new Error(`Extraction returned an invalid response (${response.status}).`);
+      }
     }
-  }
 
-  if (!response.ok) {
-    const detail = data.error ?? data.message ?? `Request failed (${response.status})`;
-    throw new Error(detail);
-  }
+    if (isRetryableHttpStatus(response.status)) {
+      const detail = data.error ?? data.message ?? `Request failed (${response.status})`;
+      throw new RetryableQueueError(detail, response.status);
+    }
 
-  return data as T;
+    if (!response.ok) {
+      const detail = data.error ?? data.message ?? `Request failed (${response.status})`;
+      throw new Error(detail);
+    }
+
+    return data as T;
+  });
 }
 
 function splitName(person: LeadPerson): { firstName?: string; lastName?: string } {
