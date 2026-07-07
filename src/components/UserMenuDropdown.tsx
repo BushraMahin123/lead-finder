@@ -16,9 +16,14 @@ function initialsFromEmail(email: string): string {
 interface UserMenuDropdownProps {
   email: string;
   name: string;
+  showAdmin?: boolean;
 }
 
-export default function UserMenuDropdown({ email, name }: UserMenuDropdownProps) {
+export default function UserMenuDropdown({
+  email,
+  name,
+  showAdmin = false,
+}: UserMenuDropdownProps) {
   const [open, setOpen] = useState(false);
   const [portalLoading, setPortalLoading] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
@@ -122,6 +127,11 @@ export default function UserMenuDropdown({ email, name }: UserMenuDropdownProps)
           </div>
 
           <div className="py-1">
+            {showAdmin && (
+              <MenuLink href="/admin" onNavigate={() => setOpen(false)}>
+                Admin panel
+              </MenuLink>
+            )}
             <MenuLink href="/dashboard" onNavigate={() => setOpen(false)}>
               Tables
             </MenuLink>

@@ -31,6 +31,7 @@ export interface UserBillingSnapshot {
   subscriptionStatus: string | null;
   currentPeriodEnd: string | null;
   stripeCustomerId: string | null;
+  stripeSubscriptionId: string | null;
 }
 
 function getAdminOrThrow() {
@@ -135,6 +136,7 @@ export async function getUserBillingSnapshot(
     subscriptionStatus: row.subscription_status,
     currentPeriodEnd: row.current_period_end,
     stripeCustomerId: row.stripe_customer_id,
+    stripeSubscriptionId: row.stripe_subscription_id,
   };
 }
 

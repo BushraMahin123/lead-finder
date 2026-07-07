@@ -13,7 +13,8 @@
     "db:migrate": "node scripts/run-migration.mjs",
     "db:migrate:user-profiles": "node scripts/run-migration.mjs supabase/user_profiles.sql",
     "db:migrate:ai-parse": "node scripts/run-migration.mjs supabase/ai_parse.sql",
-    "db:migrate:campaign-columns": "node scripts/run-migration.mjs supabase/campaign_columns.sql"
+    "db:migrate:campaign-columns": "node scripts/run-migration.mjs supabase/campaign_columns.sql",
+    "db:migrate:super-admins": "node scripts/run-migration.mjs supabase/super_admins.sql"
   },
   "dependencies": {
     "@google/genai": "^2.10.0",

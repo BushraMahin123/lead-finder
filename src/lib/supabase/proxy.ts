@@ -121,5 +121,21 @@ export async function updateSession(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
+    const { isSuperAdmin } = await import("@/lib/admin");
+    const allowed = userId ? await isSuperAdmin(userId, user) : false;
+
+    if (!allowed) {
+      if (pathname.startsWith("/api/")) {
+        return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+      }
+
+      const url = request.nextUrl.clone();
+      url.pathname = "/";
+      url.search = "view=search";
+      return NextResponse.redirect(url);
+    }
+  }
+
   return supabaseResponse;
 }

@@ -31,7 +31,7 @@ export default function AISearchSection({
       <div className="w-full max-w-2xl">
         <div className="mb-6">
           <AISearchHeading
-            title="Describe your ideal lead, Gemini builds the filters"
+            title="Describe your ideal lead, our AI builds the filters"
             size="md"
             layout="stacked"
           />

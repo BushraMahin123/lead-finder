@@ -26,7 +26,7 @@ export default function SearchEmptyState({
           Describe your ideal lead above
         </h3>
         <p className="mt-2 text-sm leading-relaxed text-slate-600">
-          Gemini will build filters on the left and show matching contacts here.
+          Our AI will build filters on the left and show matching contacts here.
           Or start from a template below.
         </p>
       </div>

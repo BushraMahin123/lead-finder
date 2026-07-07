@@ -67,7 +67,7 @@ export async function assertAiParseRateLimit(
     geminiCount >= AI_PARSE_CONFIG.geminiRateLimitPerHour
   ) {
     throw new AiParseRateLimitError(
-      `AI parsing limit reached (${AI_PARSE_CONFIG.geminiRateLimitPerHour} Gemini calls/hour). Basic filters still work — try a simpler query or manual filters.`,
+      `AI parsing limit reached (${AI_PARSE_CONFIG.geminiRateLimitPerHour} requests/hour). Basic filters still work — try a simpler query or manual filters.`,
       60,
     );
   }

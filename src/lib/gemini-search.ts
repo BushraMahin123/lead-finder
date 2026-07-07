@@ -77,7 +77,7 @@ function buildFallbackWarning(
   }
 
   if (isGeminiUnavailableError(error)) {
-    return "AI is temporarily unavailable (Gemini quota exceeded). Basic filters were applied from your query instead.";
+    return "Our AI is temporarily unavailable. Basic filters were applied from your query instead.";
   }
 
   return "AI could not fully parse that query. Basic filters were applied — review filters on the left and adjust if needed.";
@@ -274,7 +274,7 @@ export async function parseLeadQueryWithGemini(
 
     if (isGeminiUnavailableError(error)) {
       throw new Error(
-        "AI search is temporarily unavailable because the Gemini API quota was exceeded. Use manual filters, or retry in a minute.",
+        "AI search is temporarily unavailable. Use manual filters, or retry in a minute.",
       );
     }
 

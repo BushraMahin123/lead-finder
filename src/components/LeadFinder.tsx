@@ -287,7 +287,7 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
           onSearch={handleAISearch}
           loading={aiParsing || search.loading}
           loadingMessage={
-            aiParsing ? "Gemini is building your filters…" : undefined
+            aiParsing ? "Our AI is building your filters…" : undefined
           }
           error={showEmpty ? search.error : null}
           warning={aiWarning}
