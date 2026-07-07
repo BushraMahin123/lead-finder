@@ -12,6 +12,7 @@ import type {
   CampaignColumn,
   CampaignColumnValue,
   CampaignWithContacts,
+  ContactRowMeta,
 } from "@/types/campaign";
 import type { LeadPerson } from "@/types/lead";
 
@@ -26,6 +27,9 @@ export default function CampaignContacts() {
   const [columnValues, setColumnValues] = useState<
     Record<string, Record<string, CampaignColumnValue>>
   >({});
+  const [contactMeta, setContactMeta] = useState<Record<string, ContactRowMeta>>(
+    {},
+  );
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,6 +58,7 @@ export default function CampaignContacts() {
       setAllPeople(loaded.contacts ?? []);
       setAiColumns(loaded.columns ?? []);
       setColumnValues(loaded.columnValues ?? {});
+      setContactMeta(loaded.contactMeta ?? {});
       setPage(1);
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
@@ -264,6 +269,62 @@ export default function CampaignContacts() {
     }
   }
 
+  async function handleContactMetaUpdate(
+    personId: string,
+    updates: Partial<Pick<ContactRowMeta, "status" | "notes" | "rowColor" | "isDone">>,
+  ) {
+    if (!campaignId) return;
+
+    const previous = contactMeta[personId];
+    const optimistic: ContactRowMeta = {
+      personId,
+      status: updates.status ?? previous?.status ?? "not_contacted",
+      notes: updates.notes ?? previous?.notes ?? "",
+      rowColor:
+        updates.rowColor !== undefined
+          ? updates.rowColor
+          : (previous?.rowColor ?? null),
+      isDone: updates.isDone ?? previous?.isDone ?? false,
+      updatedAt: new Date().toISOString(),
+    };
+
+    setContactMeta((current) => ({
+      ...current,
+      [personId]: optimistic,
+    }));
+
+    try {
+      const { response, data } = await fetchJson(
+        `/api/campaigns/${campaignId}/contacts/${encodeURIComponent(personId)}`,
+        {
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(updates),
+        },
+      );
+
+      if (!response.ok) {
+        throw new Error(String(data.error ?? "Failed to save contact update"));
+      }
+
+      const meta = data.meta as ContactRowMeta;
+      setContactMeta((current) => ({
+        ...current,
+        [personId]: meta,
+      }));
+    } catch (err) {
+      setContactMeta((current) => {
+        if (!previous) {
+          const next = { ...current };
+          delete next[personId];
+          return next;
+        }
+        return { ...current, [personId]: previous };
+      });
+      setError(err instanceof Error ? err.message : "Failed to save contact update");
+    }
+  }
+
   const visiblePeople = useMemo(() => {
     const start = (page - 1) * SEARCH_RESULTS_PER_PAGE;
     return allPeople.slice(start, start + SEARCH_RESULTS_PER_PAGE);
@@ -357,6 +418,9 @@ export default function CampaignContacts() {
             setColumnModalOpen(true);
           }}
           onDeleteColumn={handleDeleteColumn}
+          enableTracking
+          contactMeta={contactMeta}
+          onContactMetaUpdate={handleContactMetaUpdate}
         />
 
         {allPeople.length > 0 && totalPages > 1 && (

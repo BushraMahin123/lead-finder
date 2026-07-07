@@ -1,46 +1,25 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import type { AdminCampaignSummary } from "@/lib/admin-data";
+import type { AdminCampaignSummary } from "@/lib/admin-types";
 
-export default function AdminCampaigns() {
-  const [campaigns, setCampaigns] = useState<AdminCampaignSummary[]>([]);
-  const [total, setTotal] = useState(0);
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+type AdminCampaignsProps = {
+  initialCampaigns: AdminCampaignSummary[];
+  initialTotal: number;
+  initialPage: number;
+};
 
+export default function AdminCampaigns({
+  initialCampaigns,
+  initialTotal,
+  initialPage,
+}: AdminCampaignsProps) {
   const perPage = 20;
-  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const totalPages = Math.max(1, Math.ceil(initialTotal / perPage));
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const params = new URLSearchParams({
-          page: String(page),
-          perPage: String(perPage),
-        });
-        const response = await fetch(`/api/admin/campaigns?${params}`);
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(String(data.error ?? "Failed to load tables"));
-        }
-
-        setCampaigns((data.campaigns ?? []) as AdminCampaignSummary[]);
-        setTotal(Number(data.total ?? 0));
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    void load();
-  }, [page]);
+  function buildUrl(page: number) {
+    return page > 1 ? `/admin/campaigns?page=${page}` : "/admin/campaigns";
+  }
 
   return (
     <div className="space-y-6">
@@ -50,12 +29,6 @@ export default function AdminCampaigns() {
           All saved lead tables across the platform.
         </p>
       </div>
-
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
 
       <div className="card-flat overflow-hidden">
         <div className="overflow-x-auto">
@@ -70,20 +43,14 @@ export default function AdminCampaigns() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
-                    Loading tables…
-                  </td>
-                </tr>
-              ) : campaigns.length === 0 ? (
+              {initialCampaigns.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
                     No tables found.
                   </td>
                 </tr>
               ) : (
-                campaigns.map((campaign) => (
+                initialCampaigns.map((campaign) => (
                   <tr key={campaign.id} className="hover:bg-slate-50/80">
                     <td className="px-4 py-3">
                       <div className="font-medium text-slate-900">{campaign.name}</div>
@@ -118,25 +85,23 @@ export default function AdminCampaigns() {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3">
-          <button
-            type="button"
-            disabled={page <= 1 || loading}
-            onClick={() => setPage((current) => current - 1)}
-            className="btn btn-secondary"
+          <Link
+            href={buildUrl(initialPage - 1)}
+            aria-disabled={initialPage <= 1}
+            className={`btn btn-secondary ${initialPage <= 1 ? "pointer-events-none opacity-50" : ""}`}
           >
             Previous
-          </button>
+          </Link>
           <span className="text-sm text-slate-600">
-            Page {page} of {totalPages}
+            Page {initialPage} of {totalPages}
           </span>
-          <button
-            type="button"
-            disabled={page >= totalPages || loading}
-            onClick={() => setPage((current) => current + 1)}
-            className="btn btn-secondary"
+          <Link
+            href={buildUrl(initialPage + 1)}
+            aria-disabled={initialPage >= totalPages}
+            className={`btn btn-secondary ${initialPage >= totalPages ? "pointer-events-none opacity-50" : ""}`}
           >
             Next
-          </button>
+          </Link>
         </div>
       )}
     </div>

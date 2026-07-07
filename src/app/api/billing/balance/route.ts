@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUserId, unauthorizedResponse } from "@/lib/auth";
 import { getPlanById } from "@/lib/billing/plans";
+import { syncStripeSubscriptionForUser } from "@/lib/billing/sync-subscription";
 import { getUserBillingSnapshot } from "@/lib/billing/tokens";
 
 export async function GET() {
@@ -10,7 +11,11 @@ export async function GET() {
       return unauthorizedResponse();
     }
 
-    const snapshot = await getUserBillingSnapshot(userId);
+    let snapshot = await getUserBillingSnapshot(userId);
+    if (!snapshot.stripeSubscriptionId && snapshot.stripeCustomerId) {
+      await syncStripeSubscriptionForUser(userId);
+      snapshot = await getUserBillingSnapshot(userId);
+    }
     const plan = getPlanById(snapshot.planId);
 
     return NextResponse.json({
@@ -21,6 +26,7 @@ export async function GET() {
       subscriptionStatus: snapshot.subscriptionStatus,
       currentPeriodEnd: snapshot.currentPeriodEnd,
       hasStripeCustomer: Boolean(snapshot.stripeCustomerId),
+      hasStripeSubscription: Boolean(snapshot.stripeSubscriptionId),
     });
   } catch (error) {
     const message =

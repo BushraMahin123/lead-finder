@@ -1,57 +1,22 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import type { AdminLedgerEntry, AdminStats } from "@/lib/admin-data";
+import type { AdminLedgerEntry, AdminStats } from "@/lib/admin-types";
 
 function formatAmount(amount: number): string {
   const prefix = amount > 0 ? "+" : "";
   return `${prefix}${amount.toLocaleString()}`;
 }
 
-export default function AdminDashboard() {
-  const [stats, setStats] = useState<AdminStats | null>(null);
-  const [recentLedger, setRecentLedger] = useState<AdminLedgerEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+type AdminDashboardProps = {
+  stats: AdminStats;
+  recentLedger: AdminLedgerEntry[];
+};
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const response = await fetch("/api/admin/stats");
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(String(data.error ?? "Failed to load stats"));
-        }
-        setStats(data.stats as AdminStats);
-        setRecentLedger((data.recentLedger ?? []) as AdminLedgerEntry[]);
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    void load();
-  }, []);
-
-  if (loading) {
-    return <p className="text-sm text-slate-500">Loading admin overview…</p>;
-  }
-
-  if (error) {
-    return (
-      <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-        {error}
-      </div>
-    );
-  }
-
-  if (!stats) return null;
-
+export default function AdminDashboard({
+  stats,
+  recentLedger,
+}: AdminDashboardProps) {
   const cards = [
     { label: "Users", value: stats.totalUsers.toLocaleString() },
     { label: "Tables", value: stats.totalCampaigns.toLocaleString() },

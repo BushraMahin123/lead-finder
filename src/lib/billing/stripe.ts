@@ -2,6 +2,7 @@ import Stripe from "stripe";
 import {
   getPlanById,
   getStripePriceId,
+  assertStripePriceId,
   getTopUpById,
   type PlanId,
   type TopUpId,
@@ -11,6 +12,10 @@ import {
   getUserBillingSnapshot,
   updateBillingAccount,
 } from "@/lib/billing/tokens";
+import {
+  clearStaleStripeLinks,
+  isStripeModeMismatchError,
+} from "@/lib/billing/stripe-mode";
 
 let stripeClient: Stripe | null = null;
 
@@ -43,12 +48,21 @@ function getAppUrl(): string {
 async function getOrCreateStripeCustomer(userId: string, email?: string | null) {
   await ensureUserBillingAccount(userId);
   const snapshot = await getUserBillingSnapshot(userId);
+  const stripe = getStripe();
 
   if (snapshot.stripeCustomerId) {
-    return snapshot.stripeCustomerId;
+    try {
+      await stripe.customers.retrieve(snapshot.stripeCustomerId);
+      return snapshot.stripeCustomerId;
+    } catch (error) {
+      if (isStripeModeMismatchError(error)) {
+        await clearStaleStripeLinks(userId);
+      } else {
+        throw error;
+      }
+    }
   }
 
-  const stripe = getStripe();
   const customer = await stripe.customers.create({
     email: email ?? undefined,
     metadata: { userId },
@@ -77,6 +91,7 @@ export async function createSubscriptionCheckoutSession(input: {
       `Stripe price is not configured for ${plan.name}. Set ${plan.stripePriceEnvKey} in your environment.`,
     );
   }
+  assertStripePriceId(priceId, plan.name, plan.stripePriceEnvKey);
 
   const customerId = await getOrCreateStripeCustomer(input.userId, input.email);
   const stripe = getStripe();
@@ -118,6 +133,7 @@ export async function createTopUpCheckoutSession(input: {
       `Stripe price is not configured for ${pack.name}. Set ${pack.stripePriceEnvKey} in your environment.`,
     );
   }
+  assertStripePriceId(priceId, pack.name, pack.stripePriceEnvKey);
 
   const customerId = await getOrCreateStripeCustomer(input.userId, input.email);
   const stripe = getStripe();

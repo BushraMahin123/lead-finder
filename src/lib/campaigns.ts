@@ -3,7 +3,14 @@ import {
   mergeEnrichmentsIntoPeople,
 } from "@/lib/contact-enrichments";
 import { getSupabaseAdmin } from "@/lib/supabase";
-import type { Campaign, CampaignStatus, CampaignWithContacts } from "@/types/campaign";
+import type {
+  Campaign,
+  CampaignStatus,
+  CampaignWithContacts,
+  ContactRowMeta,
+  ContactStatus,
+  RowColor,
+} from "@/types/campaign";
 import type { EnrichContactResult, LeadPerson, SearchFilters } from "@/types/lead";
 
 const CAMPAIGNS_TABLE = "campaigns";
@@ -31,6 +38,22 @@ interface ContactRow {
   person_data: LeadPerson;
   sort_order: number;
   created_at: string;
+  contact_status?: string | null;
+  contact_notes?: string | null;
+  row_color?: string | null;
+  is_done?: boolean | null;
+  contact_meta_updated_at?: string | null;
+}
+
+function mapContactMeta(row: ContactRow): ContactRowMeta {
+  return {
+    personId: row.person_id,
+    status: (row.contact_status ?? "not_contacted") as ContactStatus,
+    notes: row.contact_notes ?? "",
+    rowColor: (row.row_color as RowColor | null) ?? null,
+    isDone: row.is_done ?? false,
+    updatedAt: row.contact_meta_updated_at ?? row.created_at,
+  };
 }
 
 function mapCampaign(row: CampaignRow): Campaign {
@@ -197,14 +220,66 @@ export async function getCampaignWithContacts(
 
   if (error) throw new Error(error.message);
 
-  const contacts = ((data as ContactRow[] | null) ?? []).map(
-    (row) => row.person_data,
-  );
+  const rows = (data as ContactRow[] | null) ?? [];
+  const contacts = rows.map((row) => row.person_data);
+  const contactMeta: Record<string, ContactRowMeta> = {};
+
+  for (const row of rows) {
+    contactMeta[row.person_id] = mapContactMeta(row);
+  }
 
   return {
     ...campaign,
     contacts: await mergeEnrichmentsIntoPeople(contacts),
+    contactMeta,
   };
+}
+
+export async function updateCampaignContactMeta(input: {
+  campaignId: string;
+  personId: string;
+  userId: string;
+  status?: ContactStatus;
+  notes?: string;
+  rowColor?: RowColor | null;
+  isDone?: boolean;
+}): Promise<ContactRowMeta> {
+  const campaign = await getCampaignForUser(input.campaignId, input.userId);
+  if (!campaign) {
+    throw new Error("Campaign not found");
+  }
+
+  const admin = getAdminOrThrow();
+  const now = new Date().toISOString();
+
+  const updates: Record<string, unknown> = {
+    contact_meta_updated_at: now,
+  };
+
+  if (input.status !== undefined) updates.contact_status = input.status;
+  if (input.notes !== undefined) updates.contact_notes = input.notes;
+  if (input.rowColor !== undefined) updates.row_color = input.rowColor;
+  if (input.isDone !== undefined) updates.is_done = input.isDone;
+
+  const { data, error } = await admin
+    .from(CONTACTS_TABLE)
+    .update(updates)
+    .eq("campaign_id", input.campaignId)
+    .eq("person_id", input.personId)
+    .select(
+      "person_id, contact_status, contact_notes, row_color, is_done, contact_meta_updated_at, created_at",
+    )
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  if (!data) throw new Error("Contact not found");
+
+  await admin
+    .from(CAMPAIGNS_TABLE)
+    .update({ updated_at: now })
+    .eq("id", input.campaignId);
+
+  return mapContactMeta(data as ContactRow);
 }
 
 export async function updateCampaignContactEnrichments(

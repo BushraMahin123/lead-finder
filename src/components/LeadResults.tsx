@@ -6,9 +6,17 @@ import { ApiError, fetchJson } from "@/lib/fetch-json";
 import type {
   CampaignColumn,
   CampaignColumnValue,
+  ContactRowMeta,
 } from "@/types/campaign";
 import type { EnrichContactResult, EnrichType, LeadPerson, SearchFilters } from "@/types/lead";
 import AiColumnErrorIndicator from "@/components/AiColumnErrorIndicator";
+import {
+  ContactNotesInput,
+  ContactTrackingCell,
+  rowBackgroundClass,
+  rowLeftBorderClass,
+  stickyCellBackground,
+} from "@/components/ContactRowTracking";
 
 interface LeadResultsProps {
   people: LeadPerson[];
@@ -26,6 +34,12 @@ interface LeadResultsProps {
   onRunColumn?: (columnId: string, personIds: string[]) => void;
   onEditColumn?: (column: CampaignColumn) => void;
   onDeleteColumn?: (columnId: string) => void;
+  enableTracking?: boolean;
+  contactMeta?: Record<string, ContactRowMeta>;
+  onContactMetaUpdate?: (
+    personId: string,
+    updates: Partial<Pick<ContactRowMeta, "status" | "notes" | "rowColor" | "isDone">>,
+  ) => void;
 }
 
 function displayName(person: LeadPerson): string {
@@ -78,10 +92,12 @@ const STICKY_HEADER_CLASSES = [
   `sticky left-56 z-30 w-52 min-w-52 bg-slate-50 ${STICKY_SHADOW}`,
 ] as const;
 
-function stickyBodyClass(index: 0 | 1 | 2, selected: boolean): string {
-  const bg = selected
-    ? "bg-indigo-50 group-hover:bg-indigo-50"
-    : "bg-white group-hover:bg-slate-50";
+function stickyBodyClass(
+  index: 0 | 1 | 2,
+  selected: boolean,
+  meta?: ContactRowMeta,
+): string {
+  const bg = stickyCellBackground(meta, selected);
   const bases = [
     `sticky left-0 z-10 w-12 min-w-12 ${bg}`,
     `sticky left-12 z-10 w-44 min-w-44 ${bg}`,
@@ -106,6 +122,9 @@ export default function LeadResults({
   onRunColumn,
   onEditColumn,
   onDeleteColumn,
+  enableTracking = false,
+  contactMeta = {},
+  onContactMetaUpdate,
 }: LeadResultsProps) {
   const router = useRouter();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
@@ -343,6 +362,16 @@ export default function LeadResults({
               <th className={`px-3 py-3 font-medium ${STICKY_HEADER_CLASSES[2]}`}>
                 Title
               </th>
+              {enableTracking && (
+                <>
+                  <th className="min-w-[14rem] border-l border-slate-200/80 bg-slate-50/90 px-3 py-3 font-medium text-slate-700">
+                    Follow-up
+                  </th>
+                  <th className="min-w-[12rem] bg-slate-50/90 px-3 py-3 font-medium text-slate-700">
+                    Notes
+                  </th>
+                </>
+              )}
               <th className="px-3 py-3 font-medium">Company</th>
               <th className="px-3 py-3 font-medium">Email</th>
               <th className="px-3 py-3 font-medium">Phone</th>
@@ -397,17 +426,15 @@ export default function LeadResults({
           <tbody className="divide-y divide-slate-100">
             {people.map((person) => {
               const selected = selectedIds.has(person.id);
+              const meta = contactMeta[person.id];
+              const isDone = meta?.isDone || meta?.status === "done";
 
               return (
               <tr
                 key={person.id}
-                className={
-                  selected
-                    ? "group bg-indigo-50/60 hover:bg-indigo-50"
-                    : "group hover:bg-slate-50/80"
-                }
+                className={`border-l-[3px] ${rowLeftBorderClass(meta)} ${rowBackgroundClass(meta, selected)}`}
               >
-                <td className={`px-3 py-3 ${stickyBodyClass(0, selected)}`}>
+                <td className={`px-3 py-3 ${stickyBodyClass(0, selected, meta)}`}>
                   {enableEnrichment && (
                     <input
                       type="checkbox"
@@ -419,16 +446,41 @@ export default function LeadResults({
                   )}
                 </td>
                 <td
-                  className={`max-w-44 truncate px-3 py-3 font-medium text-slate-900 ${stickyBodyClass(1, selected)}`}
+                  className={`max-w-44 truncate px-3 py-3 font-medium ${stickyBodyClass(1, selected, meta)} ${
+                    isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-900"
+                  }`}
                 >
                   {displayName(person)}
                 </td>
                 <td
-                  className={`max-w-52 truncate px-3 py-3 text-slate-700 ${stickyBodyClass(2, selected)}`}
+                  className={`max-w-52 truncate px-3 py-3 ${stickyBodyClass(2, selected, meta)} ${
+                    isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-700"
+                  }`}
                 >
                   {person.title ?? "—"}
                 </td>
-                <td className="px-3 py-3 text-slate-700">
+                {enableTracking && (
+                  <>
+                    <td className="border-l border-slate-200/60 px-3 py-2.5">
+                      <ContactTrackingCell
+                        personLabel={displayName(person)}
+                        meta={meta}
+                        onMetaUpdate={(updates) =>
+                          onContactMetaUpdate?.(person.id, updates)
+                        }
+                      />
+                    </td>
+                    <td className="px-3 py-2.5">
+                      <ContactNotesInput
+                        value={meta?.notes ?? ""}
+                        onChange={(notes) =>
+                          onContactMetaUpdate?.(person.id, { notes })
+                        }
+                      />
+                    </td>
+                  </>
+                )}
+                <td className={`px-3 py-3 ${isDone ? "opacity-60" : ""}`}>
                   <div>{person.organization?.name ?? "—"}</div>
                   {person.organization?.primary_domain && (
                     <div className="text-xs text-slate-500">
@@ -436,7 +488,7 @@ export default function LeadResults({
                     </div>
                   )}
                 </td>
-                <td className="px-3 py-3 text-slate-700">
+                <td className={`px-3 py-3 ${isDone ? "opacity-60" : ""}`}>
                   {person.email ? (
                     <div>
                       <a
@@ -446,18 +498,20 @@ export default function LeadResults({
                         {person.email}
                       </a>
                       {person.email_status && (
-                        <div className="text-xs text-slate-500">
-                          {person.email_status}
+                        <div className="mt-1">
+                          <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200/80">
+                            {person.email_status}
+                          </span>
                         </div>
                       )}
                     </div>
                   ) : (
-                    "—"
+                    <span className="text-slate-400">—</span>
                   )}
                 </td>
-                <td className="px-3 py-3 text-slate-700">{displayPhone(person)}</td>
-                <td className="px-3 py-3 text-slate-700">{displayLocation(person)}</td>
-                <td className="px-3 py-3">
+                <td className={`px-3 py-3 text-slate-700 ${isDone ? "opacity-60" : ""}`}>{displayPhone(person)}</td>
+                <td className={`px-3 py-3 text-slate-700 ${isDone ? "opacity-60" : ""}`}>{displayLocation(person)}</td>
+                <td className={`px-3 py-3 ${isDone ? "opacity-60" : ""}`}>
                   {person.linkedin_url ? (
                     <a
                       href={person.linkedin_url}

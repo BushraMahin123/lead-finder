@@ -16,10 +16,18 @@ function parseSuperAdminUserIds(): Set<string> {
   );
 }
 
-function hasSuperAdminClaim(claims: AuthClaims | null): boolean {
+function hasSuperAdminClaim(claims: AuthClaims | null | undefined): boolean {
   const appMetadata = claims?.app_metadata;
   if (!appMetadata || typeof appMetadata !== "object") return false;
   return (appMetadata as Record<string, unknown>).role === "super_admin";
+}
+
+/** Fast check for proxy/edge — env list and JWT claims only (no DB). */
+export function isSuperAdminFromSession(
+  userId: string,
+  claims?: AuthClaims | null,
+): boolean {
+  return parseSuperAdminUserIds().has(userId) || hasSuperAdminClaim(claims);
 }
 
 export async function isSuperAdmin(

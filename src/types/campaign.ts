@@ -4,6 +4,33 @@ export type CampaignStatus = "draft" | "active" | "archived";
 
 export type ColumnValueStatus = "pending" | "running" | "done" | "error";
 
+export type ContactStatus =
+  | "not_contacted"
+  | "contacted"
+  | "replied"
+  | "meeting"
+  | "no_response"
+  | "not_interested"
+  | "done";
+
+export type RowColor =
+  | "green"
+  | "yellow"
+  | "red"
+  | "blue"
+  | "purple"
+  | "orange"
+  | "gray";
+
+export interface ContactRowMeta {
+  personId: string;
+  status: ContactStatus;
+  notes: string;
+  rowColor: RowColor | null;
+  isDone: boolean;
+  updatedAt: string;
+}
+
 export interface Campaign {
   id: string;
   userId: string;
@@ -51,6 +78,7 @@ export interface CampaignColumnValue {
 
 export interface CampaignWithContacts extends Campaign {
   contacts: LeadPerson[];
+  contactMeta?: Record<string, ContactRowMeta>;
   columns?: CampaignColumn[];
   columnValues?: Record<string, Record<string, CampaignColumnValue>>;
 }

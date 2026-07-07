@@ -1,8 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
 import type {
   AdminStripeContext,
   AdminStripeInvoice,
@@ -53,61 +53,31 @@ type UserDetail = {
   }>;
 };
 
-export default function AdminUserDetail() {
-  const params = useParams<{ userId: string }>();
-  const userId = params.userId;
+export default function AdminUserDetail({
+  userId,
+  initialUser,
+  initialPortalUrl,
+}: {
+  userId: string;
+  initialUser: UserDetail;
+  initialPortalUrl: string | null;
+}) {
+  const router = useRouter();
+  const user = initialUser;
+  const portalUrl = initialPortalUrl;
 
-  const [user, setUser] = useState<UserDetail | null>(null);
-  const [portalUrl, setPortalUrl] = useState<string | null>(null);
-  const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
 
   const [grantAmount, setGrantAmount] = useState("500");
   const [grantNote, setGrantNote] = useState("");
-  const [selectedPlanId, setSelectedPlanId] = useState("free");
+  const [selectedPlanId, setSelectedPlanId] = useState(user.billing.planId);
   const [grantMonthlyTokens, setGrantMonthlyTokens] = useState(false);
   const [syncStripe, setSyncStripe] = useState(true);
   const [planNote, setPlanNote] = useState("");
   const [compTokenAmount, setCompTokenAmount] = useState("");
   const [compNote, setCompNote] = useState("");
-
-  async function loadUser() {
-    if (!userId) return;
-
-    setLoading(true);
-    setError(null);
-
-    try {
-      const [userResponse, stripeResponse] = await Promise.all([
-        fetch(`/api/admin/users/${userId}`),
-        fetch(`/api/admin/users/${userId}/stripe`),
-      ]);
-
-      const userData = await userResponse.json();
-      if (!userResponse.ok) {
-        throw new Error(String(userData.error ?? "Failed to load user"));
-      }
-
-      const detail = userData.user as UserDetail;
-      setUser(detail);
-      setSelectedPlanId(detail.billing.planId);
-
-      if (stripeResponse.ok) {
-        const stripeData = await stripeResponse.json();
-        setPortalUrl((stripeData.stripe?.portalUrl as string | null) ?? null);
-      }
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Something went wrong");
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void loadUser();
-  }, [userId]);
 
   async function runAction(
     key: string,
@@ -119,7 +89,7 @@ export default function AdminUserDetail() {
 
     try {
       await action();
-      await loadUser();
+      router.refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Action failed");
     } finally {
@@ -258,20 +228,6 @@ export default function AdminUserDetail() {
       setNotice(String(data.message ?? "Subscription synced"));
     });
   }
-
-  if (loading) {
-    return <p className="text-sm text-slate-500">Loading user…</p>;
-  }
-
-  if (error && !user) {
-    return (
-      <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-        {error}
-      </div>
-    );
-  }
-
-  if (!user) return null;
 
   const { profile, billing, stripe, plans, campaigns, ledger } = user;
   const selectedPlan = plans.find((plan) => plan.id === selectedPlanId);

@@ -192,7 +192,7 @@ export async function updateBillingAccount(
   userId: string,
   patch: Partial<{
     planId: string;
-    stripeCustomerId: string;
+    stripeCustomerId: string | null;
     stripeSubscriptionId: string | null;
     subscriptionStatus: string | null;
     currentPeriodStart: string | null;

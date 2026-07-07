@@ -1,55 +1,40 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import type { AdminUserSummary } from "@/lib/admin-data";
+import { useRouter } from "next/navigation";
+import { useState } from "react";
+import type { AdminUserSummary } from "@/lib/admin-types";
 
-export default function AdminUsers() {
-  const [users, setUsers] = useState<AdminUserSummary[]>([]);
-  const [total, setTotal] = useState(0);
-  const [query, setQuery] = useState("");
-  const [searchInput, setSearchInput] = useState("");
-  const [page, setPage] = useState(1);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+type AdminUsersProps = {
+  initialUsers: AdminUserSummary[];
+  initialTotal: number;
+  initialPage: number;
+  initialQuery: string;
+};
+
+export default function AdminUsers({
+  initialUsers,
+  initialTotal,
+  initialPage,
+  initialQuery,
+}: AdminUsersProps) {
+  const router = useRouter();
+  const [searchInput, setSearchInput] = useState(initialQuery);
 
   const perPage = 20;
-  const totalPages = Math.max(1, Math.ceil(total / perPage));
+  const totalPages = Math.max(1, Math.ceil(initialTotal / perPage));
 
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setError(null);
-
-      try {
-        const params = new URLSearchParams({
-          page: String(page),
-          perPage: String(perPage),
-        });
-        if (query) params.set("q", query);
-
-        const response = await fetch(`/api/admin/users?${params}`);
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(String(data.error ?? "Failed to load users"));
-        }
-
-        setUsers((data.users ?? []) as AdminUserSummary[]);
-        setTotal(Number(data.total ?? 0));
-      } catch (err) {
-        setError(err instanceof Error ? err.message : "Something went wrong");
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    void load();
-  }, [page, query]);
+  function buildUrl(page: number, query: string) {
+    const params = new URLSearchParams();
+    if (page > 1) params.set("page", String(page));
+    if (query) params.set("q", query);
+    const qs = params.toString();
+    return qs ? `/admin/users?${qs}` : "/admin/users";
+  }
 
   function handleSearch(event: React.FormEvent) {
     event.preventDefault();
-    setPage(1);
-    setQuery(searchInput.trim());
+    router.push(buildUrl(1, searchInput.trim()));
   }
 
   return (
@@ -73,12 +58,6 @@ export default function AdminUsers() {
         </button>
       </form>
 
-      {error && (
-        <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-          {error}
-        </div>
-      )}
-
       <div className="card-flat overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
@@ -94,20 +73,14 @@ export default function AdminUsers() {
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
-                    Loading users…
-                  </td>
-                </tr>
-              ) : users.length === 0 ? (
+              {initialUsers.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
                     No users found.
                   </td>
                 </tr>
               ) : (
-                users.map((user) => (
+                initialUsers.map((user) => (
                   <tr key={user.userId} className="hover:bg-slate-50/80">
                     <td className="px-4 py-3">
                       <div className="font-medium text-slate-900">
@@ -149,25 +122,23 @@ export default function AdminUsers() {
 
       {totalPages > 1 && (
         <div className="flex items-center justify-center gap-3">
-          <button
-            type="button"
-            disabled={page <= 1 || loading}
-            onClick={() => setPage((current) => current - 1)}
-            className="btn btn-secondary"
+          <Link
+            href={buildUrl(initialPage - 1, initialQuery)}
+            aria-disabled={initialPage <= 1}
+            className={`btn btn-secondary ${initialPage <= 1 ? "pointer-events-none opacity-50" : ""}`}
           >
             Previous
-          </button>
+          </Link>
           <span className="text-sm text-slate-600">
-            Page {page} of {totalPages}
+            Page {initialPage} of {totalPages}
           </span>
-          <button
-            type="button"
-            disabled={page >= totalPages || loading}
-            onClick={() => setPage((current) => current + 1)}
-            className="btn btn-secondary"
+          <Link
+            href={buildUrl(initialPage + 1, initialQuery)}
+            aria-disabled={initialPage >= totalPages}
+            className={`btn btn-secondary ${initialPage >= totalPages ? "pointer-events-none opacity-50" : ""}`}
           >
             Next
-          </button>
+          </Link>
         </div>
       )}
     </div>

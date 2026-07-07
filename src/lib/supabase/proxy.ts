@@ -122,8 +122,8 @@ export async function updateSession(request: NextRequest) {
   }
 
   if (pathname.startsWith("/admin") || pathname.startsWith("/api/admin")) {
-    const { isSuperAdmin } = await import("@/lib/admin");
-    const allowed = userId ? await isSuperAdmin(userId, user) : false;
+    const { isSuperAdminFromSession } = await import("@/lib/admin");
+    const allowed = userId ? isSuperAdminFromSession(userId, user) : false;
 
     if (!allowed) {
       if (pathname.startsWith("/api/")) {

@@ -6,6 +6,8 @@ import {
   OVERAGE_RATE,
   SUBSCRIPTION_PLANS,
   TOP_UP_PACKS,
+  getPlanCardAction,
+  hasPurchasedPlan,
   type PlanId,
   type TopUpId,
 } from "@/lib/billing/plans";
@@ -16,12 +18,15 @@ import {
 } from "@/lib/billing/plan-comparison";
 import { TOKEN_RATES } from "@/lib/billing/token-rates";
 import { useBillingBalance } from "@/hooks/useBillingBalance";
+import { fetchJson } from "@/lib/fetch-json";
 
 export default function PricingContent() {
-  const { balance } = useBillingBalance();
+  const { balance, loading: balanceLoading, refresh } = useBillingBalance();
   const [annual, setAnnual] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const currentPlanId = balance?.planId ?? "free";
 
   async function startCheckout(type: "subscription" | "topup", id: string) {
     setLoadingCheckout(`${type}:${id}`);
@@ -54,6 +59,62 @@ export default function PricingContent() {
       setError(err instanceof Error ? err.message : "Checkout failed");
     } finally {
       setLoadingCheckout(null);
+    }
+  }
+
+  async function changePlan(planId: PlanId) {
+    setLoadingCheckout(`change:${planId}`);
+    setError(null);
+
+    try {
+      const { response, data } = await fetchJson("/api/billing/change-plan", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ planId }),
+      });
+
+      if (!response.ok) {
+        throw new Error(String(data.error ?? "Failed to change plan"));
+      }
+
+      await refresh();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to change plan");
+    } finally {
+      setLoadingCheckout(null);
+    }
+  }
+
+  async function handlePlanAction(planId: PlanId, action: ReturnType<typeof getPlanCardAction>) {
+    if (action === "subscribe") {
+      await startCheckout("subscription", planId);
+      return;
+    }
+
+    const hasStripeSubscription = balance?.hasStripeSubscription ?? false;
+
+    if (action === "upgrade") {
+      if (!hasStripeSubscription) {
+        await startCheckout("subscription", planId);
+        return;
+      }
+      await changePlan(planId);
+      return;
+    }
+
+    if (action === "downgrade" && planId !== "free") {
+      if (!hasStripeSubscription) {
+        setError(
+          "No active Stripe subscription is linked to your account. Subscribe through Checkout first.",
+        );
+        return;
+      }
+      await changePlan(planId);
+      return;
+    }
+
+    if (action === "downgrade" && planId === "free") {
+      await openPortal();
     }
   }
 
@@ -124,10 +185,15 @@ export default function PricingContent() {
                   {balance.balance.toLocaleString()} tokens
                 </span>{" "}
                 · {balance.planName} plan
+                {hasPurchasedPlan(balance.planId) && (
+                  <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                    Active
+                  </span>
+                )}
               </p>
             )}
 
-            {balance?.planId !== "free" && (
+            {balance && hasPurchasedPlan(balance.planId) && (
               <button
                 type="button"
                 onClick={() => void openPortal()}
@@ -158,15 +224,37 @@ export default function PricingContent() {
           {SUBSCRIPTION_PLANS.map((plan) => {
             const displayPrice = getDisplayPrice(plan.priceMonthly, annual);
             const isPopular = plan.highlighted;
+            const action = balanceLoading
+              ? plan.id === "free"
+                ? "free-info"
+                : "subscribe"
+              : getPlanCardAction(currentPlanId, plan.id);
+            const isCurrentPlan = action === "active";
+            const loadingKey =
+              action === "subscribe"
+                ? `subscription:${plan.id}`
+                : action === "downgrade" && plan.id === "free"
+                  ? "portal"
+                  : `change:${plan.id}`;
+            const isLoading = loadingCheckout === loadingKey;
 
             return (
               <div
                 key={plan.id}
                 className={`card-flat relative flex flex-col p-5 ${
-                  isPopular ? "plan-popular bg-indigo-50/30 ring-2 ring-indigo-200" : ""
+                  isCurrentPlan
+                    ? "ring-2 ring-emerald-300 bg-emerald-50/20"
+                    : isPopular
+                      ? "plan-popular bg-indigo-50/30 ring-2 ring-indigo-200"
+                      : ""
                 }`}
               >
-                {isPopular && (
+                {isCurrentPlan && (
+                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-emerald-600 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-md">
+                    Current plan
+                  </span>
+                )}
+                {isPopular && !isCurrentPlan && (
                   <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-indigo-600 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-md">
                     Most popular
                   </span>
@@ -190,22 +278,40 @@ export default function PricingContent() {
                   ))}
                 </ul>
                 <div className="mt-6 flex-1" />
-                {plan.id === "free" ? (
+                {action === "free-info" ? (
                   <p className="rounded-xl bg-slate-50 px-3 py-2 text-center text-xs text-slate-500">
                     {FREE_LIFETIME_TOKENS} tokens once at signup
                   </p>
+                ) : action === "active" ? (
+                  <button
+                    type="button"
+                    disabled
+                    className="btn mt-4 w-full cursor-default bg-emerald-600 py-2.5 text-white opacity-100"
+                  >
+                    Active
+                  </button>
                 ) : (
                   <button
                     type="button"
-                    onClick={() => void startCheckout("subscription", plan.id)}
-                    disabled={loadingCheckout === `subscription:${plan.id}`}
+                    onClick={() => void handlePlanAction(plan.id, action)}
+                    disabled={Boolean(loadingCheckout)}
                     className={`btn mt-4 w-full py-2.5 disabled:opacity-50 ${
-                      isPopular ? "btn-primary" : "btn-secondary"
+                      action === "upgrade"
+                        ? "btn-primary"
+                        : action === "downgrade"
+                          ? "btn-secondary"
+                          : isPopular
+                            ? "btn-primary"
+                            : "btn-secondary"
                     }`}
                   >
-                    {loadingCheckout === `subscription:${plan.id}`
-                      ? "Redirecting…"
-                      : "Subscribe"}
+                    {isLoading
+                      ? "Processing…"
+                      : action === "upgrade"
+                        ? "Upgrade"
+                        : action === "downgrade"
+                          ? "Downgrade"
+                          : "Subscribe"}
                   </button>
                 )}
               </div>

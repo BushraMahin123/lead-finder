@@ -8,6 +8,7 @@ export interface BillingBalance {
   planName: string;
   freeTokensGranted: boolean;
   subscriptionStatus: string | null;
+  hasStripeSubscription: boolean;
 }
 
 export function useBillingBalance() {
@@ -38,6 +39,7 @@ export function useBillingBalance() {
         planName: String(data.planName ?? "Free"),
         freeTokensGranted: Boolean(data.freeTokensGranted),
         subscriptionStatus: data.subscriptionStatus ?? null,
+        hasStripeSubscription: Boolean(data.hasStripeSubscription),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load balance");

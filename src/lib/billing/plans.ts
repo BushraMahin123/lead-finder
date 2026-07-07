@@ -147,3 +147,62 @@ export function getStripePriceId(envKey: string): string | null {
   const value = process.env[envKey]?.trim();
   return value || null;
 }
+
+export function assertStripePriceId(
+  priceId: string,
+  planName: string,
+  envKey: string,
+): void {
+  if (priceId.startsWith("prod_")) {
+    throw new Error(
+      `${envKey} is set to a Stripe Product ID (${priceId}), but Checkout requires a Price ID (price_...). Open Stripe Dashboard → Products → your ${planName} plan → copy the Price ID.`,
+    );
+  }
+}
+
+const PLAN_TIER: Record<PlanId, number> = {
+  free: 0,
+  starter: 1,
+  pro: 2,
+  growth: 3,
+  agency: 4,
+};
+
+export function getPlanTier(planId: string): number {
+  return PLAN_TIER[planId as PlanId] ?? 0;
+}
+
+export type PlanCardAction =
+  | "free-info"
+  | "active"
+  | "subscribe"
+  | "upgrade"
+  | "downgrade";
+
+export function getPlanCardAction(
+  currentPlanId: string,
+  targetPlanId: PlanId,
+): PlanCardAction {
+  if (targetPlanId === "free") {
+    return currentPlanId === "free" ? "free-info" : "downgrade";
+  }
+
+  if (currentPlanId === targetPlanId) {
+    return "active";
+  }
+
+  if (currentPlanId === "free") {
+    return "subscribe";
+  }
+
+  const currentTier = getPlanTier(currentPlanId);
+  const targetTier = getPlanTier(targetPlanId);
+
+  if (targetTier > currentTier) return "upgrade";
+  if (targetTier < currentTier) return "downgrade";
+  return "active";
+}
+
+export function hasPurchasedPlan(planId: string): boolean {
+  return planId !== "free";
+}
