@@ -3,16 +3,18 @@ import BrandLogo from "@/components/BrandLogo";
 
 type PublicHeaderProps = {
   active?: "home" | "pricing";
+  waitlistMode?: boolean;
 };
 
 const navLinkClass = (active: boolean) =>
   `text-sm font-medium transition-colors ${
-    active
-      ? "text-slate-900"
-      : "text-slate-600 hover:text-slate-900"
+    active ? "text-slate-900" : "text-slate-600 hover:text-slate-900"
   }`;
 
-export default function PublicHeader({ active = "home" }: PublicHeaderProps) {
+export default function PublicHeader({
+  active = "home",
+  waitlistMode = false,
+}: PublicHeaderProps) {
   return (
     <header className="sticky top-0 z-50 border-b border-slate-200/70 bg-white/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4 sm:px-6 lg:px-8">
@@ -22,21 +24,40 @@ export default function PublicHeader({ active = "home" }: PublicHeaderProps) {
             <Link href="/#features" className={navLinkClass(false)}>
               Features
             </Link>
-            <Link
-              href="/pricing"
-              className={navLinkClass(active === "pricing")}
-            >
-              Pricing
-            </Link>
+            {waitlistMode ? (
+              <>
+                <Link href="/#how-it-works" className={navLinkClass(false)}>
+                  How it works
+                </Link>
+                <Link href="/#pricing" className={navLinkClass(false)}>
+                  Pricing
+                </Link>
+              </>
+            ) : (
+              <Link
+                href="/pricing"
+                className={navLinkClass(active === "pricing")}
+              >
+                Pricing
+              </Link>
+            )}
           </nav>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/login" className="btn btn-ghost hidden sm:inline-flex">
-            Sign in
-          </Link>
-          <Link href="/signup" className="btn btn-primary">
-            Get started
-          </Link>
+          {waitlistMode ? (
+            <a href="#waitlist" className="btn btn-primary">
+              Join waitlist
+            </a>
+          ) : (
+            <>
+              <Link href="/login" className="btn btn-ghost hidden sm:inline-flex">
+                Sign in
+              </Link>
+              <Link href="/signup" className="btn btn-primary">
+                Get started
+              </Link>
+            </>
+          )}
         </div>
       </div>
     </header>

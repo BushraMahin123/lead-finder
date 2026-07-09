@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Lead Finder | B2B People Search",
   description:
-    "Search for business leads with names, emails, phone numbers, and company data.",
+    "Search millions of professional profiles, enrich contacts, and build outreach-ready lead lists. Join the waitlist for early access.",
 };
 
 export default function RootLayout({

@@ -3,7 +3,9 @@ import { redirect } from "next/navigation";
 import AppHeader from "@/components/AppHeader";
 import LeadFinder from "@/components/LeadFinder";
 import PublicLanding from "@/components/PublicLanding";
+import WaitlistLanding from "@/components/WaitlistLanding";
 import { createClient } from "@/lib/supabase/server";
+import { isWaitlistMode } from "@/lib/waitlist";
 
 export const dynamic = "force-dynamic";
 
@@ -22,6 +24,10 @@ export default async function Home({ searchParams }: HomePageProps) {
   if (!isAuthenticated) {
     if (params.view === "search") {
       redirect("/login?next=/?view=search");
+    }
+
+    if (isWaitlistMode()) {
+      return <WaitlistLanding />;
     }
 
     return <PublicLanding />;

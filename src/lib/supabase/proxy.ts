@@ -2,11 +2,30 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasUserProfile } from "@/lib/signup/profile";
 import { getSupabasePublishableKey, getSupabaseUrl } from "@/lib/supabase/env";
+import {
+  WAITLIST_BYPASS_COOKIE,
+  isValidWaitlistBypassSecret,
+  isWaitlistMode,
+} from "@/lib/waitlist";
 
 const PUBLIC_PATHS = ["/login", "/signup", "/pricing"];
 const ONBOARDING_PATH = "/onboarding";
+const WAITLIST_PUBLIC_API = "/api/waitlist";
 
-function isPublicPath(pathname: string, searchParams: URLSearchParams): boolean {
+function hasWaitlistBypass(request: NextRequest): boolean {
+  if (!isWaitlistMode()) return true;
+  return request.cookies.get(WAITLIST_BYPASS_COOKIE)?.value === "1";
+}
+
+function isPublicPath(
+  pathname: string,
+  searchParams: URLSearchParams,
+  bypassActive: boolean,
+): boolean {
+  if (pathname === WAITLIST_PUBLIC_API) {
+    return true;
+  }
+
   if (pathname === "/" && searchParams.get("view") === "search") {
     return false;
   }
@@ -15,17 +34,34 @@ function isPublicPath(pathname: string, searchParams: URLSearchParams): boolean 
     return true;
   }
 
-  return (
-    PUBLIC_PATHS.some(
-      (path) => pathname === path || pathname.startsWith(`${path}/`),
-    ) ||
-    pathname.startsWith("/auth/") ||
-    pathname.startsWith("/api/webhooks/")
+  // Auth callbacks must stay reachable so OAuth/email confirm can complete
+  // after a developer signs in with a bypass cookie.
+  if (pathname.startsWith("/auth/") || pathname.startsWith("/api/webhooks/")) {
+    return true;
+  }
+
+  if (isWaitlistMode() && !bypassActive) {
+    return false;
+  }
+
+  return PUBLIC_PATHS.some(
+    (path) => pathname === path || pathname.startsWith(`${path}/`),
   );
 }
 
 function getUserId(claims: Record<string, unknown> | null | undefined): string | null {
   return typeof claims?.sub === "string" ? claims.sub : null;
+}
+
+function applyBypassCookie(response: NextResponse): NextResponse {
+  response.cookies.set(WAITLIST_BYPASS_COOKIE, "1", {
+    httpOnly: true,
+    sameSite: "lax",
+    secure: process.env.NODE_ENV === "production",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 30,
+  });
+  return response;
 }
 
 export async function updateSession(request: NextRequest) {
@@ -55,6 +91,21 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
+  // Developer unlock: /?access=<WAITLIST_BYPASS_SECRET>
+  const accessParam = request.nextUrl.searchParams.get("access");
+  if (
+    isWaitlistMode() &&
+    accessParam &&
+    isValidWaitlistBypassSecret(accessParam)
+  ) {
+    const url = request.nextUrl.clone();
+    url.searchParams.delete("access");
+    const redirect = NextResponse.redirect(url);
+    return applyBypassCookie(redirect);
+  }
+
+  const bypassActive = hasWaitlistBypass(request);
+
   const { data } = await supabase.auth.getClaims();
   const user = data?.claims;
   const userId = getUserId(user);
@@ -68,9 +119,18 @@ export async function updateSession(request: NextRequest) {
       return NextResponse.redirect(url);
     }
 
-    if (!isPublicPath(pathname, request.nextUrl.searchParams)) {
+    if (!isPublicPath(pathname, request.nextUrl.searchParams, bypassActive)) {
       if (pathname.startsWith("/api/")) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
+      // During waitlist mode without bypass, send guests back to the landing page
+      // instead of exposing login/signup.
+      if (isWaitlistMode() && !bypassActive) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/";
+        url.search = "";
+        return NextResponse.redirect(url);
       }
 
       const url = request.nextUrl.clone();
