@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUserId, unauthorizedResponse } from "@/lib/auth";
 import { getPlanById } from "@/lib/billing/plans";
-import { syncStripeSubscriptionForUser } from "@/lib/billing/sync-subscription";
 import { getUserBillingSnapshot } from "@/lib/billing/tokens";
 
 export async function GET() {
@@ -13,6 +12,9 @@ export async function GET() {
 
     let snapshot = await getUserBillingSnapshot(userId);
     if (!snapshot.stripeSubscriptionId && snapshot.stripeCustomerId) {
+      const { syncStripeSubscriptionForUser } = await import(
+        "@/lib/billing/sync-subscription"
+      );
       await syncStripeSubscriptionForUser(userId);
       snapshot = await getUserBillingSnapshot(userId);
     }

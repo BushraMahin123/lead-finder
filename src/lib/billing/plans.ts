@@ -172,6 +172,34 @@ export function getPlanTier(planId: string): number {
   return PLAN_TIER[planId as PlanId] ?? 0;
 }
 
+/**
+ * How many tokens to add/remove so balance matches the plan's monthly allotment.
+ * Positive = credit, negative = debit, null = do not adjust (e.g. Free).
+ */
+export function getPlanBalanceAdjustment(
+  planId: string,
+  currentBalance: number,
+): number | null {
+  const plan = getPlanById(planId);
+  if (!plan || plan.monthlyTokens <= 0) return null;
+
+  return plan.monthlyTokens - currentBalance;
+}
+
+/** @deprecated Prefer getPlanBalanceAdjustment — kept for any older call sites. */
+export function getUpgradeTokenGrant(
+  fromPlanId: string,
+  toPlanId: string,
+): number {
+  if (getPlanTier(toPlanId) <= getPlanTier(fromPlanId)) return 0;
+
+  const fromPlan = getPlanById(fromPlanId);
+  const toPlan = getPlanById(toPlanId);
+  if (!fromPlan || !toPlan) return 0;
+
+  return Math.max(0, toPlan.monthlyTokens - fromPlan.monthlyTokens);
+}
+
 export type PlanCardAction =
   | "free-info"
   | "active"

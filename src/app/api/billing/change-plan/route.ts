@@ -65,10 +65,24 @@ export async function POST(request: Request) {
     }
 
     const result = await changeUserPlan(userId, planId);
+    const targetTokens = plan.monthlyTokens;
+
+    let message = `Plan updated to ${plan.name}`;
+    if (result.tokensGranted > 0) {
+      message = `Plan updated to ${plan.name}. Balance set to ${targetTokens.toLocaleString()} tokens (${result.tokensGranted.toLocaleString()} added).`;
+    } else if (result.tokensRemoved > 0) {
+      message = `Plan updated to ${plan.name}. Balance set to ${targetTokens.toLocaleString()} tokens (${result.tokensRemoved.toLocaleString()} removed).`;
+    } else if (result.direction === "downgrade" && planId === "free") {
+      message = `Plan updated to ${plan.name}. Your existing token balance was kept.`;
+    }
 
     return NextResponse.json({
-      message: `Plan updated to ${plan.name}`,
+      message,
       planId: result.planId,
+      tokensGranted: result.tokensGranted,
+      tokensRemoved: result.tokensRemoved,
+      balance: result.balance,
+      direction: result.direction,
     });
   } catch (error) {
     const message =

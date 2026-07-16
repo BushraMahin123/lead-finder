@@ -16,6 +16,11 @@ export const metadata: Metadata = {
   title: "Lead Finder | B2B People Search",
   description:
     "Search millions of professional profiles, enrich contacts, and build outreach-ready lead lists. Join the waitlist for early access.",
+  icons: {
+    icon: [{ url: "/favicon.png", type: "image/png" }],
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
+  },
 };
 
 export default function RootLayout({

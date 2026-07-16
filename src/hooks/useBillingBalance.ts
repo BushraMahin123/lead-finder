@@ -11,6 +11,14 @@ export interface BillingBalance {
   hasStripeSubscription: boolean;
 }
 
+const BILLING_BALANCE_REFRESH_EVENT = "billing-balance-refresh";
+
+/** Notify every mounted balance widget (header + pricing) to reload. */
+export function notifyBillingBalanceRefresh() {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(BILLING_BALANCE_REFRESH_EVENT));
+}
+
 export function useBillingBalance() {
   const [balance, setBalance] = useState<BillingBalance | null>(null);
   const [loading, setLoading] = useState(true);
@@ -50,6 +58,16 @@ export function useBillingBalance() {
 
   useEffect(() => {
     void refresh();
+  }, [refresh]);
+
+  useEffect(() => {
+    const onRefresh = () => {
+      void refresh();
+    };
+    window.addEventListener(BILLING_BALANCE_REFRESH_EVENT, onRefresh);
+    return () => {
+      window.removeEventListener(BILLING_BALANCE_REFRESH_EVENT, onRefresh);
+    };
   }, [refresh]);
 
   return { balance, loading, error, refresh };

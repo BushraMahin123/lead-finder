@@ -5,7 +5,9 @@
   "packageManager": "pnpm@11.8.0",
   "scripts": {
     "predev": "node scripts/ensure-dev-clean.mjs",
-    "dev": "next dev",
+    "dev": "next dev --webpack",
+    "dev:turbo": "next dev --turbopack",
+    "dev:webpack": "next dev --webpack",
     "dev:stop": "node scripts/stop-dev.mjs",
     "build": "next build",
     "start": "next start",

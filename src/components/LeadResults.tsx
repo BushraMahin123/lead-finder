@@ -87,23 +87,30 @@ const STICKY_SHADOW =
   "shadow-[4px_0_8px_-4px_rgba(15,23,42,0.08)]";
 
 const STICKY_HEADER_CLASSES = [
-  "sticky left-0 z-30 w-12 min-w-12 bg-slate-50",
-  "sticky left-12 z-30 w-44 min-w-44 bg-slate-50",
-  `sticky left-56 z-30 w-52 min-w-52 bg-slate-50 ${STICKY_SHADOW}`,
+  "sticky left-0 z-30 w-44 min-w-44 bg-slate-50",
+  `sticky left-44 z-30 w-52 min-w-52 bg-slate-50 ${STICKY_SHADOW}`,
 ] as const;
 
 function stickyBodyClass(
-  index: 0 | 1 | 2,
+  index: 0 | 1,
   selected: boolean,
   meta?: ContactRowMeta,
 ): string {
   const bg = stickyCellBackground(meta, selected);
   const bases = [
-    `sticky left-0 z-10 w-12 min-w-12 ${bg}`,
-    `sticky left-12 z-10 w-44 min-w-44 ${bg}`,
-    `sticky left-56 z-10 w-52 min-w-52 ${bg} ${STICKY_SHADOW}`,
+    `sticky left-0 z-10 w-44 min-w-44 ${bg}`,
+    `sticky left-44 z-10 w-52 min-w-52 ${bg} ${STICKY_SHADOW}`,
   ];
   return bases[index];
+}
+
+function isInteractiveRowTarget(target: EventTarget | null): boolean {
+  if (!(target instanceof HTMLElement)) return false;
+  return Boolean(
+    target.closest(
+      "a, button, input, select, textarea, [data-no-row-select]",
+    ),
+  );
 }
 
 export default function LeadResults({
@@ -143,8 +150,6 @@ export default function LeadResults({
     setEnrichNotice(null);
   }, [peopleIds]);
 
-  const allSelected =
-    people.length > 0 && people.every((person) => selectedIds.has(person.id));
   const someSelected = selectedIds.size > 0;
 
   function toggleOne(id: string) {
@@ -154,14 +159,6 @@ export default function LeadResults({
       else next.add(id);
       return next;
     });
-  }
-
-  function toggleAll() {
-    if (allSelected) {
-      setSelectedIds(new Set());
-      return;
-    }
-    setSelectedIds(new Set(people.map((person) => person.id)));
   }
 
   async function handleExtract(type: EnrichType) {
@@ -339,27 +336,15 @@ export default function LeadResults({
       <div className="overflow-x-auto">
         <table className="min-w-full border-separate border-spacing-0 text-left text-sm">
           <colgroup>
-            <col className="w-12" />
             <col className="w-44" />
             <col className="w-52" />
           </colgroup>
           <thead className="bg-slate-50 text-slate-600">
             <tr>
               <th className={`px-3 py-3 font-medium ${STICKY_HEADER_CLASSES[0]}`}>
-                {enableEnrichment && (
-                  <input
-                    type="checkbox"
-                    checked={allSelected}
-                    onChange={toggleAll}
-                    aria-label="Select all results"
-                    className="h-4 w-4 rounded border-slate-300 text-indigo-600"
-                  />
-                )}
-              </th>
-              <th className={`px-3 py-3 font-medium ${STICKY_HEADER_CLASSES[1]}`}>
                 Name
               </th>
-              <th className={`px-3 py-3 font-medium ${STICKY_HEADER_CLASSES[2]}`}>
+              <th className={`px-3 py-3 font-medium ${STICKY_HEADER_CLASSES[1]}`}>
                 Title
               </th>
               {enableTracking && (
@@ -432,28 +417,25 @@ export default function LeadResults({
               return (
               <tr
                 key={person.id}
-                className={`border-l-[3px] ${rowLeftBorderClass(meta)} ${rowBackgroundClass(meta, selected)}`}
+                onClick={(event) => {
+                  if (!enableEnrichment || isInteractiveRowTarget(event.target)) {
+                    return;
+                  }
+                  toggleOne(person.id);
+                }}
+                className={`border-l-[3px] ${rowLeftBorderClass(meta)} ${rowBackgroundClass(meta, selected)} ${
+                  enableEnrichment ? "cursor-pointer" : ""
+                }`}
               >
-                <td className={`px-3 py-3 ${stickyBodyClass(0, selected, meta)}`}>
-                  {enableEnrichment && (
-                    <input
-                      type="checkbox"
-                      checked={selectedIds.has(person.id)}
-                      onChange={() => toggleOne(person.id)}
-                      aria-label={`Select ${displayName(person)}`}
-                      className="h-4 w-4 rounded border-slate-300 text-indigo-600"
-                    />
-                  )}
-                </td>
                 <td
-                  className={`max-w-44 truncate px-3 py-3 font-medium ${stickyBodyClass(1, selected, meta)} ${
+                  className={`max-w-44 truncate px-3 py-3 font-medium ${stickyBodyClass(0, selected, meta)} ${
                     isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-900"
                   }`}
                 >
                   {displayName(person)}
                 </td>
                 <td
-                  className={`max-w-52 truncate px-3 py-3 ${stickyBodyClass(2, selected, meta)} ${
+                  className={`max-w-52 truncate px-3 py-3 ${stickyBodyClass(1, selected, meta)} ${
                     isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-700"
                   }`}
                 >

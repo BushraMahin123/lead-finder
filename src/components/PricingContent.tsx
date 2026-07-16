@@ -17,7 +17,7 @@ import {
   PLAN_COMPARISON,
 } from "@/lib/billing/plan-comparison";
 import { TOKEN_RATES } from "@/lib/billing/token-rates";
-import { useBillingBalance } from "@/hooks/useBillingBalance";
+import { useBillingBalance, notifyBillingBalanceRefresh } from "@/hooks/useBillingBalance";
 import { fetchJson } from "@/lib/fetch-json";
 
 export default function PricingContent() {
@@ -25,6 +25,7 @@ export default function PricingContent() {
   const [annual, setAnnual] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
 
   const currentPlanId = balance?.planId ?? "free";
 
@@ -65,6 +66,7 @@ export default function PricingContent() {
   async function changePlan(planId: PlanId) {
     setLoadingCheckout(`change:${planId}`);
     setError(null);
+    setNotice(null);
 
     try {
       const { response, data } = await fetchJson("/api/billing/change-plan", {
@@ -77,6 +79,11 @@ export default function PricingContent() {
         throw new Error(String(data.error ?? "Failed to change plan"));
       }
 
+      if (typeof data.message === "string") {
+        setNotice(data.message);
+      }
+
+      notifyBillingBalanceRefresh();
       await refresh();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to change plan");
@@ -208,6 +215,7 @@ export default function PricingContent() {
       </section>
 
       <section className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
+        {notice && <div className="alert-success mb-6">{notice}</div>}
         {error && <div className="alert-error mb-6">{error}</div>}
 
         <div className="card mb-10 p-6">
