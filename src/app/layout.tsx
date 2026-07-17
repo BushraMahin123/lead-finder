@@ -17,9 +17,9 @@ export const metadata: Metadata = {
   description:
     "Search millions of professional profiles, enrich contacts, and build outreach-ready lead lists. Join the waitlist for early access.",
   icons: {
-    icon: [{ url: "/favicon.png", type: "image/png" }],
-    shortcut: "/favicon.png",
-    apple: "/favicon.png",
+    icon: [{ url: "/lead.png", type: "image/png" }],
+    shortcut: "/lead.png",
+    apple: "/lead.png",
   },
 };
 
