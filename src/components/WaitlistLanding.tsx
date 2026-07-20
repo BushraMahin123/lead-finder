@@ -28,7 +28,7 @@ const FEATURES = [
   {
     title: "AI-assisted search",
     description:
-      "Describe your ideal prospect in plain English. Lead Finder builds the filter stack for you in seconds.",
+      "Describe your ideal prospect in plain English. LEADMAGPRO builds the filter stack for you in seconds.",
     icon: (
       <svg viewBox="0 0 24 24" fill="none" className="h-5 w-5" aria-hidden>
         <path
@@ -144,7 +144,7 @@ export default function WaitlistLanding() {
                   Find the right people at the right companies
                 </h1>
                 <p className="max-w-xl text-lg leading-relaxed text-slate-600">
-                  Lead Finder is a B2B people search built for outbound teams.
+                  LEADMAGPRO is a B2B people search built for outbound teams.
                   Search millions of profiles, refine with powerful filters, and
                   export contact-ready leads—we&apos;re opening access in waves.
                 </p>

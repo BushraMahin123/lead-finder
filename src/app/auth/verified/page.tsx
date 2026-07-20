@@ -6,7 +6,7 @@ export default function VerificationSuccessPage() {
       <div className="w-full max-w-md text-center">
         <div className="mb-8">
           <p className="text-sm font-semibold uppercase tracking-wide text-indigo-600">
-            B2B Lead Finder
+            B2B LEADMAGPRO
           </p>
         </div>
 

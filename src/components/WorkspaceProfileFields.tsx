@@ -135,7 +135,7 @@ export default function WorkspaceProfileFields({
             className="input-field"
           >
             <option value="" disabled>
-              How will you use Lead Finder?
+              How will you use LEADMAGPRO?
             </option>
             {USE_CASE_OPTIONS.map((option) => (
               <option key={option.value} value={option.value}>

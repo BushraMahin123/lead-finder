@@ -72,7 +72,7 @@ function parseProfileFields(
   }
 
   if (!isValidOption(useCase, USE_CASES)) {
-    return { ok: false, error: "Please select how you plan to use Lead Finder." };
+    return { ok: false, error: "Please select how you plan to use LEADMAGPRO." };
   }
 
   return {

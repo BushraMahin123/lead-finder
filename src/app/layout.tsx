@@ -13,7 +13,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Lead Finder | B2B People Search",
+  title: "LEADMAGPRO | B2B People Search",
   description:
     "Search millions of professional profiles, enrich contacts, and build outreach-ready lead lists. Join the waitlist for early access.",
   icons: {

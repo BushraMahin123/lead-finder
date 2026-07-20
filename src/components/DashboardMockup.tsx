@@ -12,7 +12,7 @@ export default function DashboardMockup() {
           <span className="h-2.5 w-2.5 rounded-full bg-amber-400" />
           <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
           <span className="ml-3 text-xs font-medium text-slate-500">
-            Lead Finder — Search workspace
+            LEADMAGPRO — Search workspace
           </span>
         </div>
       </div>

@@ -38,7 +38,7 @@ export const SUBSCRIPTION_PLANS: SubscriptionPlan[] = [
     name: "Free",
     priceMonthly: 0,
     monthlyTokens: 0,
-    description: "Try Lead Finder with a one-time token grant.",
+    description: "Try LEADMAGPRO with a one-time token grant.",
     features: [
       `${FREE_LIFETIME_TOKENS} tokens once (lifetime)`,
       "Lead search & saved tables",

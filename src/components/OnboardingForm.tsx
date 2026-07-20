@@ -31,7 +31,7 @@ export default function OnboardingForm({
   return (
     <AuthShell
       title="Complete your workspace"
-      subtitle="You're signed in with Google. Tell us about your company so we can tailor Lead Finder for you."
+      subtitle="You're signed in with Google. Tell us about your company so we can tailor LEADMAGPRO for you."
       wide
     >
       <form action={formAction} className="space-y-5">
@@ -49,7 +49,7 @@ export default function OnboardingForm({
           disabled={pending}
           className="btn btn-primary w-full py-3"
         >
-          {pending ? "Saving workspace…" : "Continue to Lead Finder"}
+          {pending ? "Saving workspace…" : "Continue to LEADMAGPRO"}
         </button>
       </form>
     </AuthShell>
