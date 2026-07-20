@@ -105,12 +105,12 @@ export default function PublicLanding() {
         </section>
 
         <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-2xl bg-slate-950 px-8 py-14 text-center sm:px-12">
+          <div className="relative overflow-hidden rounded-2xl bg-slate-950 px-8 py-14 text-center text-white sm:px-12">
             <div className="pointer-events-none absolute inset-0 mesh-bg opacity-15" />
             <h2 className="relative text-3xl font-semibold tracking-tight text-white">
               Ready to build your next pipeline?
             </h2>
-            <p className="relative mx-auto mt-3 max-w-xl text-base text-slate-400">
+            <p className="relative mx-auto mt-3 max-w-xl text-base text-slate-300">
               Create an account in under a minute and start searching with your
               free token balance.
             </p>

@@ -270,12 +270,12 @@ export default function WaitlistLanding() {
         </section>
 
         <section className="mx-auto max-w-6xl px-4 py-20 sm:px-6 lg:px-8">
-          <div className="relative overflow-hidden rounded-2xl bg-slate-950 px-8 py-14 text-center sm:px-12">
+          <div className="relative overflow-hidden rounded-2xl bg-slate-950 px-8 py-14 text-center text-white sm:px-12">
             <div className="pointer-events-none absolute inset-0 mesh-bg opacity-15" />
             <h2 className="relative text-3xl font-semibold tracking-tight text-white">
               Be first in line when we open the doors
             </h2>
-            <p className="relative mx-auto mt-3 max-w-xl text-base text-slate-400">
+            <p className="relative mx-auto mt-3 max-w-xl text-base text-slate-300">
               Join the waitlist and we&apos;ll invite you as capacity opens.
               Early members get priority access and the free token grant.
             </p>

@@ -47,23 +47,25 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-h1,
-h2,
-h3,
-h4 {
-  color: var(--heading);
-  letter-spacing: -0.025em;
-}
+@layer base {
+  h1,
+  h2,
+  h3,
+  h4 {
+    color: var(--heading);
+    letter-spacing: -0.025em;
+  }
 
-[data-theme="dark"] h1,
-[data-theme="dark"] h2,
-[data-theme="dark"] h3,
-[data-theme="dark"] h4,
-.auth-panel h1,
-.auth-panel h2,
-.auth-panel h3,
-.auth-panel h4 {
-  color: inherit;
+  [data-theme="dark"] h1,
+  [data-theme="dark"] h2,
+  [data-theme="dark"] h3,
+  [data-theme="dark"] h4,
+  .auth-panel h1,
+  .auth-panel h2,
+  .auth-panel h3,
+  .auth-panel h4 {
+    color: inherit;
+  }
 }
 
 ::selection {
