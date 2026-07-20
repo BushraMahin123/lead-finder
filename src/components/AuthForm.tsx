@@ -12,6 +12,7 @@ type AuthFormProps = {
   ) => Promise<AuthFormState>;
   message?: string | null;
   next?: string | null;
+  waitlistMode?: boolean;
 };
 
 export type AuthFormState = {
@@ -20,7 +21,12 @@ export type AuthFormState = {
 
 const initialState: AuthFormState = { error: null };
 
-export default function AuthForm({ action, message, next }: AuthFormProps) {
+export default function AuthForm({
+  action,
+  message,
+  next,
+  waitlistMode = false,
+}: AuthFormProps) {
   const [state, formAction, pending] = useActionState(action, initialState);
 
   return (
@@ -77,12 +83,27 @@ export default function AuthForm({ action, message, next }: AuthFormProps) {
           </button>
         </form>
 
-        <p className="text-center text-sm text-slate-500">
-          Don&apos;t have an account?{" "}
-          <Link href="/signup" className="font-semibold text-indigo-600 hover:text-indigo-700">
-            Create one
-          </Link>
-        </p>
+        {waitlistMode ? (
+          <p className="text-center text-sm text-slate-500">
+            Don&apos;t have an account yet?{" "}
+            <Link
+              href="/#waitlist"
+              className="font-semibold text-indigo-600 hover:text-indigo-700"
+            >
+              Join the waitlist
+            </Link>
+          </p>
+        ) : (
+          <p className="text-center text-sm text-slate-500">
+            Don&apos;t have an account?{" "}
+            <Link
+              href="/signup"
+              className="font-semibold text-indigo-600 hover:text-indigo-700"
+            >
+              Create one
+            </Link>
+          </p>
+        )}
       </div>
     </AuthShell>
   );

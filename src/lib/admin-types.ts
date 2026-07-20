@@ -45,3 +45,40 @@ export type AdminStats = {
   tokensCreditedToday: number;
   tokensDebitedToday: number;
 };
+
+export type AdminWaitlistSignup = {
+  id: string;
+  email: string;
+  name: string | null;
+  company: string | null;
+  role: string | null;
+  useCase: string | null;
+  source: string;
+  createdAt: string;
+  invitedAt: string | null;
+  invitedUserId: string | null;
+};
+
+export type AdminCreateUserInput = {
+  email: string;
+  firstName?: string;
+  lastName?: string;
+  companyName?: string;
+  jobTitle?: string;
+  companySize?: string;
+  industry?: string;
+  useCase?: string;
+  phone?: string;
+  country?: string;
+  password?: string;
+  sendEmail?: boolean;
+  waitlistSignupId?: string;
+};
+
+export type AdminCreateUserResult = {
+  userId: string;
+  email: string;
+  temporaryPassword: string;
+  emailSent: boolean;
+  emailError: string | null;
+};

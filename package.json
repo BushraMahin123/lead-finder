@@ -17,7 +17,8 @@
     "db:migrate:ai-parse": "node scripts/run-migration.mjs supabase/ai_parse.sql",
     "db:migrate:campaign-columns": "node scripts/run-migration.mjs supabase/campaign_columns.sql",
     "db:migrate:super-admins": "node scripts/run-migration.mjs supabase/super_admins.sql",
-    "db:migrate:waitlist": "node scripts/run-migration.mjs supabase/waitlist.sql"
+    "db:migrate:waitlist": "node scripts/run-migration.mjs supabase/waitlist.sql",
+    "db:migrate:waitlist-invites": "node scripts/run-migration.mjs supabase/waitlist_invites.sql"
   },
   "dependencies": {
     "@google/genai": "^2.10.0",
@@ -26,6 +27,7 @@
     "next": "16.2.9",
     "react": "19.2.4",
     "react-dom": "19.2.4",
+    "resend": "^6.9.1",
     "stripe": "^22.3.0"
   },
   "devDependencies": {

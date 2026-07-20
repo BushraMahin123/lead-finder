@@ -40,8 +40,10 @@ function isPublicPath(
     return true;
   }
 
+  // During waitlist mode, keep signup closed but allow login so invited
+  // accounts can sign in without the developer bypass cookie.
   if (isWaitlistMode() && !bypassActive) {
-    return false;
+    return pathname === "/login" || pathname.startsWith("/login/");
   }
 
   return PUBLIC_PATHS.some(

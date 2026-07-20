@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 const NAV_ITEMS = [
   { href: "/admin", label: "Overview", exact: true },
   { href: "/admin/users", label: "Users" },
+  { href: "/admin/waitlist", label: "Waitlist" },
   { href: "/admin/campaigns", label: "Tables" },
 ];
 

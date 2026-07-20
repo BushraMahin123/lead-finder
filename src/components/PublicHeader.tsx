@@ -45,9 +45,14 @@ export default function PublicHeader({
         </div>
         <div className="flex items-center gap-2">
           {waitlistMode ? (
-            <a href="#waitlist" className="btn btn-primary">
-              Join waitlist
-            </a>
+            <>
+              <Link href="/login" className="btn btn-ghost hidden sm:inline-flex">
+                Sign in
+              </Link>
+              <a href="#waitlist" className="btn btn-primary">
+                Join waitlist
+              </a>
+            </>
           ) : (
             <>
               <Link href="/login" className="btn btn-ghost hidden sm:inline-flex">

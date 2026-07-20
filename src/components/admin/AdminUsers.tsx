@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import AdminCreateAccountForm from "@/components/admin/AdminCreateAccountForm";
 import type { AdminUserSummary } from "@/lib/admin-types";
 
 type AdminUsersProps = {
@@ -20,6 +21,7 @@ export default function AdminUsers({
 }: AdminUsersProps) {
   const router = useRouter();
   const [searchInput, setSearchInput] = useState(initialQuery);
+  const [showCreate, setShowCreate] = useState(false);
 
   const perPage = 20;
   const totalPages = Math.max(1, Math.ceil(initialTotal / perPage));
@@ -39,12 +41,40 @@ export default function AdminUsers({
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight text-slate-900">Users</h1>
-        <p className="mt-1 text-sm text-slate-600">
-          Search accounts, view balances, and grant tokens.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-slate-900">Users</h1>
+          <p className="mt-1 text-sm text-slate-600">
+            Search accounts, create users, and grant tokens.
+          </p>
+        </div>
+        <button
+          type="button"
+          className="btn btn-primary"
+          onClick={() => setShowCreate((open) => !open)}
+        >
+          {showCreate ? "Close" : "Create account"}
+        </button>
       </div>
+
+      {showCreate && (
+        <div className="card-flat p-5">
+          <h2 className="text-base font-semibold text-slate-900">
+            Create account
+          </h2>
+          <p className="mt-1 text-sm text-slate-600">
+            Provision a user and optionally email them login credentials.
+          </p>
+          <div className="mt-4">
+            <AdminCreateAccountForm
+              onCancel={() => setShowCreate(false)}
+              onSuccess={() => {
+                /* keep form open so credentials remain visible */
+              }}
+            />
+          </div>
+        </div>
+      )}
 
       <form onSubmit={handleSearch} className="flex flex-wrap gap-3">
         <input

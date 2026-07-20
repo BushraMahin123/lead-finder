@@ -18,6 +18,9 @@ export default function PublicFooter({ waitlistMode = false }: PublicFooterProps
               <a href="#pricing" className="transition hover:text-slate-800">
                 Pricing
               </a>
+              <Link href="/login" className="transition hover:text-slate-800">
+                Sign in
+              </Link>
               <a href="#waitlist" className="transition hover:text-slate-800">
                 Join waitlist
               </a>

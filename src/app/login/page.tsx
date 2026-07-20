@@ -1,4 +1,5 @@
 import AuthForm from "@/components/AuthForm";
+import { isWaitlistMode } from "@/lib/waitlist";
 import { login } from "./actions";
 
 type LoginPageProps = {
@@ -13,6 +14,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
       action={login}
       message={params.message ?? null}
       next={params.next ?? null}
+      waitlistMode={isWaitlistMode()}
     />
   );
 }
