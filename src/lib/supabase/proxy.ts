@@ -172,7 +172,7 @@ export async function updateSession(request: NextRequest) {
   if (pathname === "/login" || pathname === "/signup") {
     const next = request.nextUrl.searchParams.get("next");
     if (next && next.startsWith("/") && !next.startsWith("//")) {
-      return NextResponse.redirect(new URL(next, request.url));
+      return NextResponse.redirect(new URL(next, request.nextUrl.origin));
     }
 
     const url = request.nextUrl.clone();

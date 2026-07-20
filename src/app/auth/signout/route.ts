@@ -1,5 +1,6 @@
 import { revalidatePath } from "next/cache";
 import { type NextRequest, NextResponse } from "next/server";
+import { redirectToPath } from "@/lib/request-url";
 import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
@@ -11,5 +12,5 @@ export async function POST(request: NextRequest) {
   }
 
   revalidatePath("/", "layout");
-  return NextResponse.redirect(new URL("/", request.url), { status: 302 });
+  return NextResponse.redirect(redirectToPath(request, "/"), { status: 302 });
 }

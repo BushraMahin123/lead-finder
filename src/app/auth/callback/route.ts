@@ -1,10 +1,12 @@
 import { revalidatePath } from "next/cache";
-import { NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
+import { getRequestOrigin } from "@/lib/request-url";
 import { hasUserProfile } from "@/lib/signup/profile";
 import { createClient } from "@/lib/supabase/server";
 
-export async function GET(request: Request) {
-  const { searchParams, origin } = new URL(request.url);
+export async function GET(request: NextRequest) {
+  const { searchParams } = request.nextUrl;
+  const origin = getRequestOrigin(request);
   const code = searchParams.get("code");
   const next = searchParams.get("next") ?? "/?view=search";
 
