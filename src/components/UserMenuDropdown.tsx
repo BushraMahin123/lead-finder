@@ -53,6 +53,18 @@ export default function UserMenuDropdown({
     };
   }, [open]);
 
+  async function signOut() {
+    setOpen(false);
+    try {
+      await fetch("/auth/signout", {
+        method: "POST",
+        headers: { Accept: "application/json" },
+      });
+    } finally {
+      window.location.assign("/");
+    }
+  }
+
   async function openBillingPortal() {
     setPortalLoading(true);
     try {
@@ -150,15 +162,14 @@ export default function UserMenuDropdown({
           </div>
 
           <div className="border-t border-slate-100 py-1">
-            <form action="/auth/signout" method="post">
-              <button
-                type="submit"
-                role="menuitem"
-                className="flex w-full px-4 py-2.5 text-left text-sm text-red-600 transition hover:bg-red-50"
-              >
-                Sign out
-              </button>
-            </form>
+            <button
+              type="button"
+              role="menuitem"
+              onClick={() => void signOut()}
+              className="flex w-full px-4 py-2.5 text-left text-sm text-red-600 transition hover:bg-red-50"
+            >
+              Sign out
+            </button>
           </div>
         </div>
       )}

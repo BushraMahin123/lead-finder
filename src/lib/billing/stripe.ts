@@ -16,6 +16,7 @@ import {
   clearStaleStripeLinks,
   isStripeModeMismatchError,
 } from "@/lib/billing/stripe-mode";
+import { getAppUrl } from "@/lib/app-url";
 
 let stripeClient: Stripe | null = null;
 
@@ -33,29 +34,6 @@ export function getStripe(): Stripe {
 
 export function isStripeConfigured(): boolean {
   return Boolean(process.env.STRIPE_SECRET_KEY?.trim());
-}
-
-function isLocalhostUrl(url: string): boolean {
-  try {
-    const { hostname } = new URL(url);
-    return hostname === "localhost" || hostname === "127.0.0.1";
-  } catch {
-    return false;
-  }
-}
-
-function getAppUrl(): string {
-  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
-  if (configured && !(process.env.NODE_ENV === "production" && isLocalhostUrl(configured))) {
-    return configured.replace(/\/$/, "");
-  }
-  if (process.env.VERCEL_URL?.trim()) {
-    return `https://${process.env.VERCEL_URL.trim()}`;
-  }
-  if (configured) {
-    return configured.replace(/\/$/, "");
-  }
-  return "http://localhost:3000";
 }
 
 async function getOrCreateStripeCustomer(userId: string, email?: string | null) {

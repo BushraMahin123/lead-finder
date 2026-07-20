@@ -8,9 +8,15 @@ export async function POST(request: NextRequest) {
   const { data } = await supabase.auth.getClaims();
 
   if (data?.claims) {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "local" });
   }
 
   revalidatePath("/", "layout");
+
+  const acceptsJson = request.headers.get("accept")?.includes("application/json");
+  if (acceptsJson) {
+    return NextResponse.json({ ok: true });
+  }
+
   return NextResponse.redirect(redirectToPath(request, "/"), { status: 302 });
 }
