@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { href: "/admin/users", label: "Users" },
   { href: "/admin/waitlist", label: "Waitlist" },
   { href: "/admin/campaigns", label: "Tables" },
+  { href: "/admin/email-preview", label: "Email" },
 ];
 
 export default function AdminShell({ children }: { children: React.ReactNode }) {

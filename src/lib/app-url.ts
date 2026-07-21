@@ -8,7 +8,7 @@ function isLocalhostUrl(url: string): boolean {
 }
 
 export function getAppUrl(): string {
-  const configured = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  const configured = process.env.NEXT_PUBLIC_APP_URL?.replace(/\s+/g, "").trim();
   if (
     configured &&
     !(process.env.NODE_ENV === "production" && isLocalhostUrl(configured))
@@ -16,8 +16,8 @@ export function getAppUrl(): string {
     return configured.replace(/\/$/, "");
   }
 
-  if (process.env.VERCEL_URL?.trim()) {
-    return `https://${process.env.VERCEL_URL.trim()}`;
+  if (process.env.VERCEL_URL?.replace(/\s+/g, "").trim()) {
+    return `https://${process.env.VERCEL_URL.replace(/\s+/g, "").trim()}`;
   }
 
   if (configured) {
