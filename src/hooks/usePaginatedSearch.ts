@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { notifyBillingBalanceRefresh } from "@/hooks/useBillingBalance";
 import { ApiError } from "@/lib/fetch-json";
 import {
   fetchSearchPage,
@@ -134,6 +135,10 @@ export function usePaginatedSearch(options: UsePaginatedSearchOptions = {}) {
         applyPageData(data, nextFilters);
         if (options?.prefetch !== false) {
           void prefetchPages(nextFilters, searchKey, data.totalEntries);
+        }
+        // Only refresh balance if tokens were actually debited (not from cache)
+        if (data.tokensDebited && data.tokensDebited > 0) {
+          notifyBillingBalanceRefresh();
         }
       } catch (err) {
         setPeople([]);

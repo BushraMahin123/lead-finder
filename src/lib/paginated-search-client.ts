@@ -10,6 +10,7 @@ export interface SearchPageData {
   totalEntries: number;
   cached: boolean;
   cachedAt: string | null;
+  tokensDebited?: number;
 }
 
 export function getSearchQueryKey(filters: SearchFilters): string {
@@ -40,6 +41,7 @@ export async function fetchSearchPage(
     totalEntries: Number(data.totalEntries ?? 0),
     cached: Boolean(data.cached),
     cachedAt: (data.cachedAt as string | undefined) ?? null,
+    tokensDebited: Number(data.tokensDebited ?? 0),
   };
 }
 
