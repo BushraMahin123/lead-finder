@@ -30,6 +30,8 @@ function normalizeFilters(filters: SearchFilters) {
     employeeSizes: sortList(filters.employeeSizes),
     employeeCountMin: filters.employeeCountMin ?? null,
     employeeCountMax: filters.employeeCountMax ?? null,
+    experienceYearsMin: filters.experienceYearsMin ?? null,
+    experienceYearsMax: filters.experienceYearsMax ?? null,
     languages: sortList(filters.languages),
     companyTypes: sortList(filters.companyTypes),
     page: filters.page ?? 1,

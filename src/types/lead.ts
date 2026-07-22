@@ -69,6 +69,10 @@ export interface SearchFilters {
   employeeSizes?: string[];
   employeeCountMin?: number;
   employeeCountMax?: number;
+  /** Minimum total years of professional experience (AI Ark duration.total). */
+  experienceYearsMin?: number;
+  /** Maximum total years of professional experience. */
+  experienceYearsMax?: number;
   languages?: string[];
   companyTypes?: string[];
   personName?: string;

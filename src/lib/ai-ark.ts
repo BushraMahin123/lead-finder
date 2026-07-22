@@ -259,6 +259,8 @@ function hasPeopleFilters(filters: SearchFilters): boolean {
       hasValues(filters.employeeSizes) ||
       (typeof filters.employeeCountMin === "number" &&
         typeof filters.employeeCountMax === "number") ||
+      typeof filters.experienceYearsMin === "number" ||
+      typeof filters.experienceYearsMax === "number" ||
       hasValues(filters.languages) ||
       hasValues(filters.companyTypes),
   );
@@ -334,12 +336,29 @@ function buildSearchBody(filters: SearchFilters): Record<string, unknown> {
   }
 
   const titles = splitCsv(filters.jobTitle);
-  if (titles.length > 0) {
-    contact.experience = {
-      current: {
-        title: smartTextFilter(titles),
-      },
-    };
+  const hasExperienceYears =
+    typeof filters.experienceYearsMin === "number" ||
+    typeof filters.experienceYearsMax === "number";
+
+  if (titles.length > 0 || hasExperienceYears) {
+    const current: Record<string, unknown> = {};
+
+    if (titles.length > 0) {
+      current.title = smartTextFilter(titles);
+    }
+
+    if (hasExperienceYears) {
+      const minYear = filters.experienceYearsMin ?? 0;
+      const maxYear = filters.experienceYearsMax ?? 50;
+      current.duration = {
+        total: {
+          min: { year: minYear, month: 0 },
+          max: { year: Math.max(maxYear, minYear), month: 0 },
+        },
+      };
+    }
+
+    contact.experience = { current };
   }
 
   const locations = (filters.locations ?? []).map((v) => v.trim()).filter(Boolean);
