@@ -1,6 +1,6 @@
 import {
   mapNumericRangeToEmployeeBuckets,
-  parseNumericEmployeeRange,
+  parseFlexibleInt,
 } from "@/lib/filter-options";
 import {
   PERSON_LOCATION_REGIONS,
@@ -15,17 +15,119 @@ const JOB_TITLE_PATTERNS = [
   /\b(ceo|cfo|cto|coo|cmo|founder|co-founder|owner|partner)\b/i,
 ];
 
+/** Filler words stripped from the start of a "role in/at location" phrase. */
+const TITLE_LEADING_FILLER = new Set([
+  "find",
+  "finding",
+  "search",
+  "searching",
+  "show",
+  "me",
+  "us",
+  "please",
+  "i",
+  "im",
+  "i'm",
+  "we",
+  "get",
+  "need",
+  "want",
+  "looking",
+  "for",
+  "some",
+  "any",
+  "all",
+  "the",
+  "a",
+  "an",
+  "of",
+  "linkedin",
+  "profiles",
+  "profile",
+]);
+
+/** Org/generic nouns that are not job titles when alone or trailing. */
+const TITLE_ORG_STOPWORDS = new Set([
+  "company",
+  "companies",
+  "startup",
+  "startups",
+  "people",
+  "person",
+  "persons",
+  "employee",
+  "employees",
+  "team",
+  "teams",
+  "office",
+  "offices",
+  "firm",
+  "firms",
+  "business",
+  "businesses",
+  "organization",
+  "organizations",
+  "org",
+  "orgs",
+  "lead",
+  "leads",
+  "contact",
+  "contacts",
+  "candidate",
+  "candidates",
+  "professional",
+  "professionals",
+  "worker",
+  "workers",
+  "role",
+  "roles",
+  "title",
+  "titles",
+]);
+
+/** Single tokens that are industries/topics, not job titles. */
+const TITLE_INDUSTRY_ONLY = new Set([
+  "saas",
+  "software",
+  "fintech",
+  "healthcare",
+  "retail",
+  "consulting",
+]);
+
+const TITLE_BEFORE_LOCATION_PATTERN =
+  /\b((?:[a-z][a-z0-9&/-]*\s+){0,6}[a-z][a-z0-9&/-]*)\s+(?:in|at|from|near|based\s+in)\b/i;
+
+const NUMBER = String.raw`(\d{1,3}(?:,\d{3})*|\d{1,7})`;
+
 const EMPLOYEE_RANGE_PATTERNS = [
-  /\bof\s+employ\w*\s+(\d{1,5})\s*[-–]\s*(\d{1,5})\b/i,
-  /\bemploy\w*\s+(\d{1,5})\s*[-–]\s*(\d{1,5})\b/i,
-  /\b(\d{1,5})\s*[-–]\s*(\d{1,5})\s+employ\w*\b/i,
-  /\bwith\s+(\d{1,5})\s*[-–]\s*(\d{1,5})\s+employ\w*\b/i,
-  /\b(?:companies?|company)\s+(?:of\s+)?employ\w*\s+(\d{1,5})\s*[-–]\s*(\d{1,5})\b/i,
+  new RegExp(
+    String.raw`\bof\s+employ\w*\s+${NUMBER}\s*[-–—]\s*${NUMBER}\b`,
+    "i",
+  ),
+  new RegExp(String.raw`\bemploy\w*\s+${NUMBER}\s*[-–—]\s*${NUMBER}\b`, "i"),
+  new RegExp(
+    String.raw`\b${NUMBER}\s*[-–—]\s*${NUMBER}\s+employ\w*\b`,
+    "i",
+  ),
+  new RegExp(
+    String.raw`\bwith\s+${NUMBER}\s*[-–—]\s*${NUMBER}\s+employ\w*\b`,
+    "i",
+  ),
+  new RegExp(
+    String.raw`\b(?:companies?|company)\s+with\s+${NUMBER}\s*[-–—]\s*${NUMBER}\s+employ\w*\b`,
+    "i",
+  ),
+  new RegExp(
+    String.raw`\b(?:companies?|company)\s+(?:of\s+)?employ\w*\s+${NUMBER}\s*[-–—]\s*${NUMBER}\b`,
+    "i",
+  ),
+  new RegExp(String.raw`\b${NUMBER}\s+to\s+${NUMBER}\s+employ\w*\b`, "i"),
 ];
 
 const INDUSTRY_PHRASES: Array<{ pattern: RegExp; value: string }> = [
   { pattern: /\bsaas\b/i, value: "software development" },
-  { pattern: /\bsoftware\b/i, value: "software development" },
+  { pattern: /\bsoftware\s+(?:compan|firms?|startups?)\w*/i, value: "software development" },
   { pattern: /\bfintech\b/i, value: "financial services" },
   { pattern: /\bhealthcare\b|\bhealth care\b/i, value: "hospitals and health care" },
   { pattern: /\bretail\b/i, value: "retail" },
@@ -82,6 +184,20 @@ const MAX_EMPLOYEE_PATTERNS = [
   /\b(?:max|maximum)\s+of\s+(\d{1,5})\s+employees?\b/i,
 ];
 
+const EXPERIENCE_MIN_PATTERNS = [
+  /\b(\d{1,2})\s*\+\s*years?(?:\s+of)?(?:\s+experience|\s+exp\.?)?\b/i,
+  /\b(?:at\s+least|minimum\s+of|min(?:imum)?)\s+(\d{1,2})\s+years?(?:\s+of)?(?:\s+experience|\s+exp\.?)?\b/i,
+  /\b(?:more\s+than|over|above)\s+(\d{1,2})\s+years?(?:\s+of)?(?:\s+experience|\s+exp\.?)?\b/i,
+  /\b(\d{1,2})\s+or\s+more\s+years?(?:\s+of)?(?:\s+experience|\s+exp\.?)?\b/i,
+  /\bwith\s+(\d{1,2})\s*\+?\s*years?(?:\s+of)?\s+experience\b/i,
+  /\bwho\s+have\s+(\d{1,2})\s*\+?\s*years?(?:\s+of)?\s+experience\b/i,
+];
+
+const EXPERIENCE_RANGE_PATTERNS = [
+  /\b(\d{1,2})\s*[-–—]\s*(\d{1,2})\s+years?(?:\s+of)?(?:\s+experience|\s+exp\.?)?\b/i,
+  /\bbetween\s+(\d{1,2})\s+and\s+(\d{1,2})\s+years?(?:\s+of)?(?:\s+experience|\s+exp\.?)?\b/i,
+];
+
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
@@ -102,6 +218,40 @@ function formatExtractedTitle(value: string): string {
   return EXECUTIVE_ACRONYMS.get(normalized) ?? titleCase(value);
 }
 
+function extractTitleBeforeLocation(query: string): string | undefined {
+  const match = query.match(TITLE_BEFORE_LOCATION_PATTERN);
+  if (!match?.[1]) return undefined;
+
+  const words = match[1]
+    .trim()
+    .split(/\s+/)
+    .filter(Boolean);
+
+  while (words.length > 0 && TITLE_LEADING_FILLER.has(words[0].toLowerCase())) {
+    words.shift();
+  }
+
+  while (
+    words.length > 0 &&
+    TITLE_ORG_STOPWORDS.has(words[words.length - 1].toLowerCase())
+  ) {
+    words.pop();
+  }
+
+  if (words.length === 0) return undefined;
+
+  const lowerWords = words.map((word) => word.toLowerCase());
+  if (lowerWords.every((word) => TITLE_ORG_STOPWORDS.has(word))) {
+    return undefined;
+  }
+
+  if (words.length === 1 && TITLE_INDUSTRY_ONLY.has(lowerWords[0])) {
+    return undefined;
+  }
+
+  return formatExtractedTitle(words.join(" "));
+}
+
 export function extractJobTitleFromQuery(query: string): string | undefined {
   for (const pattern of JOB_TITLE_PATTERNS) {
     const match = query.match(pattern);
@@ -111,7 +261,8 @@ export function extractJobTitleFromQuery(query: string): string | undefined {
       );
     }
   }
-  return undefined;
+
+  return extractTitleBeforeLocation(query);
 }
 
 function extractMaxEmployeeCountFromQuery(query: string): number | null {
@@ -119,8 +270,8 @@ function extractMaxEmployeeCountFromQuery(query: string): number | null {
     const match = query.match(pattern);
     if (!match?.[1]) continue;
 
-    const limit = Number(match[1]);
-    if (!Number.isFinite(limit) || limit <= 0) continue;
+    const limit = parseFlexibleInt(match[1]);
+    if (limit === null || limit <= 0) continue;
 
     return Math.max(1, limit - 1);
   }
@@ -135,9 +286,9 @@ export function extractEmployeeCountRangeFromQuery(
     const match = query.match(pattern);
     if (!match) continue;
 
-    const start = Number(match[1]);
-    const end = Number(match[2]);
-    if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
+    const start = parseFlexibleInt(match[1]);
+    const end = parseFlexibleInt(match[2]);
+    if (start === null || end === null || end < start) {
       continue;
     }
 
@@ -145,12 +296,16 @@ export function extractEmployeeCountRangeFromQuery(
   }
 
   if (/\b(?:employ|compan|staff|headcount|saas)\w*/i.test(query)) {
-    const matches = [...query.matchAll(/\b(\d{1,5})\s*[-–]\s*(\d{1,5})\b/g)];
+    const matches = [
+      ...query.matchAll(
+        new RegExp(String.raw`\b${NUMBER}\s*[-–—]\s*${NUMBER}\b`, "g"),
+      ),
+    ];
     const last = matches.at(-1);
     if (last) {
-      const start = Number(last[1]);
-      const end = Number(last[2]);
-      if (Number.isFinite(start) && Number.isFinite(end) && end >= start) {
+      const start = parseFlexibleInt(last[1]);
+      const end = parseFlexibleInt(last[2]);
+      if (start !== null && end !== null && end >= start) {
         return { start, end };
       }
     }
@@ -195,6 +350,49 @@ export function extractEmployeeSizesFromQuery(query: string): string[] {
   }
 
   return [...sizes];
+}
+
+export function extractExperienceYearsFromQuery(
+  query: string,
+): { min?: number; max?: number } | null {
+  for (const pattern of EXPERIENCE_RANGE_PATTERNS) {
+    const match = query.match(pattern);
+    if (!match) continue;
+    const min = Number(match[1]);
+    const max = Number(match[2]);
+    if (!Number.isFinite(min) || !Number.isFinite(max) || max < min) continue;
+    return { min, max };
+  }
+
+  for (const pattern of EXPERIENCE_MIN_PATTERNS) {
+    const match = query.match(pattern);
+    if (!match?.[1]) continue;
+    const min = Number(match[1]);
+    if (!Number.isFinite(min) || min <= 0) continue;
+    if (/more\s+than|over|above/i.test(match[0])) {
+      return { min: min + 1 };
+    }
+    return { min };
+  }
+
+  return null;
+}
+
+export function extractSenioritiesFromQuery(query: string): string[] {
+  const seniorities = new Set<string>();
+  if (/\b(?:c[\s-]?level|c[\s-]?suite)\b/i.test(query)) seniorities.add("c_suite");
+  if (/\bvp\b|\bvice\s+president\b/i.test(query)) seniorities.add("vp");
+  if (/\bdirector\b/i.test(query)) seniorities.add("director");
+  if (/\bhead\b/i.test(query)) seniorities.add("head");
+  if (/\bmanager\b/i.test(query)) seniorities.add("manager");
+  if (/\bsenior\b/i.test(query)) seniorities.add("senior");
+  if (/\bmid[\s-]?level\b/i.test(query)) seniorities.add("mid-level");
+  if (/\b(?:entry[\s-]?level|junior)\b/i.test(query)) seniorities.add("entry");
+  if (/\bintern\b/i.test(query)) seniorities.add("intern");
+  if (/\bfounder\b/i.test(query)) seniorities.add("founder");
+  if (/\bowner\b/i.test(query)) seniorities.add("owner");
+  if (/\bpartner\b/i.test(query)) seniorities.add("partner");
+  return [...seniorities];
 }
 
 export function extractIndustriesFromQuery(query: string): string[] {
@@ -319,6 +517,20 @@ function shouldReplaceJobTitle(current: string | undefined, extracted: string | 
   );
 }
 
+function preferSpecificLocations(locations: string[]): string[] {
+  const usStates = new Set(
+    (
+      PERSON_LOCATION_REGIONS.find((region) => region.value === "United States")
+        ?.states ?? []
+    ).map((state) => state.value),
+  );
+  const hasUsStates = locations.some((location) => usStates.has(location));
+  if (hasUsStates && locations.includes("United States")) {
+    return locations.filter((location) => location !== "United States");
+  }
+  return locations;
+}
+
 export function refineFiltersFromQuery(
   query: string,
   filters: Partial<SearchFilters>,
@@ -350,6 +562,27 @@ export function refineFiltersFromQuery(
     delete refined.employeeCountMax;
   }
 
+  const extractedExperience = extractExperienceYearsFromQuery(query);
+  if (extractedExperience) {
+    if (typeof extractedExperience.min === "number") {
+      refined.experienceYearsMin = extractedExperience.min;
+    } else {
+      delete refined.experienceYearsMin;
+    }
+    if (typeof extractedExperience.max === "number") {
+      refined.experienceYearsMax = extractedExperience.max;
+    } else {
+      delete refined.experienceYearsMax;
+    }
+  }
+
+  const extractedSeniorities = extractSenioritiesFromQuery(query);
+  if (extractedSeniorities.length > 0) {
+    refined.seniorities = [
+      ...new Set([...(refined.seniorities ?? []), ...extractedSeniorities]),
+    ];
+  }
+
   const extractedIndustries = extractIndustriesFromQuery(query);
   if (extractedIndustries.length > 0) {
     refined.industries = [
@@ -359,9 +592,11 @@ export function refineFiltersFromQuery(
 
   const extractedLocations = extractLocationsFromQuery(query);
   if (extractedLocations.length > 0) {
-    refined.locations = [
+    refined.locations = preferSpecificLocations([
       ...new Set([...(refined.locations ?? []), ...extractedLocations]),
-    ];
+    ]);
+  } else if (refined.locations?.length) {
+    refined.locations = preferSpecificLocations(refined.locations);
   }
 
   const topicKeywords = extractTopicKeywordsFromQuery(query);

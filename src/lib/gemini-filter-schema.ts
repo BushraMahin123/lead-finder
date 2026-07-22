@@ -26,7 +26,7 @@ function optionsPrompt(options: { value: string; label: string }[]) {
 export function buildGeminiSystemPrompt(): string {
   return `You convert natural-language B2B lead search requests into structured search filters.
 
-Return ONLY valid JSON matching this shape (use null for unused string fields, [] for unused arrays):
+Return ONLY valid JSON matching this shape (use null for unused string/number fields, [] for unused arrays):
 {
   "jobTitle": string | null,
   "companyName": string | null,
@@ -45,6 +45,8 @@ Return ONLY valid JSON matching this shape (use null for unused string fields, [
   "certifications": string | null,
   "foundedYear": string | null,
   "headcountGrowth": string | null,
+  "experienceYearsMin": number | null,
+  "experienceYearsMax": number | null,
   "locations": string[],
   "companyLocations": string[],
   "industries": string[],
@@ -57,17 +59,24 @@ Return ONLY valid JSON matching this shape (use null for unused string fields, [
 
 Rules:
 - Extract as many relevant filters as possible from the user text.
-- jobTitle must contain ONLY the person's role/title (e.g. "VP of Sales"). Never include company type, industry, location, or employee count in jobTitle.
+- jobTitle must contain ONLY the person's role/title (e.g. "Senior Software Engineer"). Never include company type, industry, location, employee count, or years of experience in jobTitle.
 - If the query says "VP of Sales at SaaS companies with 1-50 employees", jobTitle should be "VP of Sales" only.
-- Map SaaS / software companies to industries=["software development"], not into jobTitle or keywords.
-- Map employee count phrases to employeeSizes using exact allowed values. Examples:
+- When a seniority word appears in the title (Senior, Director, VP, etc.), ALSO set seniorities to the matching allowed value (e.g. "senior").
+- Map SaaS / software companies to industries=["software development"], not into jobTitle or keywords. Do NOT set industry just because the job title contains "Software".
+- Map employee count phrases to employeeSizes using exact allowed values. Also include custom numeric ranges like "200-1000" in employeeSizes when needed. Examples:
   - "1-50 employees" -> ["1-10", "11-50"]
   - "1-100 employees" -> ["1-10", "11-50", "51-200"]
   - "50-500 employees" -> ["51-200", "201-500"]
+  - "200-1000 employees" or "200–1,000 employees" -> ["201-500", "501-1000"] (or ["200-1000"])
   - "200 employees" or "201-500" -> matching bucket only
-- Custom ranges like "1-100" are valid in employeeSizes when no exact bucket exists; they will be normalized automatically.
+- Ignore thousands separators in numbers (1,000 = 1000).
+- Map years-of-experience phrases to experienceYearsMin / experienceYearsMax:
+  - "5+ years of experience" / "at least 5 years" -> experienceYearsMin=5, experienceYearsMax=null
+  - "5-10 years experience" -> experienceYearsMin=5, experienceYearsMax=10
+  - "more than 5 years" -> experienceYearsMin=6, experienceYearsMax=null
+- When the user says they are based in specific states/cities, put those in locations. Prefer specific states over the country when both are mentioned (e.g. California/Texas/New York, not also United States).
 - Do not put numeric ranges like "1-50" or "-50" into keywords.
-- keywords should only include extra topical terms that are not already captured by jobTitle, industry, location, or employeeSizes.
+- keywords should only include extra topical terms that are not already captured by jobTitle, industry, location, employeeSizes, or experience.
 - For list fields, ONLY use exact "value" strings from the allowed lists below.
 - locations and companyLocations must use exact location values from the allowed location list.
 - Prefer specific job titles, company names, and domains when mentioned.
@@ -82,14 +91,19 @@ Query: "VP of Sales at SaaS companies with 1-100 employees"
   "jobTitle": "VP of Sales",
   "industries": ["software development"],
   "employeeSizes": ["1-10", "11-50", "51-200"],
+  "seniorities": ["vp"],
   "keywords": null
 }
 
-Query: "VP of Sales at SaaS companies with 1-50 employees"
+Query: "Senior Software Engineers at companies with 200–1,000 employees who have 5+ years of experience based in California, Texas, or New York"
 {
-  "jobTitle": "VP of Sales",
-  "industries": ["software development"],
-  "employeeSizes": ["1-10", "11-50"],
+  "jobTitle": "Senior Software Engineer",
+  "locations": ["California", "Texas", "New York"],
+  "employeeSizes": ["201-500", "501-1000"],
+  "experienceYearsMin": 5,
+  "experienceYearsMax": null,
+  "seniorities": ["senior"],
+  "industries": [],
   "keywords": null
 }
 
@@ -99,6 +113,7 @@ Query: "Marketing directors in the US at fintech startups with 51-200 employees"
   "locations": ["United States"],
   "industries": ["financial services"],
   "employeeSizes": ["51-200"],
+  "seniorities": ["director"],
   "keywords": null
 }
 
@@ -115,6 +130,19 @@ function cleanString(value: unknown): string | undefined {
   if (typeof value !== "string") return undefined;
   const trimmed = value.trim();
   return trimmed || undefined;
+}
+
+function cleanNumber(value: unknown): number | undefined {
+  if (typeof value === "number" && Number.isFinite(value) && value >= 0) {
+    return Math.floor(value);
+  }
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return undefined;
+    const parsed = Number(trimmed.replace(/,/g, ""));
+    if (Number.isFinite(parsed) && parsed >= 0) return Math.floor(parsed);
+  }
+  return undefined;
 }
 
 function cleanStringArray(value: unknown): string[] {
@@ -148,6 +176,8 @@ export function normalizeGeminiFilters(
   const normalizedEmployees = normalizeEmployeeSizeValues(
     cleanStringArray(raw.employeeSizes),
   );
+  const experienceYearsMin = cleanNumber(raw.experienceYearsMin);
+  const experienceYearsMax = cleanNumber(raw.experienceYearsMax);
 
   const filters: Partial<SearchFilters> = {
     jobTitle: cleanString(raw.jobTitle),
@@ -167,6 +197,8 @@ export function normalizeGeminiFilters(
     certifications: cleanString(raw.certifications),
     foundedYear: cleanString(raw.foundedYear),
     headcountGrowth: cleanString(raw.headcountGrowth),
+    experienceYearsMin,
+    experienceYearsMax,
     locations: pickLocations(cleanStringArray(raw.locations)),
     companyLocations: pickLocations(cleanStringArray(raw.companyLocations)),
     industries: pickAllowed(
@@ -200,6 +232,14 @@ export function normalizeGeminiFilters(
     page: 1,
     perPage: 20,
   };
+
+  if (
+    typeof filters.experienceYearsMin === "number" &&
+    typeof filters.experienceYearsMax === "number" &&
+    filters.experienceYearsMax < filters.experienceYearsMin
+  ) {
+    delete filters.experienceYearsMax;
+  }
 
   return Object.fromEntries(
     Object.entries(filters).filter(([, value]) => {
@@ -236,6 +276,8 @@ export function hasAnySearchFilters(filters: Partial<SearchFilters>): boolean {
       filters.employeeSizes?.length ||
       (typeof filters.employeeCountMin === "number" &&
         typeof filters.employeeCountMax === "number") ||
+      typeof filters.experienceYearsMin === "number" ||
+      typeof filters.experienceYearsMax === "number" ||
       filters.languages?.length ||
       filters.companyTypes?.length,
   );

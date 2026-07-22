@@ -122,18 +122,28 @@ export function parseEmployeeSizeRange(
   return { start: Number(match[1]), end: Number(match[2]) };
 }
 
+/** Parse integers that may include thousands separators (e.g. "1,000"). */
+export function parseFlexibleInt(value: string): number | null {
+  const cleaned = value.replace(/,/g, "").trim();
+  if (!/^\d{1,7}$/.test(cleaned)) return null;
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
 export function parseNumericEmployeeRange(
   value: string,
 ): { start: number; end: number } | null {
   const trimmed = value.trim();
   if (trimmed === "10001+") return { start: 10001, end: 999999 };
 
-  const match = trimmed.match(/^(\d{1,6})\s*[-–]\s*(\d{1,6})$/);
+  const match = trimmed.match(
+    /^(\d{1,3}(?:,\d{3})*|\d{1,7})\s*[-–—]\s*(\d{1,3}(?:,\d{3})*|\d{1,7})$/,
+  );
   if (!match) return null;
 
-  const start = Number(match[1]);
-  const end = Number(match[2]);
-  if (!Number.isFinite(start) || !Number.isFinite(end) || end < start) {
+  const start = parseFlexibleInt(match[1]);
+  const end = parseFlexibleInt(match[2]);
+  if (start === null || end === null || end < start) {
     return null;
   }
 
@@ -147,7 +157,12 @@ export function mapNumericRangeToEmployeeBuckets(
   const sizes = new Set<string>();
 
   for (const bucket of EMPLOYEE_SIZE_BUCKETS) {
-    if (bucket.start <= end && bucket.end >= start) {
+    const overlapStart = Math.max(bucket.start, start);
+    const overlapEnd = Math.min(bucket.end, end);
+    // Require real overlap (skip single-point boundary touches like 200 vs 51-200).
+    if (overlapEnd > overlapStart) {
+      sizes.add(bucket.value);
+    } else if (overlapStart === overlapEnd && overlapStart === start && start === bucket.start) {
       sizes.add(bucket.value);
     }
   }

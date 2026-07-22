@@ -2,6 +2,7 @@ import { hasAnySearchFilters } from "@/lib/gemini-filter-schema";
 import { parseLeadQuery } from "@/lib/parse-lead-query";
 import {
   extractEmployeeSizesFromQuery,
+  extractExperienceYearsFromQuery,
   extractIndustriesFromQuery,
   extractJobTitleFromQuery,
   extractLocationsFromQuery,
@@ -43,6 +44,12 @@ function countFilterDimensions(filters: Partial<SearchFilters>): number {
   ) {
     count++;
   }
+  if (
+    typeof filters.experienceYearsMin === "number" ||
+    typeof filters.experienceYearsMax === "number"
+  ) {
+    count++;
+  }
   if (filters.companyName?.trim()) count++;
   if (filters.companyDomain?.trim()) count++;
   if (filters.seniorities?.length) count++;
@@ -80,8 +87,34 @@ export function isRuleBasedParseSufficient(
   }
 
   const expectedLocations = extractLocationsFromQuery(query);
-  if (!includesAll(filters.locations, expectedLocations)) {
+  // Specific states may drop the country (United States) intentionally.
+  const locationOk =
+    expectedLocations.length === 0 ||
+    expectedLocations.every(
+      (location) =>
+        location === "United States" ||
+        (filters.locations ?? []).some(
+          (value) => value.toLowerCase() === location.toLowerCase(),
+        ),
+    );
+  if (!locationOk) {
     return false;
+  }
+
+  const expectedExperience = extractExperienceYearsFromQuery(query);
+  if (expectedExperience) {
+    if (
+      expectedExperience.min !== undefined &&
+      filters.experienceYearsMin !== expectedExperience.min
+    ) {
+      return false;
+    }
+    if (
+      expectedExperience.max !== undefined &&
+      filters.experienceYearsMax !== expectedExperience.max
+    ) {
+      return false;
+    }
   }
 
   if (COMPLEX_QUERY_PATTERN.test(query) && countFilterDimensions(filters) < 2) {
@@ -90,6 +123,17 @@ export function isRuleBasedParseSufficient(
 
   const words = query.trim().split(/\s+/).filter(Boolean).length;
   const dimensions = countFilterDimensions(filters);
+
+  // Location/industry alone is not enough for short "role in place" queries
+  // when we failed to capture a job title (forces Gemini for edge cases).
+  if (
+    dimensions === 1 &&
+    !filters.jobTitle?.trim() &&
+    (filters.locations?.length ?? 0) > 0 &&
+    /\b[a-z][a-z0-9&/-]+\s+(?:in|at|from|near|based\s+in)\b/i.test(query)
+  ) {
+    return false;
+  }
 
   if (dimensions >= 2) return true;
   if (dimensions >= 1 && words <= 10) return true;

@@ -4,7 +4,21 @@ const TAG_RULES: Array<{ label: string; isActive: (filters: Partial<SearchFilter
   { label: "Job title", isActive: (f) => Boolean(f.jobTitle?.trim()) },
   { label: "Location", isActive: (f) => Boolean(f.locations?.length || f.companyLocations?.length) },
   { label: "Industry", isActive: (f) => Boolean(f.industries?.length) },
-  { label: "Company size", isActive: (f) => Boolean(f.employeeSizes?.length) },
+  {
+    label: "Company size",
+    isActive: (f) =>
+      Boolean(
+        f.employeeSizes?.length ||
+          (typeof f.employeeCountMin === "number" &&
+            typeof f.employeeCountMax === "number"),
+      ),
+  },
+  {
+    label: "Experience",
+    isActive: (f) =>
+      typeof f.experienceYearsMin === "number" ||
+      typeof f.experienceYearsMax === "number",
+  },
   { label: "Company name", isActive: (f) => Boolean(f.companyName?.trim()) },
   { label: "Seniority", isActive: (f) => Boolean(f.seniorities?.length) },
   { label: "Keywords", isActive: (f) => Boolean(f.keywords?.trim()) },
@@ -21,7 +35,7 @@ export function getAppliedFilterTags(filters: Partial<SearchFilters> | null | un
 }
 
 export function getPrimaryFilterTags(filters: Partial<SearchFilters> | null | undefined) {
-  const primary = ["Job title", "Location", "Industry", "Company size"];
+  const primary = ["Job title", "Location", "Industry", "Company size", "Experience"];
   const active = new Set(getAppliedFilterTags(filters).map((tag) => tag.label));
 
   return primary.map((label) => ({

@@ -92,6 +92,10 @@ export default function FilterPanel({
   const [certifications, setCertifications] = useState("");
   const [foundedYear, setFoundedYear] = useState("");
   const [headcountGrowth, setHeadcountGrowth] = useState("");
+  const [experienceYearsMin, setExperienceYearsMin] = useState("");
+  const [experienceYearsMax, setExperienceYearsMax] = useState("");
+  const [employeeCountMin, setEmployeeCountMin] = useState("");
+  const [employeeCountMax, setEmployeeCountMax] = useState("");
   const [listFilters, setListFilters] = useState(EMPTY_LIST_FILTERS);
 
   function updateListFilter<K extends keyof typeof EMPTY_LIST_FILTERS>(
@@ -102,34 +106,55 @@ export default function FilterPanel({
   }
 
   function applyExternalFilters(filters: Partial<SearchFilters>) {
-    if (filters.personName) setPersonName(filters.personName);
-    if (filters.linkedInUrls) setLinkedInUrls(filters.linkedInUrls);
-    if (filters.companyName) setCompanyName(filters.companyName);
-    if (filters.companyDomain) setCompanyDomain(filters.companyDomain);
-    if (filters.jobTitle) setJobTitle(filters.jobTitle);
-    if (filters.keywords) setKeywords(filters.keywords);
-    if (filters.skills) setSkills(filters.skills);
-    if (filters.linkedInBadge) setLinkedInBadge(filters.linkedInBadge);
-    if (filters.funding) setFunding(filters.funding);
-    if (filters.technology) setTechnology(filters.technology);
-    if (filters.annualRevenue) setAnnualRevenue(filters.annualRevenue);
-    if (filters.productsServices) setProductsServices(filters.productsServices);
-    if (filters.education) setEducation(filters.education);
-    if (filters.socialMedia) setSocialMedia(filters.socialMedia);
-    if (filters.certifications) setCertifications(filters.certifications);
-    if (filters.foundedYear) setFoundedYear(filters.foundedYear);
-    if (filters.headcountGrowth) setHeadcountGrowth(filters.headcountGrowth);
+    // Full replace — never merge with the previous AI/manual filter state.
+    setPersonName(filters.personName ?? "");
+    setLinkedInUrls(filters.linkedInUrls ?? "");
+    setCompanyName(filters.companyName ?? "");
+    setCompanyDomain(filters.companyDomain ?? "");
+    setJobTitle(filters.jobTitle ?? "");
+    setKeywords(filters.keywords ?? "");
+    setSkills(filters.skills ?? "");
+    setLinkedInBadge(filters.linkedInBadge ?? "");
+    setFunding(filters.funding ?? "");
+    setTechnology(filters.technology ?? "");
+    setAnnualRevenue(filters.annualRevenue ?? "");
+    setProductsServices(filters.productsServices ?? "");
+    setEducation(filters.education ?? "");
+    setSocialMedia(filters.socialMedia ?? "");
+    setCertifications(filters.certifications ?? "");
+    setFoundedYear(filters.foundedYear ?? "");
+    setHeadcountGrowth(filters.headcountGrowth ?? "");
+    setExperienceYearsMin(
+      typeof filters.experienceYearsMin === "number"
+        ? String(filters.experienceYearsMin)
+        : "",
+    );
+    setExperienceYearsMax(
+      typeof filters.experienceYearsMax === "number"
+        ? String(filters.experienceYearsMax)
+        : "",
+    );
+    setEmployeeCountMin(
+      typeof filters.employeeCountMin === "number"
+        ? String(filters.employeeCountMin)
+        : "",
+    );
+    setEmployeeCountMax(
+      typeof filters.employeeCountMax === "number"
+        ? String(filters.employeeCountMax)
+        : "",
+    );
 
-    setListFilters((current) => ({
-      locations: filters.locations ?? current.locations,
-      companyLocations: filters.companyLocations ?? current.companyLocations,
-      industries: filters.industries ?? current.industries,
-      seniorities: filters.seniorities ?? current.seniorities,
-      departments: filters.departments ?? current.departments,
-      employeeSizes: filters.employeeSizes ?? current.employeeSizes,
-      languages: filters.languages ?? current.languages,
-      companyTypes: filters.companyTypes ?? current.companyTypes,
-    }));
+    setListFilters({
+      locations: filters.locations ?? [],
+      companyLocations: filters.companyLocations ?? [],
+      industries: filters.industries ?? [],
+      seniorities: filters.seniorities ?? [],
+      departments: filters.departments ?? [],
+      employeeSizes: filters.employeeSizes ?? [],
+      languages: filters.languages ?? [],
+      companyTypes: filters.companyTypes ?? [],
+    });
   }
 
   useEffect(() => {
@@ -155,6 +180,8 @@ export default function FilterPanel({
     industry: listFilters.industries.length > 0,
     jobTitle: Boolean(jobTitle.trim()),
     seniority: listFilters.seniorities.length > 0,
+    experienceYears:
+      experienceYearsMin.trim().length > 0 || experienceYearsMax.trim().length > 0,
     location: listFilters.locations.length > 0,
     keywords: Boolean(keywords.trim()),
     skills: Boolean(skills.trim()),
@@ -163,7 +190,10 @@ export default function FilterPanel({
     funding: Boolean(funding.trim()),
     technology: Boolean(technology.trim()),
     annualRevenue: Boolean(annualRevenue.trim()),
-    employees: listFilters.employeeSizes.length > 0,
+    employees:
+      listFilters.employeeSizes.length > 0 ||
+      employeeCountMin.trim().length > 0 ||
+      employeeCountMax.trim().length > 0,
     productsServices: Boolean(productsServices.trim()),
     education: Boolean(education.trim()),
     socialMedia: Boolean(socialMedia.trim()),
@@ -193,6 +223,19 @@ export default function FilterPanel({
       linkedInBadge,
     );
 
+    const parsedExperienceMin = experienceYearsMin.trim()
+      ? Number(experienceYearsMin)
+      : undefined;
+    const parsedExperienceMax = experienceYearsMax.trim()
+      ? Number(experienceYearsMax)
+      : undefined;
+    const parsedEmployeeMin = employeeCountMin.trim()
+      ? Number(employeeCountMin)
+      : undefined;
+    const parsedEmployeeMax = employeeCountMax.trim()
+      ? Number(employeeCountMax)
+      : undefined;
+
     return {
       searchMode: hasLinkedInMode ? "linkedin" : "people",
       linkedInUrls,
@@ -212,6 +255,22 @@ export default function FilterPanel({
       certifications: certifications || undefined,
       foundedYear: foundedYear || undefined,
       headcountGrowth: headcountGrowth || undefined,
+      experienceYearsMin:
+        typeof parsedExperienceMin === "number" && Number.isFinite(parsedExperienceMin)
+          ? parsedExperienceMin
+          : undefined,
+      experienceYearsMax:
+        typeof parsedExperienceMax === "number" && Number.isFinite(parsedExperienceMax)
+          ? parsedExperienceMax
+          : undefined,
+      employeeCountMin:
+        typeof parsedEmployeeMin === "number" && Number.isFinite(parsedEmployeeMin)
+          ? parsedEmployeeMin
+          : undefined,
+      employeeCountMax:
+        typeof parsedEmployeeMax === "number" && Number.isFinite(parsedEmployeeMax)
+          ? parsedEmployeeMax
+          : undefined,
       ...listFilters,
       perPage: SEARCH_RESULTS_PER_PAGE,
       page: 1,
@@ -241,6 +300,10 @@ export default function FilterPanel({
     setCertifications("");
     setFoundedYear("");
     setHeadcountGrowth("");
+    setExperienceYearsMin("");
+    setExperienceYearsMax("");
+    setEmployeeCountMin("");
+    setEmployeeCountMax("");
     setListFilters(EMPTY_LIST_FILTERS);
     setActiveFilter(null);
   }
@@ -319,6 +382,35 @@ export default function FilterPanel({
             embedded
           />
         );
+      case "experienceYears":
+        return (
+          <div className="grid grid-cols-2 gap-2">
+            <label className="space-y-1">
+              <span className="text-xs font-medium text-slate-600">Min years</span>
+              <input
+                type="number"
+                min={0}
+                max={50}
+                value={experienceYearsMin}
+                onChange={(event) => setExperienceYearsMin(event.target.value)}
+                placeholder="e.g. 5"
+                className={textInputClassName()}
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="text-xs font-medium text-slate-600">Max years</span>
+              <input
+                type="number"
+                min={0}
+                max={50}
+                value={experienceYearsMax}
+                onChange={(event) => setExperienceYearsMax(event.target.value)}
+                placeholder="Optional"
+                className={textInputClassName()}
+              />
+            </label>
+          </div>
+        );
       case "location":
         return (
           <LocationFilterSection
@@ -396,13 +488,21 @@ export default function FilterPanel({
         );
       case "employees":
         return (
-          <FilterSection
-            title="Employees"
-            options={EMPLOYEE_SIZE_OPTIONS}
-            selected={listFilters.employeeSizes}
-            onChange={(values) => updateListFilter("employeeSizes", values)}
-            embedded
-          />
+          <div className="space-y-3">
+            <FilterSection
+              title="Employees"
+              options={EMPLOYEE_SIZE_OPTIONS}
+              selected={listFilters.employeeSizes}
+              onChange={(values) => updateListFilter("employeeSizes", values)}
+              embedded
+            />
+            {(employeeCountMin || employeeCountMax) && (
+              <p className="text-xs text-slate-500">
+                Custom range from AI: {employeeCountMin || "…"}–
+                {employeeCountMax || "…"} employees
+              </p>
+            )}
+          </div>
         );
       case "productsServices":
         return (
@@ -515,7 +615,10 @@ export default function FilterPanel({
           appliedFilters={appliedFilters ?? null}
           loading={loading}
           onSearch={onAISearch}
-          onClear={onClearFilters}
+          onClear={() => {
+            clearAll();
+            onClearFilters();
+          }}
         />
       )}
 
