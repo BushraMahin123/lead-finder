@@ -33,54 +33,65 @@ export async function changeUserPlan(
         ? "downgrade"
         : "same";
 
+  // User upgrades must go through Stripe Checkout (handled by change-plan route).
+  if (direction === "upgrade") {
+    const balance = snapshot.balance;
+    return { planId, tokensGranted: 0, tokensRemoved: 0, balance, direction };
+  }
+
+  // Downgrades update Stripe in place.
   await adminChangeUserPlan({
     userId,
     adminUserId: userId,
     planId,
     grantMonthlyTokens: false,
     syncStripe: true,
+    chargeImmediately: false,
   });
 
   let tokensGranted = 0;
   let tokensRemoved = 0;
   let balance = (await getUserBillingSnapshot(userId)).balance;
+  const plan = getPlanById(planId);
+  const planName = plan?.name ?? planId;
 
-  // Paid plans: set balance to that plan's monthly allotment (e.g. Pro → 8500, Starter → 2500).
-  // Free keeps the current balance so a downgrade does not wipe remaining tokens.
-  const adjustment = getPlanBalanceAdjustment(planId, balance);
-  const planName = getPlanById(planId)?.name ?? planId;
+  if (direction === "downgrade") {
+    // Paid downgrades: set balance to that plan's monthly allotment.
+    // Free keeps the current balance so a downgrade does not wipe remaining tokens.
+    const adjustment = getPlanBalanceAdjustment(planId, balance);
 
-  if (adjustment !== null && adjustment !== 0) {
-    if (adjustment > 0) {
-      tokensGranted = adjustment;
-      balance = await creditTokens({
-        userId,
-        amount: adjustment,
-        type: "plan_change_sync",
-        description: `Set balance to ${planName} monthly allotment`,
-        metadata: {
-          fromPlanId: previousPlanId,
-          toPlanId: planId,
-          direction,
-          targetBalance: getPlanById(planId)?.monthlyTokens,
-        },
-        idempotencyKey: `plan_balance_sync:${userId}:${previousPlanId}:${planId}:${randomUUID()}`,
-      });
-    } else {
-      tokensRemoved = Math.abs(adjustment);
-      balance = await debitTokens({
-        userId,
-        amount: tokensRemoved,
-        type: "plan_change_sync",
-        description: `Set balance to ${planName} monthly allotment`,
-        metadata: {
-          fromPlanId: previousPlanId,
-          toPlanId: planId,
-          direction,
-          targetBalance: getPlanById(planId)?.monthlyTokens,
-        },
-        idempotencyKey: `plan_balance_sync:${userId}:${previousPlanId}:${planId}:${randomUUID()}`,
-      });
+    if (adjustment !== null && adjustment !== 0) {
+      if (adjustment > 0) {
+        tokensGranted = adjustment;
+        balance = await creditTokens({
+          userId,
+          amount: adjustment,
+          type: "plan_change_sync",
+          description: `Set balance to ${planName} monthly allotment`,
+          metadata: {
+            fromPlanId: previousPlanId,
+            toPlanId: planId,
+            direction,
+            targetBalance: plan?.monthlyTokens,
+          },
+          idempotencyKey: `plan_balance_sync:${userId}:${previousPlanId}:${planId}:${randomUUID()}`,
+        });
+      } else {
+        tokensRemoved = Math.abs(adjustment);
+        balance = await debitTokens({
+          userId,
+          amount: tokensRemoved,
+          type: "plan_change_sync",
+          description: `Set balance to ${planName} monthly allotment`,
+          metadata: {
+            fromPlanId: previousPlanId,
+            toPlanId: planId,
+            direction,
+            targetBalance: plan?.monthlyTokens,
+          },
+          idempotencyKey: `plan_balance_sync:${userId}:${previousPlanId}:${planId}:${randomUUID()}`,
+        });
+      }
     }
   }
 

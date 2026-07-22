@@ -1,8 +1,11 @@
 import { NextResponse } from "next/server";
-import { getAuthenticatedUserId, unauthorizedResponse } from "@/lib/auth";
+import { getAuthenticatedClaims, getAuthenticatedUserId, unauthorizedResponse } from "@/lib/auth";
 import { changeUserPlan } from "@/lib/billing/change-plan";
-import { getPlanById, type PlanId } from "@/lib/billing/plans";
-import { isStripeConfigured } from "@/lib/billing/stripe";
+import { getPlanById, getPlanTier, type PlanId } from "@/lib/billing/plans";
+import {
+  createSubscriptionCheckoutSession,
+  isStripeConfigured,
+} from "@/lib/billing/stripe";
 import { syncStripeSubscriptionForUser } from "@/lib/billing/sync-subscription";
 import { getUserBillingSnapshot } from "@/lib/billing/tokens";
 
@@ -48,9 +51,31 @@ export async function POST(request: Request) {
       });
     }
 
+    // Upgrades must go through Stripe Checkout so the user pays before tokens.
+    if (getPlanTier(planId) > getPlanTier(snapshot.planId)) {
+      if (planId === "free") {
+        return NextResponse.json({ error: "Invalid upgrade target" }, { status: 400 });
+      }
+
+      const claims = await getAuthenticatedClaims();
+      const email = typeof claims?.email === "string" ? claims.email : null;
+      const session = await createSubscriptionCheckoutSession({
+        userId,
+        email,
+        planId,
+      });
+
+      return NextResponse.json({
+        url: session.url,
+        requiresPayment: true,
+        message: `Continue to Stripe to pay for ${plan.name}.`,
+      });
+    }
+
     let hasSubscription = Boolean(snapshot.stripeSubscriptionId);
     if (!hasSubscription) {
-      hasSubscription = await syncStripeSubscriptionForUser(userId);
+      hasSubscription = (await syncStripeSubscriptionForUser(userId))
+        .hasSubscription;
     }
 
     if (planId !== "free" && !hasSubscription) {

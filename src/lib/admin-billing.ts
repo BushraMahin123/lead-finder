@@ -157,6 +157,8 @@ async function updateStripeSubscriptionPlan(input: {
   userId: string;
   subscriptionId: string;
   planId: Exclude<PlanId, "free">;
+  /** When true, invoice and charge the prorated upgrade immediately. */
+  chargeImmediately?: boolean;
 }) {
   const plan = getPlanById(input.planId);
   if (!plan || plan.id === "free") {
@@ -177,26 +179,44 @@ async function updateStripeSubscriptionPlan(input: {
     throw new Error("Stripe subscription has no line items");
   }
 
-  const updated = await stripe.subscriptions.update(input.subscriptionId, {
-    items: [{ id: itemId, price: priceId }],
-    metadata: {
-      userId: input.userId,
+  const chargeImmediately = Boolean(input.chargeImmediately);
+
+  try {
+    const updated = await stripe.subscriptions.update(input.subscriptionId, {
+      items: [{ id: itemId, price: priceId }],
+      metadata: {
+        userId: input.userId,
+        planId: plan.id,
+      },
+      // Upgrades: invoice the price difference now and require payment to succeed.
+      // Downgrades / admin: switch price with no immediate charge.
+      proration_behavior: chargeImmediately ? "always_invoice" : "none",
+      ...(chargeImmediately
+        ? { payment_behavior: "error_if_incomplete" as const }
+        : {}),
+    });
+
+    const { periodStart, periodEnd } = readSubscriptionPeriod(updated);
+
+    await updateBillingAccount(input.userId, {
       planId: plan.id,
-    },
-    proration_behavior: "none",
-  });
+      stripeSubscriptionId: updated.id,
+      subscriptionStatus: updated.status,
+      currentPeriodStart: periodStart,
+      currentPeriodEnd: periodEnd,
+    });
 
-  const { periodStart, periodEnd } = readSubscriptionPeriod(updated);
-
-  await updateBillingAccount(input.userId, {
-    planId: plan.id,
-    stripeSubscriptionId: updated.id,
-    subscriptionStatus: updated.status,
-    currentPeriodStart: periodStart,
-    currentPeriodEnd: periodEnd,
-  });
-
-  return updated;
+    return updated;
+  } catch (error) {
+    if (chargeImmediately) {
+      const message =
+        error instanceof Error ? error.message : "Payment failed";
+      throw new Error(
+        `Upgrade payment failed. Your plan was not changed and no tokens were granted. ${message}`,
+      );
+    }
+    throw error;
+  }
 }
 
 export async function adminChangeUserPlan(input: {
@@ -205,6 +225,8 @@ export async function adminChangeUserPlan(input: {
   planId: PlanId;
   grantMonthlyTokens?: boolean;
   syncStripe?: boolean;
+  /** Charge the prorated difference immediately (user upgrades). */
+  chargeImmediately?: boolean;
   note?: string;
 }): Promise<{ planId: PlanId; balance?: number }> {
   const plan = getPlanById(input.planId);
@@ -237,6 +259,7 @@ export async function adminChangeUserPlan(input: {
       userId: input.userId,
       subscriptionId: snapshot.stripeSubscriptionId,
       planId: input.planId,
+      chargeImmediately: input.chargeImmediately,
     });
   } else {
     await updateBillingAccount(input.userId, {

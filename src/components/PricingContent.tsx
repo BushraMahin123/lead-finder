@@ -18,10 +18,9 @@ import {
 } from "@/lib/billing/plan-comparison";
 import { TOKEN_RATES } from "@/lib/billing/token-rates";
 import { useBillingBalance, notifyBillingBalanceRefresh } from "@/hooks/useBillingBalance";
-import { fetchJson } from "@/lib/fetch-json";
 
 export default function PricingContent() {
-  const { balance, loading: balanceLoading, refresh } = useBillingBalance();
+  const { balance, loading: balanceLoading } = useBillingBalance();
   const [annual, setAnnual] = useState(false);
   const [loadingCheckout, setLoadingCheckout] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -32,6 +31,7 @@ export default function PricingContent() {
   async function startCheckout(type: "subscription" | "topup", id: string) {
     setLoadingCheckout(`${type}:${id}`);
     setError(null);
+    setNotice(null);
 
     try {
       const body =
@@ -63,65 +63,50 @@ export default function PricingContent() {
     }
   }
 
-  async function changePlan(planId: PlanId) {
-    setLoadingCheckout(`change:${planId}`);
+  async function handlePlanAction(planId: PlanId, action: ReturnType<typeof getPlanCardAction>) {
     setError(null);
     setNotice(null);
 
-    try {
-      const { response, data } = await fetchJson("/api/billing/change-plan", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ planId }),
-      });
-
-      if (!response.ok) {
-        throw new Error(String(data.error ?? "Failed to change plan"));
-      }
-
-      if (typeof data.message === "string") {
-        setNotice(data.message);
-      }
-
-      notifyBillingBalanceRefresh();
-      await refresh();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to change plan");
-    } finally {
-      setLoadingCheckout(null);
+    if (action === "cancel") {
+      await openPortal();
+      return;
     }
-  }
 
-  async function handlePlanAction(planId: PlanId, action: ReturnType<typeof getPlanCardAction>) {
-    if (action === "subscribe") {
+    if (action === "upgrade") {
+      // Upgrade is allowed while subscribed — pay via Checkout.
       await startCheckout("subscription", planId);
       return;
     }
 
-    const hasStripeSubscription = balance?.hasStripeSubscription ?? false;
+    if (action === "subscribe") {
+      // Re-fetch so we see cancel_at_period_end / cancel_at right after portal return.
+      let cancelScheduled = Boolean(balance?.cancelAtPeriodEnd);
+      let onPaidPlan = hasPurchasedPlan(currentPlanId);
+      let hasStripeSubscription = balance?.hasStripeSubscription ?? false;
 
-    if (action === "upgrade") {
-      if (!hasStripeSubscription) {
-        await startCheckout("subscription", planId);
-        return;
+      try {
+        const response = await fetch("/api/billing/balance");
+        const data = await response.json();
+        if (response.ok) {
+          cancelScheduled = Boolean(data.cancelAtPeriodEnd);
+          onPaidPlan = hasPurchasedPlan(String(data.planId ?? "free"));
+          hasStripeSubscription = Boolean(data.hasStripeSubscription);
+          notifyBillingBalanceRefresh();
+        }
+      } catch {
+        // Fall back to in-memory balance values.
       }
-      await changePlan(planId);
-      return;
-    }
 
-    if (action === "downgrade" && planId !== "free") {
-      if (!hasStripeSubscription) {
+      // Lower/other plans: allow checkout once the current plan is scheduled to cancel.
+      // Checkout creates the new subscription and fulfill ends the old one immediately.
+      if ((onPaidPlan || hasStripeSubscription) && !cancelScheduled) {
         setError(
-          "No active Stripe subscription is linked to your account. Subscribe through Checkout first.",
+          "Cancel your current subscription first before switching to another plan. After you schedule cancellation, you can subscribe to a lower plan right away. You can still upgrade without canceling.",
         );
         return;
       }
-      await changePlan(planId);
-      return;
-    }
 
-    if (action === "downgrade" && planId === "free") {
-      await openPortal();
+      await startCheckout("subscription", planId);
     }
   }
 
@@ -192,11 +177,29 @@ export default function PricingContent() {
                   {balance.balance.toLocaleString()} tokens
                 </span>{" "}
                 · {balance.planName} plan
-                {hasPurchasedPlan(balance.planId) && (
-                  <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
-                    Active
-                  </span>
-                )}
+                {hasPurchasedPlan(balance.planId) &&
+                  (balance.cancelAtPeriodEnd ? (
+                    <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                      Cancels{" "}
+                      {formatCancelDate(balance.currentPeriodEnd) ?? "soon"}
+                    </span>
+                  ) : (
+                    <span className="ml-2 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-emerald-700">
+                      Active
+                    </span>
+                  ))}
+              </p>
+            )}
+
+            {balance?.cancelAtPeriodEnd && balance.currentPeriodEnd && (
+              <p className="max-w-xl text-sm text-amber-800">
+                Your {balance.planName} plan stays active until{" "}
+                <span className="font-semibold">
+                  {formatCancelDate(balance.currentPeriodEnd)}
+                </span>
+                . You can subscribe to another plan now — paying for it will
+                switch you over and end {balance.planName} immediately. Or reopen
+                billing to undo cancellation.
               </p>
             )}
 
@@ -207,7 +210,7 @@ export default function PricingContent() {
                 disabled={loadingCheckout === "portal"}
                 className="btn btn-secondary disabled:opacity-50"
               >
-                Manage subscription
+                {loadingCheckout === "portal" ? "Opening…" : "Manage billing"}
               </button>
             )}
           </div>
@@ -237,14 +240,16 @@ export default function PricingContent() {
                 ? "free-info"
                 : "subscribe"
               : getPlanCardAction(currentPlanId, plan.id);
-            const isCurrentPlan = action === "active";
+            const isCurrentPlan = plan.id === currentPlanId;
             const loadingKey =
               action === "subscribe"
                 ? `subscription:${plan.id}`
-                : action === "downgrade" && plan.id === "free"
-                  ? "portal"
-                  : `change:${plan.id}`;
-            const isLoading = loadingCheckout === loadingKey;
+                : action === "upgrade"
+                  ? `subscription:${plan.id}`
+                  : action === "cancel"
+                    ? "portal"
+                    : null;
+            const isLoading = loadingKey !== null && loadingCheckout === loadingKey;
 
             return (
               <div
@@ -258,8 +263,16 @@ export default function PricingContent() {
                 }`}
               >
                 {isCurrentPlan && (
-                  <span className="absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full bg-emerald-600 px-3 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-md">
-                    Current plan
+                  <span
+                    className={`absolute -top-3 left-1/2 -translate-x-1/2 whitespace-nowrap rounded-full px-3 py-0.5 text-[10px] font-bold uppercase tracking-wide text-white shadow-md ${
+                      balance?.cancelAtPeriodEnd
+                        ? "bg-amber-600"
+                        : "bg-emerald-600"
+                    }`}
+                  >
+                    {balance?.cancelAtPeriodEnd
+                      ? `Cancels ${formatCancelDate(balance.currentPeriodEnd) ?? "soon"}`
+                      : "Current plan"}
                   </span>
                 )}
                 {isPopular && !isCurrentPlan && (
@@ -290,23 +303,28 @@ export default function PricingContent() {
                   <p className="rounded-xl bg-slate-50 px-3 py-2 text-center text-xs text-slate-500">
                     {FREE_LIFETIME_TOKENS} tokens once at signup
                   </p>
-                ) : action === "active" ? (
-                  <button
-                    type="button"
-                    disabled
-                    className="btn mt-4 w-full cursor-default bg-emerald-600 py-2.5 text-white opacity-100"
-                  >
-                    Active
-                  </button>
-                ) : (
-                  <button
+                ) : action === "none" ? null : (
+                  <>
+                    {isCurrentPlan &&
+                      balance?.cancelAtPeriodEnd &&
+                      balance.currentPeriodEnd && (
+                        <p className="mt-4 rounded-xl bg-amber-50 px-3 py-2 text-center text-xs text-amber-900 ring-1 ring-amber-100">
+                          Access until {formatCancelDate(balance.currentPeriodEnd)}.
+                          Won&apos;t renew after that.
+                        </p>
+                      )}
+                    <button
                     type="button"
                     onClick={() => void handlePlanAction(plan.id, action)}
                     disabled={Boolean(loadingCheckout)}
-                    className={`btn mt-4 w-full py-2.5 disabled:opacity-50 ${
+                    className={`btn w-full py-2.5 disabled:opacity-50 ${
+                      isCurrentPlan && balance?.cancelAtPeriodEnd
+                        ? "mt-2"
+                        : "mt-4"
+                    } ${
                       action === "upgrade"
                         ? "btn-primary"
-                        : action === "downgrade"
+                        : action === "cancel"
                           ? "btn-secondary"
                           : isPopular
                             ? "btn-primary"
@@ -314,13 +332,23 @@ export default function PricingContent() {
                     }`}
                   >
                     {isLoading
-                      ? "Processing…"
-                      : action === "upgrade"
-                        ? "Upgrade"
-                        : action === "downgrade"
-                          ? "Downgrade"
-                          : "Subscribe"}
+                      ? action === "cancel"
+                        ? "Opening…"
+                        : action === "upgrade"
+                          ? "Redirecting…"
+                          : "Processing…"
+                        : action === "upgrade"
+                          ? "Upgrade"
+                          : action === "cancel"
+                            ? balance?.cancelAtPeriodEnd
+                              ? "Manage cancellation"
+                              : "Cancel subscription"
+                            : balance?.cancelAtPeriodEnd &&
+                                hasPurchasedPlan(currentPlanId)
+                              ? "Switch & pay"
+                              : "Subscribe"}
                   </button>
+                  </>
                 )}
               </div>
             );
@@ -398,6 +426,17 @@ export default function PricingContent() {
       </section>
     </div>
   );
+}
+
+function formatCancelDate(iso: string | null | undefined): string | null {
+  if (!iso) return null;
+  const date = new Date(iso);
+  if (Number.isNaN(date.getTime())) return null;
+  return date.toLocaleDateString(undefined, {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 function TokenRate({ label, rate }: { label: string; rate: string }) {

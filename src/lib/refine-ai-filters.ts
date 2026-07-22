@@ -5,6 +5,7 @@ import {
 import {
   PERSON_LOCATION_REGIONS,
   REMOTE_LOCATION,
+  locationMentionedInText,
 } from "@/lib/location-regions";
 import type { SearchFilters } from "@/types/lead";
 
@@ -197,10 +198,6 @@ const EXPERIENCE_RANGE_PATTERNS = [
   /\b(\d{1,2})\s*[-–—]\s*(\d{1,2})\s+years?(?:\s+of)?(?:\s+experience|\s+exp\.?)?\b/i,
   /\bbetween\s+(\d{1,2})\s+and\s+(\d{1,2})\s+years?(?:\s+of)?(?:\s+experience|\s+exp\.?)?\b/i,
 ];
-
-function escapeRegExp(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
 
 const NOISE_KEYWORD_PATTERN =
   /^(?:-?\d+|employees?|employee|companies?|company|saas|software|with|of|at|in|for|and|the|a|an)$/i;
@@ -417,23 +414,23 @@ export function extractLocationsFromQuery(query: string): string[] {
   }
 
   for (const region of PERSON_LOCATION_REGIONS) {
-    if (new RegExp(`\\b${escapeRegExp(region.value)}\\b`, "i").test(query)) {
+    if (locationMentionedInText(query, region.value)) {
       locations.add(region.value);
     }
 
     for (const city of region.cities ?? []) {
-      if (new RegExp(`\\b${escapeRegExp(city.value)}\\b`, "i").test(query)) {
+      if (locationMentionedInText(query, city.value)) {
         locations.add(city.value);
       }
     }
 
     for (const state of region.states ?? []) {
-      if (new RegExp(`\\b${escapeRegExp(state.value)}\\b`, "i").test(query)) {
+      if (locationMentionedInText(query, state.value)) {
         locations.add(state.value);
       }
 
       for (const city of state.cities ?? []) {
-        if (new RegExp(`\\b${escapeRegExp(city.value)}\\b`, "i").test(query)) {
+        if (locationMentionedInText(query, city.value)) {
           locations.add(city.value);
         }
       }

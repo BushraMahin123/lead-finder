@@ -11,24 +11,38 @@ export async function GET() {
     }
 
     let snapshot = await getUserBillingSnapshot(userId);
-    if (!snapshot.stripeSubscriptionId && snapshot.stripeCustomerId) {
+    let cancelAtPeriodEnd = false;
+    let currentPeriodEnd = snapshot.currentPeriodEnd;
+
+    if (snapshot.stripeCustomerId) {
       const { syncStripeSubscriptionForUser } = await import(
         "@/lib/billing/sync-subscription"
       );
-      await syncStripeSubscriptionForUser(userId);
+      const sync = await syncStripeSubscriptionForUser(userId);
       snapshot = await getUserBillingSnapshot(userId);
+      cancelAtPeriodEnd = sync.cancelAtPeriodEnd;
+      currentPeriodEnd = sync.currentPeriodEnd ?? snapshot.currentPeriodEnd;
     }
+
     const plan = getPlanById(snapshot.planId);
+    const hasLiveSubscription =
+      Boolean(snapshot.stripeSubscriptionId) &&
+      ["active", "trialing", "past_due", "unpaid"].includes(
+        snapshot.subscriptionStatus ?? "",
+      );
 
     return NextResponse.json({
       balance: snapshot.balance,
-      planId: snapshot.planId,
-      planName: plan?.name ?? snapshot.planId,
+      planId: hasLiveSubscription ? snapshot.planId : "free",
+      planName: hasLiveSubscription
+        ? (plan?.name ?? snapshot.planId)
+        : "Free",
       freeTokensGranted: snapshot.freeTokensGranted,
       subscriptionStatus: snapshot.subscriptionStatus,
-      currentPeriodEnd: snapshot.currentPeriodEnd,
+      currentPeriodEnd: hasLiveSubscription ? currentPeriodEnd : null,
+      cancelAtPeriodEnd: hasLiveSubscription ? cancelAtPeriodEnd : false,
       hasStripeCustomer: Boolean(snapshot.stripeCustomerId),
-      hasStripeSubscription: Boolean(snapshot.stripeSubscriptionId),
+      hasStripeSubscription: hasLiveSubscription,
     });
   } catch (error) {
     const message =

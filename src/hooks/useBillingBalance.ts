@@ -8,6 +8,8 @@ export interface BillingBalance {
   planName: string;
   freeTokensGranted: boolean;
   subscriptionStatus: string | null;
+  currentPeriodEnd: string | null;
+  cancelAtPeriodEnd: boolean;
   hasStripeSubscription: boolean;
 }
 
@@ -47,6 +49,11 @@ export function useBillingBalance() {
         planName: String(data.planName ?? "Free"),
         freeTokensGranted: Boolean(data.freeTokensGranted),
         subscriptionStatus: data.subscriptionStatus ?? null,
+        currentPeriodEnd:
+          typeof data.currentPeriodEnd === "string"
+            ? data.currentPeriodEnd
+            : null,
+        cancelAtPeriodEnd: Boolean(data.cancelAtPeriodEnd),
         hasStripeSubscription: Boolean(data.hasStripeSubscription),
       });
     } catch (err) {

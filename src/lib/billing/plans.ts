@@ -202,23 +202,26 @@ export function getUpgradeTokenGrant(
 
 export type PlanCardAction =
   | "free-info"
-  | "active"
+  | "none"
+  | "cancel"
   | "subscribe"
-  | "upgrade"
-  | "downgrade";
+  | "upgrade";
 
 export function getPlanCardAction(
   currentPlanId: string,
   targetPlanId: PlanId,
 ): PlanCardAction {
+  // Free card never shows a CTA button.
   if (targetPlanId === "free") {
-    return currentPlanId === "free" ? "free-info" : "downgrade";
+    return currentPlanId === "free" ? "free-info" : "none";
   }
 
+  // Active paid plan: cancel only.
   if (currentPlanId === targetPlanId) {
-    return "active";
+    return "cancel";
   }
 
+  // Not subscribed yet — can subscribe to any paid plan.
   if (currentPlanId === "free") {
     return "subscribe";
   }
@@ -226,9 +229,13 @@ export function getPlanCardAction(
   const currentTier = getPlanTier(currentPlanId);
   const targetTier = getPlanTier(targetPlanId);
 
+  // Higher plans: upgrade without canceling.
   if (targetTier > currentTier) return "upgrade";
-  if (targetTier < currentTier) return "downgrade";
-  return "active";
+
+  // Lower paid plans: Subscribe (blocked until cancel is scheduled, unless already canceling).
+  if (targetTier < currentTier) return "subscribe";
+
+  return "cancel";
 }
 
 export function hasPurchasedPlan(planId: string): boolean {

@@ -11,6 +11,7 @@ import {
   PERSON_LOCATION_REGIONS,
   REMOTE_LOCATION,
   allValuesInRegion,
+  canonicalizeLocationValue,
 } from "@/lib/location-regions";
 import type { SearchFilters } from "@/types/lead";
 
@@ -166,7 +167,11 @@ function pickAllowed(values: string[], allowed: string[]): string[] {
 }
 
 function pickLocations(values: string[]): string[] {
-  return pickAllowed(values, PERSON_LOCATIONS);
+  return [...new Set(
+    values
+      .map((value) => canonicalizeLocationValue(value, PERSON_LOCATIONS))
+      .filter((value): value is string => Boolean(value)),
+  )];
 }
 
 export function normalizeGeminiFilters(
