@@ -149,7 +149,21 @@ function Field({
 }) {
   return (
     <div className="space-y-2">
-      <label htmlFor={id} className="label">{label}</label>
+      {/* <label htmlFor={id} className="label">{label}</label> */}
+      <label
+        htmlFor={id}
+        className="label flex items-center gap-1"
+      >
+        <span>{label}</span>
+        {required && (
+          <span
+            className="ml-1 text-red-500 font-bold"
+            aria-hidden="true"
+          >
+            *
+          </span>
+        )}
+      </label>
       <input
         id={id}
         name={name}

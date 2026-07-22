@@ -80,7 +80,7 @@ export default function WorkspaceProfileFields({
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <label htmlFor="company_size" className="label">
-            Company size
+            Company size <span className="text-red-500">*</span>
           </label>
           <select
             id="company_size"
@@ -101,7 +101,7 @@ export default function WorkspaceProfileFields({
         </div>
         <div className="space-y-2">
           <label htmlFor="industry" className="label">
-            Industry
+            Industry <span className="text-red-500">*</span>
           </label>
           <select
             id="industry"
@@ -125,7 +125,7 @@ export default function WorkspaceProfileFields({
       <div className="grid gap-4 sm:grid-cols-2">
         <div className="space-y-2">
           <label htmlFor="use_case" className="label">
-            Primary use case
+            Primary use case <span className="text-red-500">*</span>
           </label>
           <select
             id="use_case"
@@ -199,6 +199,7 @@ function Field({
     <div className="space-y-2">
       <label htmlFor={id} className="label">
         {label}
+        {required && <span className="text-red-500 ml-1">*</span>}
       </label>
       <input
         id={id}
