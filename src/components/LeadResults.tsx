@@ -194,6 +194,7 @@ export default function LeadResults({
         type === "email" ? Boolean(result.email) : Boolean(result.phone_numbers?.length),
       ).length;
       const failed = results.filter((result) => result.error);
+      const failedCount = Number(data.failedCount ?? failed.length);
       const freshlyExtracted = enrichedCount - fromStorage;
 
       onPeopleUpdate(applyEnrichment(people, results));
@@ -219,8 +220,19 @@ export default function LeadResults({
 
       if (failed.length > 0 && enrichedCount > 0) {
         setEnrichNotice(
-          `Extracted ${labelPlural} for ${enrichedCount} of ${selectedPeople.length}. ${failed.length} could not be enriched.`,
+          `Extracted ${labelPlural} for ${enrichedCount} of ${selectedPeople.length}. ${failedCount} could not be enriched.`,
         );
+      } else if (failed.length > 0 && enrichedCount === 0) {
+        // Show specific error message if all failures have the same error
+        const errorMessages = new Set(failed.map((f) => f.error));
+        if (errorMessages.size === 1) {
+          const specificError = Array.from(errorMessages)[0];
+          setEnrichError(specificError || `Failed to extract ${labelPlural} for ${failedCount} of ${selectedPeople.length} contact${selectedPeople.length === 1 ? "" : "s"}. Please try again.`);
+        } else {
+          setEnrichError(
+            `Failed to extract ${labelPlural} for ${failedCount} of ${selectedPeople.length} contact${selectedPeople.length === 1 ? "" : "s"}. Please try again.`,
+          );
+        }
       }
     } catch (err) {
       if (err instanceof ApiError && err.status === 401) {
