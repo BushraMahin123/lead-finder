@@ -10,6 +10,7 @@ import type {
 } from "@/types/campaign";
 import type { EnrichContactResult, EnrichType, LeadPerson, SearchFilters } from "@/types/lead";
 import AiColumnErrorIndicator from "@/components/AiColumnErrorIndicator";
+import TruncatedText from "@/components/TruncatedText";
 import {
   ContactNotesInput,
   ContactTrackingCell,
@@ -428,18 +429,22 @@ export default function LeadResults({
                 }`}
               >
                 <td
-                  className={`max-w-44 truncate px-3 py-3 font-medium ${stickyBodyClass(0, selected, meta)} ${
+                  className={`max-w-44 px-3 py-3 font-medium ${stickyBodyClass(0, selected, meta)} ${
                     isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-900"
                   }`}
                 >
-                  {displayName(person)}
+                  <TruncatedText text={displayName(person)} className="block truncate" />
                 </td>
                 <td
-                  className={`max-w-52 truncate px-3 py-3 ${stickyBodyClass(1, selected, meta)} ${
+                  className={`max-w-52 px-3 py-3 ${stickyBodyClass(1, selected, meta)} ${
                     isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-700"
                   }`}
                 >
-                  {person.title ?? "—"}
+                  {person.title ? (
+                    <TruncatedText text={person.title} className="block truncate" />
+                  ) : (
+                    "—"
+                  )}
                 </td>
                 {enableTracking && (
                   <>

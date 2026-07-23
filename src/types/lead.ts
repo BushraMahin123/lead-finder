@@ -81,6 +81,10 @@ export interface SearchFilters {
   funding?: string;
   technology?: string;
   annualRevenue?: string;
+  /** Parsed minimum annual revenue in USD (for AI Ark revenue range). */
+  annualRevenueMin?: number;
+  /** Parsed maximum annual revenue in USD. */
+  annualRevenueMax?: number;
   productsServices?: string;
   education?: string;
   socialMedia?: string;

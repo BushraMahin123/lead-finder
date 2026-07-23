@@ -92,10 +92,21 @@ const US_STATES: LocationState[] = [
 ];
 
 const CANADA_PROVINCES: LocationState[] = [
-  { value: "Ontario", label: "Ontario", cities: [{ value: "Toronto", label: "Toronto" }] },
+  { value: "Ontario", label: "Ontario", cities: [
+    { value: "Toronto", label: "Toronto" },
+    { value: "Ottawa", label: "Ottawa" },
+    { value: "Mississauga", label: "Mississauga" },
+    { value: "Hamilton", label: "Hamilton" },
+  ]},
   { value: "British Columbia", label: "British Columbia", cities: [{ value: "Vancouver", label: "Vancouver" }] },
-  { value: "Quebec", label: "Quebec", cities: [{ value: "Montreal", label: "Montreal" }] },
-  { value: "Alberta", label: "Alberta", cities: [{ value: "Calgary", label: "Calgary" }] },
+  { value: "Quebec", label: "Quebec", cities: [
+    { value: "Montreal", label: "Montreal" },
+    { value: "Quebec City", label: "Quebec City" },
+  ]},
+  { value: "Alberta", label: "Alberta", cities: [
+    { value: "Calgary", label: "Calgary" },
+    { value: "Edmonton", label: "Edmonton" },
+  ]},
   { value: "Manitoba", label: "Manitoba" },
   { value: "Saskatchewan", label: "Saskatchewan" },
   { value: "Nova Scotia", label: "Nova Scotia" },

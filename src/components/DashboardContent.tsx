@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { AISearchIconBadge } from "@/components/AISearchIcon";
+import TruncatedText from "@/components/TruncatedText";
 import {
   IconArrowRight,
   IconChevronRight,
@@ -389,9 +390,11 @@ function TableCard({ campaign }: { campaign: Campaign }) {
             <IconTable className="h-5 w-5" />
           </span>
           <div className="min-w-0">
-            <h3 className="truncate font-semibold text-slate-900 group-hover:text-indigo-700">
-              {campaign.name}
-            </h3>
+            <TruncatedText
+              as="h3"
+              text={campaign.name}
+              className="truncate font-semibold text-slate-900 group-hover:text-indigo-700"
+            />
             {subtitle && (
               <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-slate-500">
                 {subtitle}

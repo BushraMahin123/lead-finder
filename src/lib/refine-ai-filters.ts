@@ -86,6 +86,18 @@ const TITLE_ORG_STOPWORDS = new Set([
   "titles",
 ]);
 
+/** Connector verbs that leak into titles from phrases like "Managers working at…". */
+const TITLE_TRAILING_CONNECTORS = new Set([
+  "working",
+  "employed",
+  "currently",
+  "based",
+  "located",
+  "living",
+  "residing",
+  "looking",
+]);
+
 /** Single tokens that are industries/topics, not job titles. */
 const TITLE_INDUSTRY_ONLY = new Set([
   "saas",
@@ -94,10 +106,13 @@ const TITLE_INDUSTRY_ONLY = new Set([
   "healthcare",
   "retail",
   "consulting",
+  "ecommerce",
+  "e-commerce",
 ]);
 
+// Prefer multi-word connectors before bare "at/in" so "working" is not captured.
 const TITLE_BEFORE_LOCATION_PATTERN =
-  /\b((?:[a-z][a-z0-9&/-]*\s+){0,6}[a-z][a-z0-9&/-]*)\s+(?:in|at|from|near|based\s+in)\b/i;
+  /\b((?:[a-z][a-z0-9&/-]*\s+){0,6}[a-z][a-z0-9&/-]*)\s+(?:working\s+at|employed\s+(?:at|by)|based\s+(?:in|at)|located\s+in|living\s+in|in|at|from|near)\b/i;
 
 const NUMBER = String.raw`(\d{1,3}(?:,\d{3})*|\d{1,7})`;
 
@@ -129,6 +144,7 @@ const EMPLOYEE_RANGE_PATTERNS = [
 const INDUSTRY_PHRASES: Array<{ pattern: RegExp; value: string }> = [
   { pattern: /\bsaas\b/i, value: "software development" },
   { pattern: /\bsoftware\s+(?:compan|firms?|startups?)\w*/i, value: "software development" },
+  { pattern: /\be[\s-]?commerce\b|\becommerce\b/i, value: "retail" },
   { pattern: /\bfintech\b/i, value: "financial services" },
   { pattern: /\bhealthcare\b|\bhealth care\b/i, value: "hospitals and health care" },
   { pattern: /\bretail\b/i, value: "retail" },
@@ -179,11 +195,45 @@ const EXECUTIVE_ACRONYMS = new Map<string, string>([
 ]);
 
 const MAX_EMPLOYEE_PATTERNS = [
-  /\b(?:less|fewer|under|below)\s+than\s+(\d{1,5})\s+employees?\b/i,
-  /\b(?:less|fewer|under|below)\s+(\d{1,5})\s+employees?\b/i,
-  /\bat\s+most\s+(\d{1,5})\s+employees?\b/i,
-  /\b(?:max|maximum)\s+of\s+(\d{1,5})\s+employees?\b/i,
+  /\b(?:less|fewer|under|below)\s+than\s+(\d{1,3}(?:,\d{3})*|\d{1,7})\s+employees?\b/i,
+  /\b(?:less|fewer|under|below)\s+(\d{1,3}(?:,\d{3})*|\d{1,7})\s+employees?\b/i,
+  /\bat\s+most\s+(\d{1,3}(?:,\d{3})*|\d{1,7})\s+employees?\b/i,
+  /\b(?:max|maximum)\s+of\s+(\d{1,3}(?:,\d{3})*|\d{1,7})\s+employees?\b/i,
 ];
+
+const MIN_EMPLOYEE_PATTERNS: Array<{ pattern: RegExp; exclusive: boolean }> = [
+  {
+    pattern:
+      /\b(?:more\s+than|over|above)\s+(\d{1,3}(?:,\d{3})*|\d{1,7})\s+employees?\b/i,
+    exclusive: true,
+  },
+  {
+    pattern:
+      /\b(?:at\s+least|minimum\s+of|min(?:imum)?)\s+(\d{1,3}(?:,\d{3})*|\d{1,7})\s+employees?\b/i,
+    exclusive: false,
+  },
+  {
+    pattern: /\b(\d{1,3}(?:,\d{3})*|\d{1,7})\s*\+\s*employees?\b/i,
+    exclusive: false,
+  },
+  {
+    pattern:
+      /\b(?:companies?|company)\s+with\s+(?:over|more\s+than|above)\s+(\d{1,3}(?:,\d{3})*|\d{1,7})\s+employees?\b/i,
+    exclusive: true,
+  },
+  {
+    pattern:
+      /\b(?:companies?|company)\s+with\s+(?:at\s+least|minimum\s+of)\s+(\d{1,3}(?:,\d{3})*|\d{1,7})\s+employees?\b/i,
+    exclusive: false,
+  },
+];
+
+/** True when the query clearly talks about company size, even if we can't parse the number yet. */
+export const EMPLOYEE_SIZE_SIGNAL_PATTERN =
+  /\b(?:employees?|headcount|company\s+size|staff\s+size)\b|\b(?:over|more\s+than|above|at\s+least|under|less\s+than|fewer\s+than|between)\s+\d[\d,]*(?:\s*(?:and|[-–—])\s*\d[\d,]*)?\s+employees?\b|\b\d[\d,]*(?:\s*[-–—]\s*\d[\d,]*)?\s*\+?\s*employees?\b/i;
+
+export const EXPERIENCE_SIGNAL_PATTERN =
+  /\b(?:years?(?:\s+of)?(?:\s+[a-z][\w\s&/-]{0,40})?\s+experience|\d+\s*\+\s*years?|\bat\s+least\s+\d+\s+years?)\b/i;
 
 const EXPERIENCE_MIN_PATTERNS = [
   /\b(\d{1,2})\s*\+\s*years?(?:\s+of)?(?:\s+experience|\s+exp\.?)?\b/i,
@@ -235,6 +285,13 @@ function extractTitleBeforeLocation(query: string): string | undefined {
     words.pop();
   }
 
+  while (
+    words.length > 0 &&
+    TITLE_TRAILING_CONNECTORS.has(words[words.length - 1].toLowerCase())
+  ) {
+    words.pop();
+  }
+
   if (words.length === 0) return undefined;
 
   const lowerWords = words.map((word) => word.toLowerCase());
@@ -276,6 +333,20 @@ function extractMaxEmployeeCountFromQuery(query: string): number | null {
   return null;
 }
 
+export function extractMinEmployeeCountFromQuery(query: string): number | null {
+  for (const { pattern, exclusive } of MIN_EMPLOYEE_PATTERNS) {
+    const match = query.match(pattern);
+    if (!match?.[1]) continue;
+
+    const limit = parseFlexibleInt(match[1]);
+    if (limit === null || limit <= 0) continue;
+
+    return exclusive ? limit + 1 : limit;
+  }
+
+  return null;
+}
+
 export function extractEmployeeCountRangeFromQuery(
   query: string,
 ): { start: number; end: number } | null {
@@ -290,6 +361,16 @@ export function extractEmployeeCountRangeFromQuery(
     }
 
     return { start, end };
+  }
+
+  const minEmployees = extractMinEmployeeCountFromQuery(query);
+  if (minEmployees !== null) {
+    return { start: minEmployees, end: 999999 };
+  }
+
+  const maxEmployees = extractMaxEmployeeCountFromQuery(query);
+  if (maxEmployees !== null) {
+    return { start: 1, end: maxEmployees };
   }
 
   if (/\b(?:employ|compan|staff|headcount|saas)\w*/i.test(query)) {
@@ -314,19 +395,12 @@ export function extractEmployeeCountRangeFromQuery(
 export function extractEmployeeSizesFromQuery(query: string): string[] {
   const sizes = new Set<string>();
   const numericRange = extractEmployeeCountRangeFromQuery(query);
-  const maxEmployees = extractMaxEmployeeCountFromQuery(query);
 
   if (numericRange) {
     for (const bucket of mapNumericRangeToEmployeeBuckets(
       numericRange.start,
       numericRange.end,
     )) {
-      sizes.add(bucket);
-    }
-  }
-
-  if (maxEmployees !== null) {
-    for (const bucket of mapNumericRangeToEmployeeBuckets(1, maxEmployees)) {
       sizes.add(bucket);
     }
   }
@@ -347,6 +421,121 @@ export function extractEmployeeSizesFromQuery(query: string): string[] {
   }
 
   return [...sizes];
+}
+
+/** Pull topical skill from phrases like "5+ years of machine learning experience". */
+export function extractSkillsFromExperienceQuery(query: string): string | undefined {
+  const match = query.match(
+    /\b\d{1,2}\s*\+?\s*years?\s+of\s+([a-z][a-z0-9\s&/.-]{1,60}?)\s+experience\b/i,
+  );
+  if (!match?.[1]) return undefined;
+
+  const skill = match[1]
+    .trim()
+    .replace(/\s+/g, " ")
+    .replace(/^(?:professional|work|relevant|total)\s+/i, "")
+    .trim();
+
+  if (!skill || /^(?:professional|work|relevant|total)$/i.test(skill)) {
+    return undefined;
+  }
+
+  return titleCase(skill);
+}
+
+function parseMoneyAmount(raw: string): number | null {
+  const cleaned = raw.replace(/[$,\s]/g, "").toLowerCase();
+  const match = cleaned.match(/^(\d+(?:\.\d+)?)(k|m|mm|b|bn|million|billion)?$/i);
+  if (!match) return null;
+
+  const amount = Number(match[1]);
+  if (!Number.isFinite(amount)) return null;
+
+  const unit = (match[2] ?? "").toLowerCase();
+  if (unit === "k") return Math.round(amount * 1_000);
+  if (unit === "m" || unit === "mm" || unit === "million") {
+    return Math.round(amount * 1_000_000);
+  }
+  if (unit === "b" || unit === "bn" || unit === "billion") {
+    return Math.round(amount * 1_000_000_000);
+  }
+
+  // Bare number next to "million" handled by caller patterns.
+  return Math.round(amount);
+}
+
+/**
+ * Extract annual revenue range from free-form text.
+ * Examples: "over $10 million", "revenue between $1M and $5M", "$10M+"
+ */
+export function extractAnnualRevenueFromQuery(
+  query: string,
+): { min?: number; max?: number; label: string } | null {
+  const between = query.match(
+    /\b(?:annual\s+)?revenue\s+(?:of\s+|between\s+)?\$?\s*(\d+(?:\.\d+)?)\s*(k|m|mm|b|bn|million|billion)?\s*(?:and|to|[-–—])\s*\$?\s*(\d+(?:\.\d+)?)\s*(k|m|mm|b|bn|million|billion)?\b/i,
+  );
+  if (between) {
+    const start = parseMoneyAmount(`${between[1]}${between[2] ?? ""}`);
+    const end = parseMoneyAmount(`${between[3]}${between[4] ?? ""}`);
+    if (start !== null && end !== null && end >= start) {
+      return {
+        min: start,
+        max: end,
+        label: `$${between[1]}${between[2] ?? ""}–$${between[3]}${between[4] ?? ""}`,
+      };
+    }
+  }
+
+  const over = query.match(
+    /\b(?:annual\s+)?revenue\s+(?:of\s+)?(?:over|more\s+than|above|greater\s+than|at\s+least)\s+\$?\s*(\d+(?:\.\d+)?)\s*(k|m|mm|b|bn|million|billion)?\b/i,
+  );
+  if (over) {
+    const unit = over[2] ?? "million";
+    const min = parseMoneyAmount(`${over[1]}${unit}`);
+    if (min !== null) {
+      const exclusive = /over|more\s+than|above|greater\s+than/i.test(over[0]);
+      const shortUnit =
+        /billion|bn|^b$/i.test(unit) ? "B" : /million|mm|^m$/i.test(unit) ? "M" : /k/i.test(unit) ? "K" : "";
+      return {
+        min: exclusive ? min + 1 : min,
+        label: `Over $${over[1]}${shortUnit}`,
+      };
+    }
+  }
+
+  const plus = query.match(
+    /\b(?:annual\s+)?revenue\s+(?:of\s+)?\$?\s*(\d+(?:\.\d+)?)\s*(k|m|mm|b|bn|million|billion)?\s*\+/i,
+  );
+  if (plus) {
+    const unit = plus[2] ?? "million";
+    const min = parseMoneyAmount(`${plus[1]}${unit}`);
+    if (min !== null) {
+      const shortUnit =
+        /billion|bn|^b$/i.test(unit) ? "B" : /million|mm|^m$/i.test(unit) ? "M" : /k/i.test(unit) ? "K" : "";
+      return {
+        min,
+        label: `$${plus[1]}${shortUnit}+`,
+      };
+    }
+  }
+
+  const under = query.match(
+    /\b(?:annual\s+)?revenue\s+(?:of\s+)?(?:under|below|less\s+than|at\s+most)\s+\$?\s*(\d+(?:\.\d+)?)\s*(k|m|mm|b|bn|million|billion)?\b/i,
+  );
+  if (under) {
+    const unit = under[2] ?? "million";
+    const max = parseMoneyAmount(`${under[1]}${unit}`);
+    if (max !== null) {
+      const shortUnit =
+        /billion|bn|^b$/i.test(unit) ? "B" : /million|mm|^m$/i.test(unit) ? "M" : /k/i.test(unit) ? "K" : "";
+      return {
+        max: Math.max(0, max - 1),
+        label: `Under $${under[1]}${shortUnit}`,
+      };
+    }
+  }
+
+  return null;
 }
 
 export function extractExperienceYearsFromQuery(
@@ -378,17 +567,17 @@ export function extractExperienceYearsFromQuery(
 export function extractSenioritiesFromQuery(query: string): string[] {
   const seniorities = new Set<string>();
   if (/\b(?:c[\s-]?level|c[\s-]?suite)\b/i.test(query)) seniorities.add("c_suite");
-  if (/\bvp\b|\bvice\s+president\b/i.test(query)) seniorities.add("vp");
-  if (/\bdirector\b/i.test(query)) seniorities.add("director");
-  if (/\bhead\b/i.test(query)) seniorities.add("head");
-  if (/\bmanager\b/i.test(query)) seniorities.add("manager");
-  if (/\bsenior\b/i.test(query)) seniorities.add("senior");
+  if (/\bvps?\b|\bvice\s+presidents?\b/i.test(query)) seniorities.add("vp");
+  if (/\bdirectors?\b/i.test(query)) seniorities.add("director");
+  if (/\bheads?\b/i.test(query)) seniorities.add("head");
+  if (/\bmanagers?\b/i.test(query)) seniorities.add("manager");
+  if (/\bseniors?\b/i.test(query)) seniorities.add("senior");
   if (/\bmid[\s-]?level\b/i.test(query)) seniorities.add("mid-level");
-  if (/\b(?:entry[\s-]?level|junior)\b/i.test(query)) seniorities.add("entry");
-  if (/\bintern\b/i.test(query)) seniorities.add("intern");
-  if (/\bfounder\b/i.test(query)) seniorities.add("founder");
-  if (/\bowner\b/i.test(query)) seniorities.add("owner");
-  if (/\bpartner\b/i.test(query)) seniorities.add("partner");
+  if (/\b(?:entry[\s-]?level|juniors?)\b/i.test(query)) seniorities.add("entry");
+  if (/\binterns?\b/i.test(query)) seniorities.add("intern");
+  if (/\bfounders?\b/i.test(query)) seniorities.add("founder");
+  if (/\bowners?\b/i.test(query)) seniorities.add("owner");
+  if (/\bpartners?\b/i.test(query)) seniorities.add("partner");
   return [...seniorities];
 }
 
@@ -441,6 +630,34 @@ export function extractLocationsFromQuery(query: string): string[] {
     locations.add(REMOTE_LOCATION.value);
   }
 
+  // Capture free-form places after in/from/near when not already in the known list
+  // (e.g. smaller cities). Prefer specific city over a broader country if both appear.
+  if (locations.size === 0) {
+    const freeform = query.match(
+      /\b(?:in|from|near|based\s+in|located\s+in)\s+(?:the\s+)?([a-z][a-z0-9\s.'-]{1,40}?)(?=\s+(?:working|at|with|who|for|and|,|\.|$))/i,
+    );
+    const candidate = freeform?.[1]?.trim();
+    const banned = new Set([
+      ...TITLE_ORG_STOPWORDS,
+      ...TITLE_LEADING_FILLER,
+      "us",
+      "usa",
+      "uk",
+    ]);
+    if (
+      candidate &&
+      !banned.has(candidate.toLowerCase()) &&
+      !/^\d/.test(candidate)
+    ) {
+      locations.add(
+        candidate
+          .split(/\s+/)
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(" "),
+      );
+    }
+  }
+
   return [...locations];
 }
 
@@ -459,12 +676,19 @@ function cleanJobTitle(value: string | undefined): string | undefined {
   if (!value) return undefined;
 
   let cleaned = value.trim();
+  cleaned = cleaned.split(/\s+working\s+at\s+/i)[0] ?? cleaned;
+  cleaned = cleaned.split(/\s+employed\s+(?:at|by)\s+/i)[0] ?? cleaned;
   cleaned = cleaned.split(/\s+at\s+/i)[0] ?? cleaned;
   cleaned = cleaned.split(/\s+in\s+/i)[0] ?? cleaned;
   cleaned = cleaned.replace(/\s+of\s+employees?.*$/i, "");
   cleaned = cleaned.replace(/\s+employees?\s+\d.*$/i, "");
   cleaned = cleaned.replace(/\s+(companies?|company)\b.*$/i, "");
-  cleaned = cleaned.trim();
+  cleaned = cleaned
+    .replace(
+      /\s+(?:working|employed|currently|based|located|living|residing|looking)\s*$/i,
+      "",
+    )
+    .trim();
 
   if (!cleaned || cleaned.length > 60) return undefined;
   if (/\bemployees?\b/i.test(cleaned)) return undefined;
@@ -515,17 +739,53 @@ function shouldReplaceJobTitle(current: string | undefined, extracted: string | 
 }
 
 function preferSpecificLocations(locations: string[]): string[] {
-  const usStates = new Set(
-    (
-      PERSON_LOCATION_REGIONS.find((region) => region.value === "United States")
-        ?.states ?? []
-    ).map((state) => state.value),
+  let result = [...locations];
+
+  const usRegion = PERSON_LOCATION_REGIONS.find(
+    (region) => region.value === "United States",
   );
-  const hasUsStates = locations.some((location) => usStates.has(location));
-  if (hasUsStates && locations.includes("United States")) {
-    return locations.filter((location) => location !== "United States");
+  const canadaRegion = PERSON_LOCATION_REGIONS.find(
+    (region) => region.value === "Canada",
+  );
+
+  const usStates = new Set((usRegion?.states ?? []).map((state) => state.value));
+  const canadaProvinces = new Set(
+    (canadaRegion?.states ?? []).map((state) => state.value),
+  );
+  const usCities = new Set(
+    (usRegion?.states ?? []).flatMap(
+      (state) => state.cities?.map((city) => city.value) ?? [],
+    ),
+  );
+  const canadaCities = new Set(
+    (canadaRegion?.states ?? []).flatMap(
+      (state) => state.cities?.map((city) => city.value) ?? [],
+    ),
+  );
+
+  const hasUsStates = result.some((location) => usStates.has(location));
+  const hasCanadaProvinces = result.some((location) =>
+    canadaProvinces.has(location),
+  );
+  const hasUsCities = result.some((location) => usCities.has(location));
+  const hasCanadaCities = result.some((location) => canadaCities.has(location));
+
+  if ((hasUsStates || hasUsCities) && result.includes("United States")) {
+    result = result.filter((location) => location !== "United States");
   }
-  return locations;
+  if ((hasCanadaProvinces || hasCanadaCities) && result.includes("Canada")) {
+    result = result.filter((location) => location !== "Canada");
+  }
+
+  // If a city is selected, drop its parent state/province so we don't widen the search.
+  if (hasCanadaCities) {
+    result = result.filter((location) => !canadaProvinces.has(location));
+  }
+  if (hasUsCities) {
+    result = result.filter((location) => !usStates.has(location));
+  }
+
+  return result;
 }
 
 export function refineFiltersFromQuery(
@@ -602,6 +862,29 @@ export function refineFiltersFromQuery(
       ? refined.keywords.split(/,\s*/).filter(Boolean)
       : [];
     refined.keywords = [...new Set([...existing, ...topicKeywords])].join(", ");
+  }
+
+  const extractedSkill = extractSkillsFromExperienceQuery(query);
+  if (extractedSkill) {
+    const existingSkills = refined.skills
+      ? refined.skills.split(/,\s*/).filter(Boolean)
+      : [];
+    refined.skills = [...new Set([...existingSkills, extractedSkill])].join(", ");
+  }
+
+  const extractedRevenue = extractAnnualRevenueFromQuery(query);
+  if (extractedRevenue) {
+    refined.annualRevenue = extractedRevenue.label;
+    if (typeof extractedRevenue.min === "number") {
+      refined.annualRevenueMin = extractedRevenue.min;
+    } else {
+      delete refined.annualRevenueMin;
+    }
+    if (typeof extractedRevenue.max === "number") {
+      refined.annualRevenueMax = extractedRevenue.max;
+    } else {
+      delete refined.annualRevenueMax;
+    }
   }
 
   const cleanedKeywords = cleanKeywords(refined.keywords, refined);
