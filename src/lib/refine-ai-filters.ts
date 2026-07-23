@@ -630,6 +630,34 @@ export function extractLocationsFromQuery(query: string): string[] {
     locations.add(REMOTE_LOCATION.value);
   }
 
+  // Capture free-form places after in/from/near when not already in the known list
+  // (e.g. smaller cities). Prefer specific city over a broader country if both appear.
+  if (locations.size === 0) {
+    const freeform = query.match(
+      /\b(?:in|from|near|based\s+in|located\s+in)\s+(?:the\s+)?([a-z][a-z0-9\s.'-]{1,40}?)(?=\s+(?:working|at|with|who|for|and|,|\.|$))/i,
+    );
+    const candidate = freeform?.[1]?.trim();
+    const banned = new Set([
+      ...TITLE_ORG_STOPWORDS,
+      ...TITLE_LEADING_FILLER,
+      "us",
+      "usa",
+      "uk",
+    ]);
+    if (
+      candidate &&
+      !banned.has(candidate.toLowerCase()) &&
+      !/^\d/.test(candidate)
+    ) {
+      locations.add(
+        candidate
+          .split(/\s+/)
+          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+          .join(" "),
+      );
+    }
+  }
+
   return [...locations];
 }
 
@@ -711,17 +739,53 @@ function shouldReplaceJobTitle(current: string | undefined, extracted: string | 
 }
 
 function preferSpecificLocations(locations: string[]): string[] {
-  const usStates = new Set(
-    (
-      PERSON_LOCATION_REGIONS.find((region) => region.value === "United States")
-        ?.states ?? []
-    ).map((state) => state.value),
+  let result = [...locations];
+
+  const usRegion = PERSON_LOCATION_REGIONS.find(
+    (region) => region.value === "United States",
   );
-  const hasUsStates = locations.some((location) => usStates.has(location));
-  if (hasUsStates && locations.includes("United States")) {
-    return locations.filter((location) => location !== "United States");
+  const canadaRegion = PERSON_LOCATION_REGIONS.find(
+    (region) => region.value === "Canada",
+  );
+
+  const usStates = new Set((usRegion?.states ?? []).map((state) => state.value));
+  const canadaProvinces = new Set(
+    (canadaRegion?.states ?? []).map((state) => state.value),
+  );
+  const usCities = new Set(
+    (usRegion?.states ?? []).flatMap(
+      (state) => state.cities?.map((city) => city.value) ?? [],
+    ),
+  );
+  const canadaCities = new Set(
+    (canadaRegion?.states ?? []).flatMap(
+      (state) => state.cities?.map((city) => city.value) ?? [],
+    ),
+  );
+
+  const hasUsStates = result.some((location) => usStates.has(location));
+  const hasCanadaProvinces = result.some((location) =>
+    canadaProvinces.has(location),
+  );
+  const hasUsCities = result.some((location) => usCities.has(location));
+  const hasCanadaCities = result.some((location) => canadaCities.has(location));
+
+  if ((hasUsStates || hasUsCities) && result.includes("United States")) {
+    result = result.filter((location) => location !== "United States");
   }
-  return locations;
+  if ((hasCanadaProvinces || hasCanadaCities) && result.includes("Canada")) {
+    result = result.filter((location) => location !== "Canada");
+  }
+
+  // If a city is selected, drop its parent state/province so we don't widen the search.
+  if (hasCanadaCities) {
+    result = result.filter((location) => !canadaProvinces.has(location));
+  }
+  if (hasUsCities) {
+    result = result.filter((location) => !usStates.has(location));
+  }
+
+  return result;
 }
 
 export function refineFiltersFromQuery(

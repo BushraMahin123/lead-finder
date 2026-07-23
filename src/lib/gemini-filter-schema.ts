@@ -192,7 +192,16 @@ function pickAllowed(values: string[], allowed: string[]): string[] {
 function pickLocations(values: string[]): string[] {
   return [...new Set(
     values
-      .map((value) => canonicalizeLocationValue(value, PERSON_LOCATIONS))
+      .map((value) => {
+        const canonical = canonicalizeLocationValue(value, PERSON_LOCATIONS);
+        if (canonical) return canonical;
+
+        // Keep free-form cities Gemini extracted (e.g. Ottawa) so we don't drop them.
+        const trimmed = value.trim().replace(/\s+/g, " ");
+        if (trimmed.length < 2 || trimmed.length > 80) return null;
+        if (/^[\d\s.,+-]+$/.test(trimmed)) return null;
+        return trimmed;
+      })
       .filter((value): value is string => Boolean(value)),
   )];
 }

@@ -177,7 +177,8 @@ function buildLocationAliasMap(): Map<string, string[]> {
       setAliases(state.value, stateAliases);
 
       for (const city of state.cities ?? []) {
-        setAliases(city.value, [city.value, state.value, ...(abbr ? [abbr] : [])]);
+        // City filters must stay city-specific — do not widen to the whole state.
+        setAliases(city.value, [city.value]);
       }
     }
   }
