@@ -1,4 +1,5 @@
 import { parseEmployeeSizeRange } from "@/lib/filter-options";
+import { filterPeopleBySearchFilters } from "@/lib/filter-result-match";
 import {
   enqueueAiArk,
   isRetryableHttpStatus,
@@ -165,15 +166,39 @@ function normalizeDomain(raw: string): string {
     .split("/")[0];
 }
 
-function smartTextFilter(values: string[]) {
+function smartTextFilter(values: string[], mode: "SMART" | "WORD" | "STRICT" = "SMART") {
   return {
     any: {
       include: {
-        mode: "SMART",
+        mode,
         content: values,
       },
     },
   };
+}
+
+function titleSearchVariants(title: string): string[] {
+  const trimmed = title.trim();
+  if (!trimmed) return [];
+
+  const variants = new Set<string>([trimmed]);
+  const singular = trimmed
+    .replace(/\bmanagers\b/gi, "Manager")
+    .replace(/\bdirectors\b/gi, "Director")
+    .replace(/\bengineers\b/gi, "Engineer")
+    .replace(/\bscientists\b/gi, "Scientist")
+    .replace(/\banalysts\b/gi, "Analyst")
+    .replace(/\bmarketers\b/gi, "Marketer")
+    .replace(/\bdesigners\b/gi, "Designer")
+    .replace(/\bdevelopers\b/gi, "Developer")
+    .replace(/\bowners\b/gi, "Owner")
+    .replace(/\bfounders\b/gi, "Founder");
+
+  if (singular !== trimmed) {
+    variants.add(singular);
+  }
+
+  return [...variants];
 }
 
 function anyInclude(values: string[]) {
@@ -261,6 +286,8 @@ function hasPeopleFilters(filters: SearchFilters): boolean {
         typeof filters.employeeCountMax === "number") ||
       typeof filters.experienceYearsMin === "number" ||
       typeof filters.experienceYearsMax === "number" ||
+      typeof filters.annualRevenueMin === "number" ||
+      typeof filters.annualRevenueMax === "number" ||
       hasValues(filters.languages) ||
       hasValues(filters.companyTypes),
   );
@@ -335,7 +362,19 @@ function buildSearchBody(filters: SearchFilters): Record<string, unknown> {
     account.type = anyInclude(companyTypes);
   }
 
-  const titles = splitCsv(filters.jobTitle);
+  const hasRevenueRange =
+    typeof filters.annualRevenueMin === "number" ||
+    typeof filters.annualRevenueMax === "number";
+  if (hasRevenueRange) {
+    const start = filters.annualRevenueMin ?? 0;
+    const end = filters.annualRevenueMax ?? 100_000_000_000;
+    account.revenue = {
+      type: "RANGE",
+      range: [{ start, end }],
+    };
+  }
+
+  const titles = splitCsv(filters.jobTitle).flatMap(titleSearchVariants);
   const hasExperienceYears =
     typeof filters.experienceYearsMin === "number" ||
     typeof filters.experienceYearsMax === "number";
@@ -344,7 +383,8 @@ function buildSearchBody(filters: SearchFilters): Record<string, unknown> {
     const current: Record<string, unknown> = {};
 
     if (titles.length > 0) {
-      current.title = smartTextFilter(titles);
+      // WORD is stricter than SMART — reduces unrelated title matches from the provider.
+      current.title = smartTextFilter([...new Set(titles)], "WORD");
     }
 
     if (hasExperienceYears) {
@@ -401,7 +441,14 @@ function buildSearchBody(filters: SearchFilters): Record<string, unknown> {
   if (filters.socialMedia?.trim()) parts.push(filters.socialMedia.trim());
   if (filters.certifications?.trim()) parts.push(filters.certifications.trim());
   if (filters.funding?.trim()) parts.push(filters.funding.trim());
-  if (filters.annualRevenue?.trim()) parts.push(filters.annualRevenue.trim());
+  // annualRevenue is applied via account.revenue when min/max exist; keep label out of keywords.
+  if (
+    filters.annualRevenue?.trim() &&
+    typeof filters.annualRevenueMin !== "number" &&
+    typeof filters.annualRevenueMax !== "number"
+  ) {
+    parts.push(filters.annualRevenue.trim());
+  }
   if (filters.foundedYear?.trim()) parts.push(filters.foundedYear.trim());
   if (filters.headcountGrowth?.trim()) parts.push(filters.headcountGrowth.trim());
   if (filters.linkedInBadge?.trim()) parts.push(filters.linkedInBadge.trim());
@@ -563,10 +610,23 @@ export async function searchPeople(
 
   const sourcePeople = result.content ?? [];
   const people = sourcePeople.map(mapPersonToLead);
-  const enriched = await enrichPeople(people, sourcePeople, filters);
+  const matched = filterPeopleBySearchFilters(people, filters);
+  const matchedIds = new Set(matched.map((person) => person.id));
+  const matchedSources = sourcePeople.filter((person) =>
+    matchedIds.has(person.id),
+  );
+  const enriched = await enrichPeople(matched, matchedSources, filters);
+
+  // If we dropped mismatches, shrink total so pagination reflects what we can show.
+  const providerTotal = result.totalElements ?? people.length;
+  const dropped = people.length - matched.length;
+  const totalEntries =
+    dropped > 0
+      ? Math.max(matched.length, providerTotal - dropped)
+      : providerTotal;
 
   return {
     people: enriched,
-    totalEntries: result.totalElements ?? enriched.length,
+    totalEntries,
   };
 }

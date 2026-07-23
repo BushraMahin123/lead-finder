@@ -96,6 +96,8 @@ export default function FilterPanel({
   const [experienceYearsMax, setExperienceYearsMax] = useState("");
   const [employeeCountMin, setEmployeeCountMin] = useState("");
   const [employeeCountMax, setEmployeeCountMax] = useState("");
+  const [annualRevenueMin, setAnnualRevenueMin] = useState("");
+  const [annualRevenueMax, setAnnualRevenueMax] = useState("");
   const [listFilters, setListFilters] = useState(EMPTY_LIST_FILTERS);
 
   function updateListFilter<K extends keyof typeof EMPTY_LIST_FILTERS>(
@@ -118,6 +120,16 @@ export default function FilterPanel({
     setFunding(filters.funding ?? "");
     setTechnology(filters.technology ?? "");
     setAnnualRevenue(filters.annualRevenue ?? "");
+    setAnnualRevenueMin(
+      typeof filters.annualRevenueMin === "number"
+        ? String(filters.annualRevenueMin)
+        : "",
+    );
+    setAnnualRevenueMax(
+      typeof filters.annualRevenueMax === "number"
+        ? String(filters.annualRevenueMax)
+        : "",
+    );
     setProductsServices(filters.productsServices ?? "");
     setEducation(filters.education ?? "");
     setSocialMedia(filters.socialMedia ?? "");
@@ -189,7 +201,10 @@ export default function FilterPanel({
     companyType: listFilters.companyTypes.length > 0,
     funding: Boolean(funding.trim()),
     technology: Boolean(technology.trim()),
-    annualRevenue: Boolean(annualRevenue.trim()),
+    annualRevenue:
+      Boolean(annualRevenue.trim()) ||
+      annualRevenueMin.trim().length > 0 ||
+      annualRevenueMax.trim().length > 0,
     employees:
       listFilters.employeeSizes.length > 0 ||
       employeeCountMin.trim().length > 0 ||
@@ -217,7 +232,6 @@ export default function FilterPanel({
       socialMedia,
       certifications,
       funding,
-      annualRevenue,
       foundedYear,
       headcountGrowth,
       linkedInBadge,
@@ -234,6 +248,12 @@ export default function FilterPanel({
       : undefined;
     const parsedEmployeeMax = employeeCountMax.trim()
       ? Number(employeeCountMax)
+      : undefined;
+    const parsedRevenueMin = annualRevenueMin.trim()
+      ? Number(annualRevenueMin)
+      : undefined;
+    const parsedRevenueMax = annualRevenueMax.trim()
+      ? Number(annualRevenueMax)
       : undefined;
 
     return {
@@ -271,6 +291,14 @@ export default function FilterPanel({
         typeof parsedEmployeeMax === "number" && Number.isFinite(parsedEmployeeMax)
           ? parsedEmployeeMax
           : undefined,
+      annualRevenueMin:
+        typeof parsedRevenueMin === "number" && Number.isFinite(parsedRevenueMin)
+          ? parsedRevenueMin
+          : undefined,
+      annualRevenueMax:
+        typeof parsedRevenueMax === "number" && Number.isFinite(parsedRevenueMax)
+          ? parsedRevenueMax
+          : undefined,
       ...listFilters,
       perPage: SEARCH_RESULTS_PER_PAGE,
       page: 1,
@@ -294,6 +322,8 @@ export default function FilterPanel({
     setFunding("");
     setTechnology("");
     setAnnualRevenue("");
+    setAnnualRevenueMin("");
+    setAnnualRevenueMax("");
     setProductsServices("");
     setEducation("");
     setSocialMedia("");
@@ -479,12 +509,20 @@ export default function FilterPanel({
         );
       case "annualRevenue":
         return (
-          <input
-            value={annualRevenue}
-            onChange={(event) => setAnnualRevenue(event.target.value)}
-            placeholder="$1M–$10M"
-            className={textInputClassName()}
-          />
+          <div className="space-y-2">
+            <input
+              value={annualRevenue}
+              onChange={(event) => setAnnualRevenue(event.target.value)}
+              placeholder="$1M–$10M"
+              className={textInputClassName()}
+            />
+            {(annualRevenueMin || annualRevenueMax) && (
+              <p className="text-xs text-slate-500">
+                Range from AI: {annualRevenueMin || "…"}–
+                {annualRevenueMax || "…"} USD
+              </p>
+            )}
+          </div>
         );
       case "employees":
         return (
