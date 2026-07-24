@@ -263,24 +263,36 @@ export async function enrichContactsWithPersistence(
   const stored = await getEnrichmentsForPeople(people);
   const results: EnrichContactResult[] = [];
 
-  for (const person of people) {
+  // Process contacts in parallel for better performance
+  const enrichmentPromises = people.map(async (person) => {
     const cached = stored.get(person.id);
     const cachedForType = cached ? cachedResultForType(cached, type) : null;
+    
     if (cachedForType) {
-      results.push(cachedForType);
-      continue;
+      return cachedForType;
     }
 
-    const result =
-      type === "email"
-        ? await enrichEmailContact(person)
-        : await enrichPhoneContact(person);
+    try {
+      const result =
+        type === "email"
+          ? await enrichEmailContact(person)
+          : await enrichPhoneContact(person);
 
-    if (resultHasType(result, type)) {
-      await saveEnrichment(person, result);
+      if (resultHasType(result, type)) {
+        await saveEnrichment(person, result);
+      }
+      return result;
+    } catch (error) {
+      // Return error result instead of throwing to avoid failing entire batch
+      return {
+        id: person.id,
+        error: error instanceof Error ? error.message : "Enrichment failed",
+      };
     }
-    results.push(result);
-  }
+  });
+
+  const settledResults = await Promise.all(enrichmentPromises);
+  results.push(...settledResults);
 
   return results;
 }

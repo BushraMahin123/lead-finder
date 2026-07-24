@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
     const results = await enrichContactsWithPersistence(people, type);
     const fromStorage = results.filter((result) => result.fromStorage).length;
     const freshCount = countFreshExtractions(results, type);
+    const failed = results.filter((result) => result.error).length;
     const tokenDebit = calculateEnrichTokenCost(type, freshCount);
 
     let balance = await assertSufficientTokens(userId, tokenDebit);
@@ -109,6 +110,7 @@ export async function POST(request: NextRequest) {
       campaignUpdated,
       tokensDebited: tokenDebit,
       tokenBalance: balance,
+      failedCount: failed,
     });
   } catch (error) {
     if (error instanceof InsufficientTokensError) {
