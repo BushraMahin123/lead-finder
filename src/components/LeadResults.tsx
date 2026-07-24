@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ApiError, fetchJson } from "@/lib/fetch-json";
+import { notifyBillingBalanceRefresh } from "@/hooks/useBillingBalance";
 import type {
   CampaignColumn,
   CampaignColumnValue,
@@ -17,6 +18,7 @@ import {
   rowLeftBorderClass,
   stickyCellBackground,
 } from "@/components/ContactRowTracking";
+import { IconCopy } from "@/components/icons";
 
 interface LeadResultsProps {
   people: LeadPerson[];
@@ -113,6 +115,18 @@ function isInteractiveRowTarget(target: EventTarget | null): boolean {
   );
 }
 
+async function copyToClipboard(text: string, fieldId: string, onCopied: (fieldId: string) => void): Promise<boolean> {
+  try {
+    await navigator.clipboard.writeText(text);
+    onCopied(fieldId);
+    setTimeout(() => onCopied(null), 2000);
+    return true;
+  } catch (err) {
+    console.error("Failed to copy:", err);
+    return false;
+  }
+}
+
 export default function LeadResults({
   people,
   totalEntries,
@@ -138,6 +152,8 @@ export default function LeadResults({
   const [enrichingType, setEnrichingType] = useState<EnrichType | null>(null);
   const [enrichError, setEnrichError] = useState<string | null>(null);
   const [enrichNotice, setEnrichNotice] = useState<string | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
   const peopleIds = useMemo(
     () => people.map((person) => person.id).join(","),
@@ -148,6 +164,8 @@ export default function LeadResults({
     setSelectedIds(new Set());
     setEnrichError(null);
     setEnrichNotice(null);
+    setCopiedField(null);
+    setProcessingIds(new Set());
   }, [peopleIds]);
 
   const someSelected = selectedIds.size > 0;
@@ -168,6 +186,7 @@ export default function LeadResults({
     setEnrichingType(type);
     setEnrichError(null);
     setEnrichNotice(null);
+    setProcessingIds(new Set(selectedPeople.map((p) => p.id)));
 
     const label = type === "email" ? "email" : "phone number";
     const labelPlural = type === "email" ? "emails" : "phone numbers";
@@ -200,6 +219,12 @@ export default function LeadResults({
       onPeopleUpdate(applyEnrichment(people, results));
       setSelectedIds(new Set());
 
+      // Refresh token balance immediately after successful extraction
+      const tokensDebited = Number(data.tokensDebited ?? 0);
+      if (tokensDebited > 0) {
+        notifyBillingBalanceRefresh();
+      }
+
       if (enrichedCount > 0) {
         if (fromStorage > 0 && freshlyExtracted > 0) {
           setEnrichNotice(
@@ -220,7 +245,7 @@ export default function LeadResults({
 
       if (failed.length > 0 && enrichedCount > 0) {
         setEnrichNotice(
-          `Extracted ${labelPlural} for ${enrichedCount} of ${selectedPeople.length}. ${failedCount} could not be enriched.`,
+          `Extracted ${labelPlural} for ${enrichedCount} of ${selectedPeople.length}. ${failedCount} could not be found.`,
         );
       } else if (failed.length > 0 && enrichedCount === 0) {
         // Show specific error message if all failures have the same error
@@ -253,6 +278,7 @@ export default function LeadResults({
       );
     } finally {
       setEnrichingType(null);
+      setProcessingIds(new Set());
     }
   }
 
@@ -333,25 +359,41 @@ export default function LeadResults({
         </div>
 
         {enrichError && (
-          <p className="mt-3 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-            {enrichError}
-          </p>
+          <div className="mt-3 flex items-center justify-between rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+            <p>{enrichError}</p>
+            <button
+              type="button"
+              onClick={() => setEnrichError(null)}
+              className="ml-2 text-red-400 hover:text-red-600 transition-colors"
+              title="Dismiss"
+            >
+              ×
+            </button>
+          </div>
         )}
 
         {enrichNotice && (
-          <p className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
-            {enrichNotice}
-          </p>
+          <div className="mt-3 flex items-center justify-between rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+            <p>{enrichNotice}</p>
+            <button
+              type="button"
+              onClick={() => setEnrichNotice(null)}
+              className="ml-2 text-emerald-400 hover:text-emerald-600 transition-colors"
+              title="Dismiss"
+            >
+              ×
+            </button>
+          </div>
         )}
       </div>
 
-      <div className="overflow-x-auto">
+      <div className="overflow-x-auto max-h-[calc(100vh-12rem)] overflow-y-auto">
         <table className="min-w-full border-separate border-spacing-0 text-left text-sm">
           <colgroup>
             <col className="w-44" />
             <col className="w-52" />
           </colgroup>
-          <thead className="bg-slate-50 text-slate-600">
+          <thead className="sticky top-0 z-20 bg-slate-50 text-slate-600 shadow-sm">
             <tr>
               <th className={`px-3 py-3 font-medium ${STICKY_HEADER_CLASSES[0]}`}>
                 Name
@@ -361,23 +403,23 @@ export default function LeadResults({
               </th>
               {enableTracking && (
                 <>
-                  <th className="min-w-[14rem] border-l border-slate-200/80 bg-slate-50/90 px-3 py-3 font-medium text-slate-700">
+                  <th className="min-w-[14rem] border-l border-slate-200/80 bg-slate-50/90 px-3 py-3 font-medium text-slate-700 sticky top-0">
                     Follow-up
                   </th>
-                  <th className="min-w-[12rem] bg-slate-50/90 px-3 py-3 font-medium text-slate-700">
+                  <th className="min-w-[12rem] bg-slate-50/90 px-3 py-3 font-medium text-slate-700 sticky top-0">
                     Notes
                   </th>
                 </>
               )}
-              <th className="px-3 py-3 font-medium">Company</th>
-              <th className="px-3 py-3 font-medium">Email</th>
-              <th className="px-3 py-3 font-medium">Phone</th>
-              <th className="px-3 py-3 font-medium">Location</th>
-              <th className="px-3 py-3 font-medium">LinkedIn</th>
+              <th className="px-3 py-3 font-medium sticky top-0 bg-slate-50">Company</th>
+              <th className="px-3 py-3 font-medium sticky top-0 bg-slate-50">Email</th>
+              <th className="px-3 py-3 font-medium sticky top-0 bg-slate-50">Phone</th>
+              <th className="px-3 py-3 font-medium sticky top-0 bg-slate-50">Location</th>
+              <th className="px-3 py-3 font-medium sticky top-0 bg-slate-50">LinkedIn</th>
               {aiColumns.map((column) => (
                 <th
                   key={column.id}
-                  className="min-w-[10rem] px-3 py-3 font-medium text-violet-800"
+                  className="min-w-[10rem] px-3 py-3 font-medium text-violet-800 sticky top-0 bg-slate-50"
                 >
                   <div className="flex items-center gap-1.5">
                     <span className="truncate">{column.name}</span>
@@ -408,7 +450,7 @@ export default function LeadResults({
                 </th>
               ))}
               {onAddColumn && (
-                <th className="px-3 py-3 font-medium">
+                <th className="px-3 py-3 font-medium sticky top-0 bg-slate-50">
                   <button
                     type="button"
                     onClick={onAddColumn}
@@ -427,128 +469,175 @@ export default function LeadResults({
               const isDone = meta?.isDone || meta?.status === "done";
 
               return (
-              <tr
-                key={person.id}
-                onClick={(event) => {
-                  if (!enableEnrichment || isInteractiveRowTarget(event.target)) {
-                    return;
-                  }
-                  toggleOne(person.id);
-                }}
-                className={`border-l-[3px] ${rowLeftBorderClass(meta)} ${rowBackgroundClass(meta, selected)} ${
-                  enableEnrichment ? "cursor-pointer" : ""
-                }`}
-              >
-                <td
-                  className={`max-w-44 truncate px-3 py-3 font-medium ${stickyBodyClass(0, selected, meta)} ${
-                    isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-900"
-                  }`}
+                <tr
+                  key={person.id}
+                  onClick={(event) => {
+                    if (!enableEnrichment || isInteractiveRowTarget(event.target)) {
+                      return;
+                    }
+                    toggleOne(person.id);
+                  }}
+                  className={`border-l-[3px] ${rowLeftBorderClass(meta)} ${rowBackgroundClass(meta, selected)} ${enableEnrichment ? "cursor-pointer" : ""
+                    }`}
                 >
-                  {displayName(person)}
-                </td>
-                <td
-                  className={`max-w-52 truncate px-3 py-3 ${stickyBodyClass(1, selected, meta)} ${
-                    isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-700"
-                  }`}
-                >
-                  {person.title ?? "—"}
-                </td>
-                {enableTracking && (
-                  <>
-                    <td className="border-l border-slate-200/60 px-3 py-2.5">
-                      <ContactTrackingCell
-                        personLabel={displayName(person)}
-                        meta={meta}
-                        onMetaUpdate={(updates) =>
-                          onContactMetaUpdate?.(person.id, updates)
-                        }
-                      />
-                    </td>
-                    <td className="px-3 py-2.5">
-                      <ContactNotesInput
-                        value={meta?.notes ?? ""}
-                        onChange={(notes) =>
-                          onContactMetaUpdate?.(person.id, { notes })
-                        }
-                      />
-                    </td>
-                  </>
-                )}
-                <td className={`px-3 py-3 ${isDone ? "opacity-60" : ""}`}>
-                  <div>{person.organization?.name ?? "—"}</div>
-                  {person.organization?.primary_domain && (
-                    <div className="text-xs text-slate-500">
-                      {person.organization.primary_domain}
-                    </div>
+                  <td
+                    className={`max-w-44 truncate px-3 py-3 font-medium ${stickyBodyClass(0, selected, meta)} ${isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-900"
+                      }`}
+                  >
+                    {displayName(person)}
+                  </td>
+                  <td
+                    className={`max-w-52 truncate px-3 py-3 ${stickyBodyClass(1, selected, meta)} ${isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-700"
+                      }`}
+                  >
+                    {person.title ?? "—"}
+                  </td>
+                  {enableTracking && (
+                    <>
+                      <td className="border-l border-slate-200/60 px-3 py-2.5">
+                        <ContactTrackingCell
+                          personLabel={displayName(person)}
+                          meta={meta}
+                          onMetaUpdate={(updates) =>
+                            onContactMetaUpdate?.(person.id, updates)
+                          }
+                        />
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <ContactNotesInput
+                          value={meta?.notes ?? ""}
+                          onChange={(notes) =>
+                            onContactMetaUpdate?.(person.id, { notes })
+                          }
+                        />
+                      </td>
+                    </>
                   )}
-                </td>
-                <td className={`px-3 py-3 ${isDone ? "opacity-60" : ""}`}>
-                  {person.email ? (
-                    <div>
+                  <td className={`px-3 py-3 ${isDone ? "opacity-60" : ""}`}>
+                    <div>{person.organization?.name ?? "—"}</div>
+                    {person.organization?.primary_domain && (
+                      <div className="text-xs text-slate-500">
+                        {person.organization.primary_domain}
+                      </div>
+                    )}
+                  </td>
+                  <td className={`px-3 py-3 ${isDone ? "opacity-60" : ""}`}>
+                    {processingIds.has(person.id) && enrichingType === "email" ? (
+                      <div className="flex items-center justify-center">
+                        <img src="/lead.png" alt="Loading" className="h-5 w-5 animate-pulse" />
+                      </div>
+                    ) : person.email ? (
+                      <div className="flex items-center gap-2">
+                        <a
+                          href={`mailto:${person.email}`}
+                          className="text-indigo-600 hover:underline"
+                        >
+                          {person.email}
+                        </a>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            copyToClipboard(person.email, `${person.id}-email`, setCopiedField);
+                          }}
+                          className="text-slate-400 hover:text-slate-600 transition-colors"
+                          title="Copy email"
+                          data-no-row-select
+                        >
+                          <IconCopy className="h-4 w-4" />
+                        </button>
+                        {copiedField === `${person.id}-email` && (
+                          <span className="text-xs text-emerald-600 font-medium">Copied!</span>
+                        )}
+                        {person.email_status && (
+                          <div className="mt-1">
+                            <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200/80">
+                              {person.email_status}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </td>
+                  <td className={`px-3 py-3 text-slate-700 ${isDone ? "opacity-60" : ""}`}>
+                    {processingIds.has(person.id) && enrichingType === "phone" ? (
+                      <div className="flex items-center justify-center">
+                        <img src="/lead.png" alt="Loading" className="h-5 w-5 animate-pulse" />
+                      </div>
+                    ) : person.phone_numbers && person.phone_numbers.length > 0 ? (
+                      <div className="flex items-center gap-2">
+                        <span>{displayPhone(person)}</span>
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            const phone = person.phone_numbers[0];
+                            const phoneToCopy = phone.sanitized_number || phone.raw_number;
+                            if (phoneToCopy) {
+                              copyToClipboard(phoneToCopy, `${person.id}-phone`, setCopiedField);
+                            }
+                          }}
+                          className="text-slate-400 hover:text-slate-600 transition-colors"
+                          title="Copy phone number"
+                          data-no-row-select
+                        >
+                          <IconCopy className="h-4 w-4" />
+                        </button>
+                        {copiedField === `${person.id}-phone` && (
+                          <span className="text-xs text-emerald-600 font-medium">Copied!</span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="text-slate-400">—</span>
+                    )}
+                  </td>
+                  <td className={`px-3 py-3 text-slate-700 ${isDone ? "opacity-60" : ""}`}>{displayLocation(person)}</td>
+                  <td className={`px-3 py-3 ${isDone ? "opacity-60" : ""}`}>
+                    {person.linkedin_url ? (
                       <a
-                        href={`mailto:${person.email}`}
+                        href={person.linkedin_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="text-indigo-600 hover:underline"
                       >
-                        {person.email}
+                        Profile
                       </a>
-                      {person.email_status && (
-                        <div className="mt-1">
-                          <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium uppercase tracking-wide text-emerald-700 ring-1 ring-emerald-200/80">
-                            {person.email_status}
-                          </span>
-                        </div>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="text-slate-400">—</span>
-                  )}
-                </td>
-                <td className={`px-3 py-3 text-slate-700 ${isDone ? "opacity-60" : ""}`}>{displayPhone(person)}</td>
-                <td className={`px-3 py-3 text-slate-700 ${isDone ? "opacity-60" : ""}`}>{displayLocation(person)}</td>
-                <td className={`px-3 py-3 ${isDone ? "opacity-60" : ""}`}>
-                  {person.linkedin_url ? (
-                    <a
-                      href={person.linkedin_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-indigo-600 hover:underline"
-                    >
-                      Profile
-                    </a>
-                  ) : (
-                    "—"
-                  )}
-                </td>
-                {aiColumns.map((column) => {
-                  const cell = columnValues[person.id]?.[column.id];
-                  const isRunning =
-                    cell?.status === "running" && cell.columnId === column.id;
+                    ) : (
+                      "—"
+                    )}
+                  </td>
+                  {aiColumns.map((column) => {
+                    const cell = columnValues[person.id]?.[column.id];
+                    const isRunning =
+                      cell?.status === "running" && cell.columnId === column.id;
 
-                  return (
-                    <td
-                      key={column.id}
-                      className="max-w-xs px-3 py-3 text-slate-700"
-                    >
-                      {isRunning ? (
-                        <span className="inline-flex items-center gap-2 text-xs text-violet-600">
-                          <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
-                          Running…
-                        </span>
-                      ) : cell?.status === "error" ? (
-                        <AiColumnErrorIndicator
-                          message={cell.error ?? "AI enrichment failed"}
-                        />
-                      ) : cell?.value ? (
-                        <span className="line-clamp-3 text-sm">{cell.value}</span>
-                      ) : (
-                        <span className="text-xs text-slate-400">—</span>
-                      )}
-                    </td>
-                  );
-                })}
-                {onAddColumn && <td className="px-3 py-3" />}
-              </tr>
-            );
+                    return (
+                      <td
+                        key={column.id}
+                        className="max-w-xs px-3 py-3 text-slate-700"
+                      >
+                        {isRunning ? (
+                          <span className="inline-flex items-center gap-2 text-xs text-violet-600">
+                            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
+                            Running…
+                          </span>
+                        ) : cell?.status === "error" ? (
+                          <AiColumnErrorIndicator
+                            message={cell.error ?? "AI enrichment failed"}
+                          />
+                        ) : cell?.value ? (
+                          <span className="line-clamp-3 text-sm">{cell.value}</span>
+                        ) : (
+                          <span className="text-xs text-slate-400">—</span>
+                        )}
+                      </td>
+                    );
+                  })}
+                  {onAddColumn && <td className="px-3 py-3" />}
+                </tr>
+              );
             })}
           </tbody>
         </table>

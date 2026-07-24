@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import LeadResults from "@/components/LeadResults";
 import { ApiError } from "@/lib/fetch-json";
+import { notifyBillingBalanceRefresh } from "@/hooks/useBillingBalance";
 import {
   fetchContactsUpTo,
   SEARCH_RESULTS_PER_PAGE,
@@ -53,6 +54,12 @@ export default function SavedSearchResults() {
       setFromCache(data.cached);
       setCachedAt(data.cachedAt);
       setPage(1);
+      
+      // Refresh token balance if tokens were debited during this operation
+      const tokensDebited = Number(data.tokensDebited ?? 0);
+      if (tokensDebited > 0) {
+        notifyBillingBalanceRefresh();
+      }
     } catch (err) {
       setAllPeople([]);
       if (err instanceof ApiError && err.status === 401) {

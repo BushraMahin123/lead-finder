@@ -14,6 +14,7 @@ import SelectCampaignModal, {
   type SelectCampaignPayload,
 } from "@/components/SelectCampaignModal";
 import { usePaginatedSearch } from "@/hooks/usePaginatedSearch";
+import { notifyBillingBalanceRefresh } from "@/hooks/useBillingBalance";
 import { fetchJson, ApiError } from "@/lib/fetch-json";
 import { AI_PREVIEW_PER_PAGE, SEARCH_RESULTS_PER_PAGE } from "@/lib/paginated-search-client";
 import type { SearchFilters } from "@/types/lead";
@@ -141,6 +142,12 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
         throw new Error(String(parseData.error ?? "Could not interpret your search"));
       }
 
+      // Refresh token balance after AI search parsing
+      const tokensDebited = Number(parseData.tokensDebited ?? 0);
+      if (tokensDebited > 0) {
+        notifyBillingBalanceRefresh();
+      }
+
       const parsedFilters = parseData.filters as Partial<SearchFilters> | undefined;
       const warning =
         typeof parseData.warning === "string" ? parseData.warning : null;
@@ -232,6 +239,12 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
           String(data.error ?? "Failed to save contacts"),
           response.status,
         );
+      }
+
+      // Refresh token balance after saving contacts
+      const tokensDebited = Number(data.tokensDebited ?? 0);
+      if (tokensDebited > 0) {
+        notifyBillingBalanceRefresh();
       }
 
       setCampaignModalOpen(false);

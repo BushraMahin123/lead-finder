@@ -57,6 +57,7 @@ export async function fetchContactsUpTo(
   let totalEntries = 0;
   let cached = false;
   let cachedAt: string | null = null;
+  let totalTokensDebited = 0;
   let page = 1;
 
   while (people.length < cap) {
@@ -69,6 +70,7 @@ export async function fetchContactsUpTo(
     totalEntries = data.totalEntries;
     cached = cached || data.cached;
     cachedAt = cachedAt ?? data.cachedAt;
+    totalTokensDebited += (data.tokensDebited ?? 0);
 
     if (data.people.length === 0) break;
 
@@ -88,5 +90,6 @@ export async function fetchContactsUpTo(
     totalEntries: Math.min(totalEntries, trimmed.length),
     cached,
     cachedAt,
+    tokensDebited: totalTokensDebited,
   };
 }
