@@ -1,4 +1,5 @@
 import {
+  ANNUAL_REVENUE_OPTIONS,
   mapNumericRangeToEmployeeBuckets,
   parseFlexibleInt,
 } from "@/lib/filter-options";
@@ -86,18 +87,6 @@ const TITLE_ORG_STOPWORDS = new Set([
   "titles",
 ]);
 
-/** Connector verbs that leak into titles from phrases like "Managers working at…". */
-const TITLE_TRAILING_CONNECTORS = new Set([
-  "working",
-  "employed",
-  "currently",
-  "based",
-  "located",
-  "living",
-  "residing",
-  "looking",
-]);
-
 /** Single tokens that are industries/topics, not job titles. */
 const TITLE_INDUSTRY_ONLY = new Set([
   "saas",
@@ -106,13 +95,10 @@ const TITLE_INDUSTRY_ONLY = new Set([
   "healthcare",
   "retail",
   "consulting",
-  "ecommerce",
-  "e-commerce",
 ]);
 
-// Prefer multi-word connectors before bare "at/in" so "working" is not captured.
 const TITLE_BEFORE_LOCATION_PATTERN =
-  /\b((?:[a-z][a-z0-9&/-]*\s+){0,6}[a-z][a-z0-9&/-]*)\s+(?:working\s+at|employed\s+(?:at|by)|based\s+(?:in|at)|located\s+in|living\s+in|in|at|from|near)\b/i;
+  /\b((?:[a-z][a-z0-9&/-]*\s+){0,6}[a-z][a-z0-9&/-]*)\s+(?:in|at|from|near|based\s+in)\b/i;
 
 const NUMBER = String.raw`(\d{1,3}(?:,\d{3})*|\d{1,7})`;
 
@@ -144,7 +130,6 @@ const EMPLOYEE_RANGE_PATTERNS = [
 const INDUSTRY_PHRASES: Array<{ pattern: RegExp; value: string }> = [
   { pattern: /\bsaas\b/i, value: "software development" },
   { pattern: /\bsoftware\s+(?:compan|firms?|startups?)\w*/i, value: "software development" },
-  { pattern: /\be[\s-]?commerce\b|\becommerce\b/i, value: "retail" },
   { pattern: /\bfintech\b/i, value: "financial services" },
   { pattern: /\bhealthcare\b|\bhealth care\b/i, value: "hospitals and health care" },
   { pattern: /\bretail\b/i, value: "retail" },
@@ -195,45 +180,11 @@ const EXECUTIVE_ACRONYMS = new Map<string, string>([
 ]);
 
 const MAX_EMPLOYEE_PATTERNS = [
-  /\b(?:less|fewer|under|below)\s+than\s+(\d{1,3}(?:,\d{3})*|\d{1,7})\s+employees?\b/i,
-  /\b(?:less|fewer|under|below)\s+(\d{1,3}(?:,\d{3})*|\d{1,7})\s+employees?\b/i,
-  /\bat\s+most\s+(\d{1,3}(?:,\d{3})*|\d{1,7})\s+employees?\b/i,
-  /\b(?:max|maximum)\s+of\s+(\d{1,3}(?:,\d{3})*|\d{1,7})\s+employees?\b/i,
+  /\b(?:less|fewer|under|below)\s+than\s+(\d{1,5})\s+employees?\b/i,
+  /\b(?:less|fewer|under|below)\s+(\d{1,5})\s+employees?\b/i,
+  /\bat\s+most\s+(\d{1,5})\s+employees?\b/i,
+  /\b(?:max|maximum)\s+of\s+(\d{1,5})\s+employees?\b/i,
 ];
-
-const MIN_EMPLOYEE_PATTERNS: Array<{ pattern: RegExp; exclusive: boolean }> = [
-  {
-    pattern:
-      /\b(?:more\s+than|over|above)\s+(\d{1,3}(?:,\d{3})*|\d{1,7})\s+employees?\b/i,
-    exclusive: true,
-  },
-  {
-    pattern:
-      /\b(?:at\s+least|minimum\s+of|min(?:imum)?)\s+(\d{1,3}(?:,\d{3})*|\d{1,7})\s+employees?\b/i,
-    exclusive: false,
-  },
-  {
-    pattern: /\b(\d{1,3}(?:,\d{3})*|\d{1,7})\s*\+\s*employees?\b/i,
-    exclusive: false,
-  },
-  {
-    pattern:
-      /\b(?:companies?|company)\s+with\s+(?:over|more\s+than|above)\s+(\d{1,3}(?:,\d{3})*|\d{1,7})\s+employees?\b/i,
-    exclusive: true,
-  },
-  {
-    pattern:
-      /\b(?:companies?|company)\s+with\s+(?:at\s+least|minimum\s+of)\s+(\d{1,3}(?:,\d{3})*|\d{1,7})\s+employees?\b/i,
-    exclusive: false,
-  },
-];
-
-/** True when the query clearly talks about company size, even if we can't parse the number yet. */
-export const EMPLOYEE_SIZE_SIGNAL_PATTERN =
-  /\b(?:employees?|headcount|company\s+size|staff\s+size)\b|\b(?:over|more\s+than|above|at\s+least|under|less\s+than|fewer\s+than|between)\s+\d[\d,]*(?:\s*(?:and|[-–—])\s*\d[\d,]*)?\s+employees?\b|\b\d[\d,]*(?:\s*[-–—]\s*\d[\d,]*)?\s*\+?\s*employees?\b/i;
-
-export const EXPERIENCE_SIGNAL_PATTERN =
-  /\b(?:years?(?:\s+of)?(?:\s+[a-z][\w\s&/-]{0,40})?\s+experience|\d+\s*\+\s*years?|\bat\s+least\s+\d+\s+years?)\b/i;
 
 const EXPERIENCE_MIN_PATTERNS = [
   /\b(\d{1,2})\s*\+\s*years?(?:\s+of)?(?:\s+experience|\s+exp\.?)?\b/i,
@@ -285,13 +236,6 @@ function extractTitleBeforeLocation(query: string): string | undefined {
     words.pop();
   }
 
-  while (
-    words.length > 0 &&
-    TITLE_TRAILING_CONNECTORS.has(words[words.length - 1].toLowerCase())
-  ) {
-    words.pop();
-  }
-
   if (words.length === 0) return undefined;
 
   const lowerWords = words.map((word) => word.toLowerCase());
@@ -333,20 +277,6 @@ function extractMaxEmployeeCountFromQuery(query: string): number | null {
   return null;
 }
 
-export function extractMinEmployeeCountFromQuery(query: string): number | null {
-  for (const { pattern, exclusive } of MIN_EMPLOYEE_PATTERNS) {
-    const match = query.match(pattern);
-    if (!match?.[1]) continue;
-
-    const limit = parseFlexibleInt(match[1]);
-    if (limit === null || limit <= 0) continue;
-
-    return exclusive ? limit + 1 : limit;
-  }
-
-  return null;
-}
-
 export function extractEmployeeCountRangeFromQuery(
   query: string,
 ): { start: number; end: number } | null {
@@ -361,16 +291,6 @@ export function extractEmployeeCountRangeFromQuery(
     }
 
     return { start, end };
-  }
-
-  const minEmployees = extractMinEmployeeCountFromQuery(query);
-  if (minEmployees !== null) {
-    return { start: minEmployees, end: 999999 };
-  }
-
-  const maxEmployees = extractMaxEmployeeCountFromQuery(query);
-  if (maxEmployees !== null) {
-    return { start: 1, end: maxEmployees };
   }
 
   if (/\b(?:employ|compan|staff|headcount|saas)\w*/i.test(query)) {
@@ -395,12 +315,19 @@ export function extractEmployeeCountRangeFromQuery(
 export function extractEmployeeSizesFromQuery(query: string): string[] {
   const sizes = new Set<string>();
   const numericRange = extractEmployeeCountRangeFromQuery(query);
+  const maxEmployees = extractMaxEmployeeCountFromQuery(query);
 
   if (numericRange) {
     for (const bucket of mapNumericRangeToEmployeeBuckets(
       numericRange.start,
       numericRange.end,
     )) {
+      sizes.add(bucket);
+    }
+  }
+
+  if (maxEmployees !== null) {
+    for (const bucket of mapNumericRangeToEmployeeBuckets(1, maxEmployees)) {
       sizes.add(bucket);
     }
   }
@@ -421,121 +348,6 @@ export function extractEmployeeSizesFromQuery(query: string): string[] {
   }
 
   return [...sizes];
-}
-
-/** Pull topical skill from phrases like "5+ years of machine learning experience". */
-export function extractSkillsFromExperienceQuery(query: string): string | undefined {
-  const match = query.match(
-    /\b\d{1,2}\s*\+?\s*years?\s+of\s+([a-z][a-z0-9\s&/.-]{1,60}?)\s+experience\b/i,
-  );
-  if (!match?.[1]) return undefined;
-
-  const skill = match[1]
-    .trim()
-    .replace(/\s+/g, " ")
-    .replace(/^(?:professional|work|relevant|total)\s+/i, "")
-    .trim();
-
-  if (!skill || /^(?:professional|work|relevant|total)$/i.test(skill)) {
-    return undefined;
-  }
-
-  return titleCase(skill);
-}
-
-function parseMoneyAmount(raw: string): number | null {
-  const cleaned = raw.replace(/[$,\s]/g, "").toLowerCase();
-  const match = cleaned.match(/^(\d+(?:\.\d+)?)(k|m|mm|b|bn|million|billion)?$/i);
-  if (!match) return null;
-
-  const amount = Number(match[1]);
-  if (!Number.isFinite(amount)) return null;
-
-  const unit = (match[2] ?? "").toLowerCase();
-  if (unit === "k") return Math.round(amount * 1_000);
-  if (unit === "m" || unit === "mm" || unit === "million") {
-    return Math.round(amount * 1_000_000);
-  }
-  if (unit === "b" || unit === "bn" || unit === "billion") {
-    return Math.round(amount * 1_000_000_000);
-  }
-
-  // Bare number next to "million" handled by caller patterns.
-  return Math.round(amount);
-}
-
-/**
- * Extract annual revenue range from free-form text.
- * Examples: "over $10 million", "revenue between $1M and $5M", "$10M+"
- */
-export function extractAnnualRevenueFromQuery(
-  query: string,
-): { min?: number; max?: number; label: string } | null {
-  const between = query.match(
-    /\b(?:annual\s+)?revenue\s+(?:of\s+|between\s+)?\$?\s*(\d+(?:\.\d+)?)\s*(k|m|mm|b|bn|million|billion)?\s*(?:and|to|[-–—])\s*\$?\s*(\d+(?:\.\d+)?)\s*(k|m|mm|b|bn|million|billion)?\b/i,
-  );
-  if (between) {
-    const start = parseMoneyAmount(`${between[1]}${between[2] ?? ""}`);
-    const end = parseMoneyAmount(`${between[3]}${between[4] ?? ""}`);
-    if (start !== null && end !== null && end >= start) {
-      return {
-        min: start,
-        max: end,
-        label: `$${between[1]}${between[2] ?? ""}–$${between[3]}${between[4] ?? ""}`,
-      };
-    }
-  }
-
-  const over = query.match(
-    /\b(?:annual\s+)?revenue\s+(?:of\s+)?(?:over|more\s+than|above|greater\s+than|at\s+least)\s+\$?\s*(\d+(?:\.\d+)?)\s*(k|m|mm|b|bn|million|billion)?\b/i,
-  );
-  if (over) {
-    const unit = over[2] ?? "million";
-    const min = parseMoneyAmount(`${over[1]}${unit}`);
-    if (min !== null) {
-      const exclusive = /over|more\s+than|above|greater\s+than/i.test(over[0]);
-      const shortUnit =
-        /billion|bn|^b$/i.test(unit) ? "B" : /million|mm|^m$/i.test(unit) ? "M" : /k/i.test(unit) ? "K" : "";
-      return {
-        min: exclusive ? min + 1 : min,
-        label: `Over $${over[1]}${shortUnit}`,
-      };
-    }
-  }
-
-  const plus = query.match(
-    /\b(?:annual\s+)?revenue\s+(?:of\s+)?\$?\s*(\d+(?:\.\d+)?)\s*(k|m|mm|b|bn|million|billion)?\s*\+/i,
-  );
-  if (plus) {
-    const unit = plus[2] ?? "million";
-    const min = parseMoneyAmount(`${plus[1]}${unit}`);
-    if (min !== null) {
-      const shortUnit =
-        /billion|bn|^b$/i.test(unit) ? "B" : /million|mm|^m$/i.test(unit) ? "M" : /k/i.test(unit) ? "K" : "";
-      return {
-        min,
-        label: `$${plus[1]}${shortUnit}+`,
-      };
-    }
-  }
-
-  const under = query.match(
-    /\b(?:annual\s+)?revenue\s+(?:of\s+)?(?:under|below|less\s+than|at\s+most)\s+\$?\s*(\d+(?:\.\d+)?)\s*(k|m|mm|b|bn|million|billion)?\b/i,
-  );
-  if (under) {
-    const unit = under[2] ?? "million";
-    const max = parseMoneyAmount(`${under[1]}${unit}`);
-    if (max !== null) {
-      const shortUnit =
-        /billion|bn|^b$/i.test(unit) ? "B" : /million|mm|^m$/i.test(unit) ? "M" : /k/i.test(unit) ? "K" : "";
-      return {
-        max: Math.max(0, max - 1),
-        label: `Under $${under[1]}${shortUnit}`,
-      };
-    }
-  }
-
-  return null;
 }
 
 export function extractExperienceYearsFromQuery(
@@ -564,20 +376,179 @@ export function extractExperienceYearsFromQuery(
   return null;
 }
 
+const REVENUE_RANGE_PATTERNS = [
+  /\$\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?\s*[-–—]\s*\$\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?/i,
+  /\$\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?\s+(?:to|and)\s+\$\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?/i,
+  /\b(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)\s+(?:to|and|[-–—])\s+(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)\b/i,
+];
+
+const REVENUE_MIN_PATTERNS = [
+  /(?:annual\s+)?revenue\s+(?:over|above|more\s+than|at\s+least|>=?)\s+\$?\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?/i,
+  /(?:over|above|more\s+than|at\s+least|>=?)\s+\$?\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?\s+(?:in\s+)?(?:annual\s+)?revenue/i,
+  /\$\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?\+/i,
+];
+
+const REVENUE_MAX_PATTERNS = [
+  /(?:annual\s+)?revenue\s+(?:under|below|less\s+than|up\s+to|<=?)\s+\$?\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?/i,
+  /(?:under|below|less\s+than|up\s+to|<=?)\s+\$?\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?\s+(?:in\s+)?(?:annual\s+)?revenue/i,
+];
+
+function parseRevenueAmount(amount: string, unit?: string): number | null {
+  const value = Number(amount);
+  if (!Number.isFinite(value) || value <= 0) return null;
+
+  const normalizedUnit = (unit ?? "").toLowerCase();
+  if (normalizedUnit === "k" || normalizedUnit === "thousand") {
+    return Math.round(value * 1_000);
+  }
+  if (normalizedUnit === "m" || normalizedUnit === "million") {
+    return Math.round(value * 1_000_000);
+  }
+  if (normalizedUnit === "b" || normalizedUnit === "billion") {
+    return Math.round(value * 1_000_000_000);
+  }
+
+  if (value >= 1_000_000) return Math.round(value);
+  if (value >= 1_000) return Math.round(value);
+  return Math.round(value * 1_000_000);
+}
+
+function formatRevenueAmount(value: number): string {
+  if (value >= 1_000_000_000) {
+    const billions = value / 1_000_000_000;
+    return `$${billions % 1 === 0 ? billions : billions.toFixed(1)}B`;
+  }
+  if (value >= 1_000_000) {
+    const millions = value / 1_000_000;
+    return `$${millions % 1 === 0 ? millions : millions.toFixed(1)}M`;
+  }
+  if (value >= 1_000) {
+    const thousands = value / 1_000;
+    return `$${thousands % 1 === 0 ? thousands : thousands.toFixed(1)}K`;
+  }
+  return `$${value}`;
+}
+
+function formatRevenueLabel(min?: number, max?: number): string {
+  if (min !== undefined && max !== undefined) {
+    return `${formatRevenueAmount(min)} - ${formatRevenueAmount(max)}`;
+  }
+  if (min !== undefined) return `${formatRevenueAmount(min)}+`;
+  if (max !== undefined) return `Up to ${formatRevenueAmount(max)}`;
+  return "";
+}
+
+function findMatchingRevenueBucket(
+  min?: number,
+  max?: number,
+): string | null {
+  if (min === undefined && max === undefined) return null;
+
+  for (const option of ANNUAL_REVENUE_OPTIONS) {
+    const optionMin = option.start;
+    const optionMax = option.end;
+
+    if (min !== undefined && max !== undefined) {
+      if (min >= optionMin && max <= optionMax) return option.label;
+      if (min <= optionMax && max >= optionMin) return option.label;
+      continue;
+    }
+
+    if (min !== undefined) {
+      if (min >= optionMin && min <= optionMax) return option.label;
+      if (min <= optionMin && option.label.endsWith("+")) return option.label;
+      continue;
+    }
+
+    if (max !== undefined && max >= optionMin && max <= optionMax) {
+      return option.label;
+    }
+  }
+
+  return null;
+}
+
+export function extractAnnualRevenueFromQuery(query: string): {
+  label: string;
+  min?: number;
+  max?: number;
+} | null {
+  const normalized = query.trim();
+  if (!normalized) return null;
+
+  for (const pattern of REVENUE_RANGE_PATTERNS) {
+    const match = normalized.match(pattern);
+    if (!match) continue;
+
+    const min = parseRevenueAmount(match[1], match[2]);
+    const max = parseRevenueAmount(match[3], match[4]);
+    if (min === null || max === null || min > max) continue;
+
+    const bucket = findMatchingRevenueBucket(min, max);
+    return {
+      label: bucket ?? formatRevenueLabel(min, max),
+      min,
+      max,
+    };
+  }
+
+  for (const pattern of REVENUE_MIN_PATTERNS) {
+    const match = normalized.match(pattern);
+    if (!match) continue;
+
+    const min = parseRevenueAmount(match[1], match[2]);
+    if (min === null) continue;
+
+    const bucket = findMatchingRevenueBucket(min, undefined);
+    return {
+      label: bucket ?? formatRevenueLabel(min, undefined),
+      min,
+    };
+  }
+
+  for (const pattern of REVENUE_MAX_PATTERNS) {
+    const match = normalized.match(pattern);
+    if (!match) continue;
+
+    const max = parseRevenueAmount(match[1], match[2]);
+    if (max === null) continue;
+
+    const bucket = findMatchingRevenueBucket(undefined, max);
+    return {
+      label: bucket ?? formatRevenueLabel(undefined, max),
+      max,
+    };
+  }
+
+  for (const option of ANNUAL_REVENUE_OPTIONS) {
+    const escapedLabel = option.label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const labelPattern = new RegExp(`\\b${escapedLabel.replace(/\s+/g, "\\s+")}\\b`, "i");
+    if (labelPattern.test(normalized)) {
+      return {
+        label: option.label,
+        min: option.start,
+        max: option.end,
+      };
+    }
+  }
+
+  return null;
+}
+
 export function extractSenioritiesFromQuery(query: string): string[] {
   const seniorities = new Set<string>();
   if (/\b(?:c[\s-]?level|c[\s-]?suite)\b/i.test(query)) seniorities.add("c_suite");
-  if (/\bvps?\b|\bvice\s+presidents?\b/i.test(query)) seniorities.add("vp");
-  if (/\bdirectors?\b/i.test(query)) seniorities.add("director");
-  if (/\bheads?\b/i.test(query)) seniorities.add("head");
-  if (/\bmanagers?\b/i.test(query)) seniorities.add("manager");
-  if (/\bseniors?\b/i.test(query)) seniorities.add("senior");
+  if (/\bvp\b|\bvice\s+president\b/i.test(query)) seniorities.add("vp");
+  if (/\bdirector\b/i.test(query)) seniorities.add("director");
+  if (/\bhead\b/i.test(query)) seniorities.add("head");
+  if (/\bmanager\b/i.test(query)) seniorities.add("manager");
+  if (/\bsenior\b/i.test(query)) seniorities.add("senior");
   if (/\bmid[\s-]?level\b/i.test(query)) seniorities.add("mid-level");
-  if (/\b(?:entry[\s-]?level|juniors?)\b/i.test(query)) seniorities.add("entry");
-  if (/\binterns?\b/i.test(query)) seniorities.add("intern");
-  if (/\bfounders?\b/i.test(query)) seniorities.add("founder");
-  if (/\bowners?\b/i.test(query)) seniorities.add("owner");
-  if (/\bpartners?\b/i.test(query)) seniorities.add("partner");
+  if (/\b(?:entry[\s-]?level|junior)\b/i.test(query)) seniorities.add("entry");
+  if (/\bintern\b/i.test(query)) seniorities.add("intern");
+  if (/\bfounder\b/i.test(query)) seniorities.add("founder");
+  if (/\bowner\b/i.test(query)) seniorities.add("owner");
+  if (/\bpartner\b/i.test(query)) seniorities.add("partner");
   return [...seniorities];
 }
 
@@ -589,73 +560,135 @@ export function extractIndustriesFromQuery(query: string): string[] {
   return [...industries];
 }
 
+/** Calculate Levenshtein distance between two strings */
+function levenshteinDistance(a: string, b: string): number {
+  const matrix: number[][] = [];
+
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
+  }
+
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1,
+        );
+      }
+    }
+  }
+
+  return matrix[b.length][a.length];
+}
+
+/** Find the best matching location from allowed values using fuzzy matching */
+function findBestLocationMatch(input: string, allowed: string[]): string | null {
+  const normalizedInput = input.toLowerCase().replace(/[^a-z0-9]/g, "");
+  let bestMatch: string | null = null;
+  let bestDistance = Infinity;
+
+  for (const value of allowed) {
+    const normalizedValue = value.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const distance = levenshteinDistance(normalizedInput, normalizedValue);
+    
+    // Accept if distance is small relative to string length (max 30% difference)
+    const threshold = Math.max(2, Math.floor(normalizedValue.length * 0.3));
+    
+    if (distance < threshold && distance < bestDistance) {
+      bestDistance = distance;
+      bestMatch = value;
+    }
+  }
+
+  return bestMatch;
+}
+
+/** Normalize location text by fuzzy matching against allowed values */
+function normalizeLocationText(text: string, allowed: string[]): string {
+  const words = text.toLowerCase().split(/\s+/);
+  const normalizedWords: string[] = [];
+
+  for (const word of words) {
+    if (word.length < 3) {
+      normalizedWords.push(word);
+      continue;
+    }
+
+    const match = findBestLocationMatch(word, allowed);
+    if (match) {
+      normalizedWords.push(match);
+    } else {
+      normalizedWords.push(word);
+    }
+  }
+
+  return normalizedWords.join(" ");
+}
+
 export function extractLocationsFromQuery(query: string): string[] {
   const locations = new Set<string>();
+  
+  // Build allowed locations list
+  const allowedLocations: string[] = [REMOTE_LOCATION.value];
+  for (const region of PERSON_LOCATION_REGIONS) {
+    allowedLocations.push(region.value);
+    for (const city of region.cities ?? []) {
+      allowedLocations.push(city.value);
+    }
+    for (const state of region.states ?? []) {
+      allowedLocations.push(state.value);
+      for (const city of state.cities ?? []) {
+        allowedLocations.push(city.value);
+      }
+    }
+  }
+  
+  const normalizedQuery = normalizeLocationText(query, allowedLocations);
 
   for (const { pattern, values } of LOCATION_MULTI_PHRASES) {
-    if (pattern.test(query)) {
+    if (pattern.test(normalizedQuery)) {
       for (const value of values) locations.add(value);
     }
   }
 
   for (const { pattern, value } of LOCATION_PHRASES) {
-    if (pattern.test(query)) locations.add(value);
+    if (pattern.test(normalizedQuery)) locations.add(value);
   }
 
   for (const region of PERSON_LOCATION_REGIONS) {
-    if (locationMentionedInText(query, region.value)) {
+    if (locationMentionedInText(normalizedQuery, region.value)) {
       locations.add(region.value);
     }
 
     for (const city of region.cities ?? []) {
-      if (locationMentionedInText(query, city.value)) {
+      if (locationMentionedInText(normalizedQuery, city.value)) {
         locations.add(city.value);
       }
     }
 
     for (const state of region.states ?? []) {
-      if (locationMentionedInText(query, state.value)) {
+      if (locationMentionedInText(normalizedQuery, state.value)) {
         locations.add(state.value);
       }
 
       for (const city of state.cities ?? []) {
-        if (locationMentionedInText(query, city.value)) {
+        if (locationMentionedInText(normalizedQuery, city.value)) {
           locations.add(city.value);
         }
       }
     }
   }
 
-  if (/\bremote\b/i.test(query)) {
+  if (/\bremote\b/i.test(normalizedQuery)) {
     locations.add(REMOTE_LOCATION.value);
-  }
-
-  // Capture free-form places after in/from/near when not already in the known list
-  // (e.g. smaller cities). Prefer specific city over a broader country if both appear.
-  if (locations.size === 0) {
-    const freeform = query.match(
-      /\b(?:in|from|near|based\s+in|located\s+in)\s+(?:the\s+)?([a-z][a-z0-9\s.'-]{1,40}?)(?=\s+(?:working|at|with|who|for|and|,|\.|$))/i,
-    );
-    const candidate = freeform?.[1]?.trim();
-    const banned = new Set([
-      ...TITLE_ORG_STOPWORDS,
-      ...TITLE_LEADING_FILLER,
-      "us",
-      "usa",
-      "uk",
-    ]);
-    if (
-      candidate &&
-      !banned.has(candidate.toLowerCase()) &&
-      !/^\d/.test(candidate)
-    ) {
-      locations.add(
-        candidate
-          .split(/\s+/)
-          .map((word) => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-          .join(" "),
-      );
-    }
   }
 
   return [...locations];
@@ -676,19 +709,12 @@ function cleanJobTitle(value: string | undefined): string | undefined {
   if (!value) return undefined;
 
   let cleaned = value.trim();
-  cleaned = cleaned.split(/\s+working\s+at\s+/i)[0] ?? cleaned;
-  cleaned = cleaned.split(/\s+employed\s+(?:at|by)\s+/i)[0] ?? cleaned;
   cleaned = cleaned.split(/\s+at\s+/i)[0] ?? cleaned;
   cleaned = cleaned.split(/\s+in\s+/i)[0] ?? cleaned;
   cleaned = cleaned.replace(/\s+of\s+employees?.*$/i, "");
   cleaned = cleaned.replace(/\s+employees?\s+\d.*$/i, "");
   cleaned = cleaned.replace(/\s+(companies?|company)\b.*$/i, "");
-  cleaned = cleaned
-    .replace(
-      /\s+(?:working|employed|currently|based|located|living|residing|looking)\s*$/i,
-      "",
-    )
-    .trim();
+  cleaned = cleaned.trim();
 
   if (!cleaned || cleaned.length > 60) return undefined;
   if (/\bemployees?\b/i.test(cleaned)) return undefined;
@@ -739,53 +765,17 @@ function shouldReplaceJobTitle(current: string | undefined, extracted: string | 
 }
 
 function preferSpecificLocations(locations: string[]): string[] {
-  let result = [...locations];
-
-  const usRegion = PERSON_LOCATION_REGIONS.find(
-    (region) => region.value === "United States",
+  const usStates = new Set(
+    (
+      PERSON_LOCATION_REGIONS.find((region) => region.value === "United States")
+        ?.states ?? []
+    ).map((state) => state.value),
   );
-  const canadaRegion = PERSON_LOCATION_REGIONS.find(
-    (region) => region.value === "Canada",
-  );
-
-  const usStates = new Set((usRegion?.states ?? []).map((state) => state.value));
-  const canadaProvinces = new Set(
-    (canadaRegion?.states ?? []).map((state) => state.value),
-  );
-  const usCities = new Set(
-    (usRegion?.states ?? []).flatMap(
-      (state) => state.cities?.map((city) => city.value) ?? [],
-    ),
-  );
-  const canadaCities = new Set(
-    (canadaRegion?.states ?? []).flatMap(
-      (state) => state.cities?.map((city) => city.value) ?? [],
-    ),
-  );
-
-  const hasUsStates = result.some((location) => usStates.has(location));
-  const hasCanadaProvinces = result.some((location) =>
-    canadaProvinces.has(location),
-  );
-  const hasUsCities = result.some((location) => usCities.has(location));
-  const hasCanadaCities = result.some((location) => canadaCities.has(location));
-
-  if ((hasUsStates || hasUsCities) && result.includes("United States")) {
-    result = result.filter((location) => location !== "United States");
+  const hasUsStates = locations.some((location) => usStates.has(location));
+  if (hasUsStates && locations.includes("United States")) {
+    return locations.filter((location) => location !== "United States");
   }
-  if ((hasCanadaProvinces || hasCanadaCities) && result.includes("Canada")) {
-    result = result.filter((location) => location !== "Canada");
-  }
-
-  // If a city is selected, drop its parent state/province so we don't widen the search.
-  if (hasCanadaCities) {
-    result = result.filter((location) => !canadaProvinces.has(location));
-  }
-  if (hasUsCities) {
-    result = result.filter((location) => !usStates.has(location));
-  }
-
-  return result;
+  return locations;
 }
 
 export function refineFiltersFromQuery(
@@ -833,6 +823,21 @@ export function refineFiltersFromQuery(
     }
   }
 
+  const extractedRevenue = extractAnnualRevenueFromQuery(query);
+  if (extractedRevenue) {
+    refined.annualRevenue = extractedRevenue.label;
+    if (typeof extractedRevenue.min === "number") {
+      refined.annualRevenueMin = extractedRevenue.min;
+    } else {
+      delete refined.annualRevenueMin;
+    }
+    if (typeof extractedRevenue.max === "number") {
+      refined.annualRevenueMax = extractedRevenue.max;
+    } else {
+      delete refined.annualRevenueMax;
+    }
+  }
+
   const extractedSeniorities = extractSenioritiesFromQuery(query);
   if (extractedSeniorities.length > 0) {
     refined.seniorities = [
@@ -862,29 +867,6 @@ export function refineFiltersFromQuery(
       ? refined.keywords.split(/,\s*/).filter(Boolean)
       : [];
     refined.keywords = [...new Set([...existing, ...topicKeywords])].join(", ");
-  }
-
-  const extractedSkill = extractSkillsFromExperienceQuery(query);
-  if (extractedSkill) {
-    const existingSkills = refined.skills
-      ? refined.skills.split(/,\s*/).filter(Boolean)
-      : [];
-    refined.skills = [...new Set([...existingSkills, extractedSkill])].join(", ");
-  }
-
-  const extractedRevenue = extractAnnualRevenueFromQuery(query);
-  if (extractedRevenue) {
-    refined.annualRevenue = extractedRevenue.label;
-    if (typeof extractedRevenue.min === "number") {
-      refined.annualRevenueMin = extractedRevenue.min;
-    } else {
-      delete refined.annualRevenueMin;
-    }
-    if (typeof extractedRevenue.max === "number") {
-      refined.annualRevenueMax = extractedRevenue.max;
-    } else {
-      delete refined.annualRevenueMax;
-    }
   }
 
   const cleanedKeywords = cleanKeywords(refined.keywords, refined);

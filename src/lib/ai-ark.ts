@@ -10,6 +10,19 @@ import type { LeadPerson, SearchFilters } from "@/types/lead";
 
 const AI_ARK_API = "https://api.ai-ark.com/api/developer-portal";
 
+/** Provider hard cap: page*size may not exceed this (returns 400 pagination limit exceeded). */
+export const AI_ARK_SEARCH_MAX_RESULTS = 10_000;
+export const AI_ARK_SEARCH_PAGE_SIZE = 100;
+export const AI_ARK_LIST_MAX_ITEMS = 10_000;
+export const AI_ARK_MAX_EXCLUDE_LISTS = 10;
+
+export class AiArkPaginationLimitError extends Error {
+  constructor(message = "pagination limit exceeded") {
+    super(message);
+    this.name = "AiArkPaginationLimitError";
+  }
+}
+
 interface AiArkPerson {
   id: string;
   profile?: {
@@ -99,36 +112,56 @@ async function arkRequest(
   options: RequestInit = {},
 ): Promise<{ response: Response; data: Record<string, unknown> }> {
   return enqueueAiArk(async () => {
-    const response = await fetch(`${AI_ARK_API}${path}`, {
-      ...options,
-      headers: {
-        "Content-Type": "application/json",
-        "X-TOKEN": getApiKey(),
-        ...options.headers,
-      },
-    });
+    const controller = new AbortController();
+    const timeoutMs = 60_000;
+    const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
-    const text = await response.text();
-    let data: Record<string, unknown> = {};
+    try {
+      const response = await fetch(`${AI_ARK_API}${path}`, {
+        ...options,
+        signal: controller.signal,
+        headers: {
+          "Content-Type": "application/json",
+          "X-TOKEN": getApiKey(),
+          ...options.headers,
+        },
+      });
 
-    if (text) {
-      try {
-        data = JSON.parse(text) as Record<string, unknown>;
-      } catch {
-        throw new Error(
-          `Search returned an invalid response (${response.status}).`,
+      const text = await response.text();
+      let data: Record<string, unknown> = {};
+
+      if (text) {
+        try {
+          data = JSON.parse(text) as Record<string, unknown>;
+        } catch {
+          throw new Error(
+            `Search returned an invalid response (${response.status}).`,
+          );
+        }
+      }
+
+      if (isRetryableHttpStatus(response.status)) {
+        throw new RetryableQueueError(
+          formatAiArkError(response.status, data),
+          response.status,
         );
       }
-    }
 
-    if (isRetryableHttpStatus(response.status)) {
-      throw new RetryableQueueError(
-        formatAiArkError(response.status, data),
-        response.status,
-      );
+      return { response, data };
+    } catch (error) {
+      if (error instanceof Error && error.name === "AbortError") {
+        throw new RetryableQueueError(
+          `AI Ark request timed out after ${timeoutMs / 1000}s`,
+          504,
+        );
+      }
+      if (error instanceof TypeError && /fetch failed/i.test(error.message)) {
+        throw new RetryableQueueError(error.message, 503);
+      }
+      throw error;
+    } finally {
+      clearTimeout(timeout);
     }
-
-    return { response, data };
   });
 }
 
@@ -140,10 +173,17 @@ async function arkFetch<T>(
 
   if (!response.ok) {
     console.error("[ai-ark]", path, response.status, data);
+    const message = formatAiArkError(response.status, data);
+    if (
+      response.status === 400 &&
+      /pagination limit exceeded/i.test(message)
+    ) {
+      throw new AiArkPaginationLimitError(message);
+    }
     if (response.status === 404) {
       throw new Error("No results found for this search.");
     }
-    throw new Error(formatAiArkError(response.status, data));
+    throw new Error(message);
   }
 
   return data as T;
@@ -264,7 +304,7 @@ function hasPeopleFilters(filters: SearchFilters): boolean {
       hasValues(filters.locations) ||
       hasValues(filters.companyLocations) ||
       filters.keywords?.trim() ||
-      filters.personName?.trim() ||
+      (filters.personName?.trim() && !filters.personNameExclude) ||
       filters.skills?.trim() ||
       filters.technology?.trim() ||
       filters.productsServices?.trim() ||
@@ -293,9 +333,15 @@ function hasPeopleFilters(filters: SearchFilters): boolean {
   );
 }
 
-function buildSearchBody(filters: SearchFilters): Record<string, unknown> {
+function buildSearchBody(
+  filters: SearchFilters,
+  options?: { excludePeopleListIds?: string[] },
+): Record<string, unknown> {
   const page = Math.max(0, (filters.page ?? 1) - 1);
-  const size = Math.min(filters.perPage ?? SEARCH_RESULTS_PER_PAGE, 100);
+  const size = Math.min(
+    filters.perPage ?? SEARCH_RESULTS_PER_PAGE,
+    AI_ARK_SEARCH_PAGE_SIZE,
+  );
 
   const account: Record<string, unknown> = {};
   const contact: Record<string, unknown> = {};
@@ -433,7 +479,9 @@ function buildSearchBody(filters: SearchFilters): Record<string, unknown> {
   }
 
   const parts: string[] = [];
-  if (filters.personName?.trim()) parts.push(filters.personName.trim());
+  if (filters.personName?.trim() && !filters.personNameExclude) {
+    parts.push(filters.personName.trim());
+  }
   if (filters.skills?.trim()) parts.push(filters.skills.trim());
   if (filters.technology?.trim()) parts.push(filters.technology.trim());
   if (filters.productsServices?.trim()) parts.push(filters.productsServices.trim());
@@ -469,7 +517,109 @@ function buildSearchBody(filters: SearchFilters): Record<string, unknown> {
   if (Object.keys(account).length > 0) body.account = account;
   if (Object.keys(contact).length > 0) body.contact = contact;
 
+  const excludeListIds = (options?.excludePeopleListIds ?? [])
+    .map((id) => id.trim())
+    .filter(Boolean)
+    .slice(0, AI_ARK_MAX_EXCLUDE_LISTS);
+  if (excludeListIds.length > 0) {
+    body.lists = {
+      people_id: {
+        exclude: excludeListIds,
+      },
+    };
+  }
+
   return body;
+}
+
+/** Create a temporary people_id list used to exclude already-fetched contacts. */
+export async function createPeopleIdList(personIds: string[]): Promise<string> {
+  const values = [
+    ...new Set(personIds.map((id) => id.trim()).filter(Boolean)),
+  ].slice(0, AI_ARK_LIST_MAX_ITEMS);
+
+  if (values.length === 0) {
+    throw new Error("Cannot create an empty people exclude list.");
+  }
+
+  const data = await arkFetch<{ id?: string }>("/v1/lists", {
+    method: "POST",
+    body: JSON.stringify({
+      type: "people_id",
+      values,
+    }),
+  });
+
+  if (!data.id) {
+    throw new Error("Failed to create people exclude list.");
+  }
+
+  return data.id;
+}
+
+export interface PeopleExcludeListState {
+  id: string;
+  count: number;
+}
+
+/** Append IDs to an existing list (up to 10k items per list). */
+export async function appendPeopleIdList(
+  listId: string,
+  personIds: string[],
+): Promise<void> {
+  const values = [
+    ...new Set(personIds.map((id) => id.trim()).filter(Boolean)),
+  ];
+  if (values.length === 0) return;
+
+  await arkFetch("/v1/lists", {
+    method: "POST",
+    body: JSON.stringify({
+      id: listId,
+      values,
+      mode: "APPEND",
+    }),
+  });
+}
+
+/**
+ * Grow exclude lists by appending into the last list when there is room,
+ * otherwise creating a new list. Caps at AI_ARK_MAX_EXCLUDE_LISTS lists.
+ */
+export async function mergePeopleIntoExcludeLists(
+  personIds: string[],
+  existing: PeopleExcludeListState[] = [],
+): Promise<PeopleExcludeListState[]> {
+  const uniqueIds = [
+    ...new Set(personIds.map((id) => id.trim()).filter(Boolean)),
+  ];
+  if (uniqueIds.length === 0) return existing;
+
+  const lists = existing.map((list) => ({ ...list }));
+  let remaining = uniqueIds;
+
+  while (remaining.length > 0) {
+    const last = lists[lists.length - 1];
+    if (last && last.count < AI_ARK_LIST_MAX_ITEMS) {
+      const space = AI_ARK_LIST_MAX_ITEMS - last.count;
+      const chunk = remaining.slice(0, space);
+      await appendPeopleIdList(last.id, chunk);
+      last.count += chunk.length;
+      remaining = remaining.slice(chunk.length);
+      continue;
+    }
+
+    if (lists.length >= AI_ARK_MAX_EXCLUDE_LISTS) {
+      break;
+    }
+
+    const chunk = remaining.slice(0, AI_ARK_LIST_MAX_ITEMS);
+    const id = await createPeopleIdList(chunk);
+    lists.push({ id, count: chunk.length });
+    remaining = remaining.slice(chunk.length);
+  }
+
+  return lists;
 }
 
 function mapPersonToLead(person: AiArkPerson): LeadPerson {
@@ -586,7 +736,13 @@ async function enrichPeople(
 
 export async function searchPeople(
   filters: SearchFilters,
-): Promise<{ people: LeadPerson[]; totalEntries: number }> {
+  options?: { excludePeopleListIds?: string[] },
+): Promise<{
+  people: LeadPerson[];
+  totalEntries: number;
+  providerPageCount: number;
+  providerPersonIds: string[];
+}> {
   const mode = inferSearchMode(filters);
 
   if (mode === "linkedin") {
@@ -602,13 +758,16 @@ export async function searchPeople(
     );
   }
 
-  const body = buildSearchBody(filters);
+  const body = buildSearchBody(filters, options);
   const result = await arkFetch<AiArkSearchResponse>("/v1/people", {
     method: "POST",
     body: JSON.stringify(body),
   });
 
   const sourcePeople = result.content ?? [];
+  const providerPersonIds = sourcePeople
+    .map((person) => person.id)
+    .filter((id): id is string => Boolean(id));
   const people = sourcePeople.map(mapPersonToLead);
   const matched = filterPeopleBySearchFilters(people, filters);
   const matchedIds = new Set(matched.map((person) => person.id));
@@ -628,5 +787,8 @@ export async function searchPeople(
   return {
     people: enriched,
     totalEntries,
+    // Keep raw page length so callers don't treat post-filter drops as end-of-results.
+    providerPageCount: people.length,
+    providerPersonIds,
   };
 }

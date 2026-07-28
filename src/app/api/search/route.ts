@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     const estimatedDebit = perPage * TOKEN_RATES.lead;
     await assertSufficientTokens(userId, estimatedDebit);
 
-    const { people, totalEntries } = await searchPeople(body);
+    const { people, totalEntries, providerPageCount } = await searchPeople(body);
 
     const tokenDebit = people.length * TOKEN_RATES.lead;
     let balance = await assertSufficientTokens(userId, tokenDebit);
@@ -71,6 +71,7 @@ export async function POST(request: NextRequest) {
     const response = await setCachedSearch(body, {
       people,
       totalEntries,
+      providerPageCount,
       page: body.page ?? 1,
       perPage,
     });

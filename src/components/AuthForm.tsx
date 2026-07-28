@@ -38,7 +38,7 @@ export default function AuthForm({
         <OAuthButtons next={next} />
 
         {message && <div className="alert-success">{message}</div>}
-        {state.error && <div className="alert-error">{state.error}</div>}
+        {state?.error && <div className="alert-error">{state.error}</div>}
 
         <form action={formAction} className="space-y-4">
           {next ? <input type="hidden" name="next" value={next} /> : null}

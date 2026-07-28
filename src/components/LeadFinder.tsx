@@ -53,6 +53,7 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
   const [campaignModalOpen, setCampaignModalOpen] = useState(false);
   const [pendingSave, setPendingSave] = useState<PendingSaveContext | null>(null);
   const [savingCampaign, setSavingCampaign] = useState(false);
+  const [saveProgressLabel, setSaveProgressLabel] = useState<string | null>(null);
   const [campaignSaveError, setCampaignSaveError] = useState<string | null>(null);
   const [aiWarning, setAiWarning] = useState<string | null>(null);
   const templateHandled = useRef(false);
@@ -210,35 +211,122 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
 
     setSavingCampaign(true);
     setCampaignSaveError(null);
+    setSaveProgressLabel("Saving…");
+
+    const targetCount = pendingSave.payload.contactCount;
+    let campaignId = selection.campaignId?.trim() || undefined;
+    let campaignName = selection.name?.trim() || undefined;
+    let totalSaved = 0;
+    let finalCampaignId: string | undefined = campaignId;
+    let excludeLists: Array<{ id: string; count: number }> = [];
+
+    async function saveChunk(remaining: number) {
+      const maxAttempts = 3;
+      let lastError: unknown;
+
+      for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+        try {
+          const { response, data } = await fetchJson("/api/campaigns/save", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              campaignId,
+              name: campaignId ? undefined : campaignName,
+              filters: pendingSave!.filters,
+              contactCount: remaining,
+              enrichEmail: pendingSave!.payload.enrichEmail,
+              enrichPhone: pendingSave!.payload.enrichPhone,
+              aiQuery: pendingSave!.aiQuery,
+              totalEntries: pendingSave!.totalEntries,
+              excludeLists,
+            }),
+          });
+
+          if (!response.ok) {
+            throw new ApiError(
+              String(data.error ?? "Failed to save contacts"),
+              response.status,
+            );
+          }
+
+          return data;
+        } catch (error) {
+          lastError = error;
+          const message =
+            error instanceof Error ? error.message : String(error);
+          const retryable =
+            error instanceof ApiError
+              ? error.status >= 500 || error.status === 429
+              : /fetch failed|timeout|network|502|503|504/i.test(message);
+
+          if (!retryable || attempt >= maxAttempts) {
+            throw error;
+          }
+
+          setSaveProgressLabel(
+            `Connection issue — retrying chunk (${attempt}/${maxAttempts})…`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, 1500 * attempt));
+        }
+      }
+
+      throw lastError;
+    }
 
     try {
-      const { response, data } = await fetchJson("/api/campaigns/save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          campaignId: selection.campaignId,
-          name: selection.name,
-          filters: pendingSave.filters,
-          contactCount: pendingSave.payload.contactCount,
-          enrichEmail: pendingSave.payload.enrichEmail,
-          enrichPhone: pendingSave.payload.enrichPhone,
-          aiQuery: pendingSave.aiQuery,
-          totalEntries: pendingSave.totalEntries,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new ApiError(
-          String(data.error ?? "Failed to save contacts"),
-          response.status,
+      while (totalSaved < targetCount) {
+        const remaining = targetCount - totalSaved;
+        setSaveProgressLabel(
+          `Saving ${totalSaved.toLocaleString()} / ${targetCount.toLocaleString()}…`,
         );
+
+        const data = await saveChunk(remaining);
+
+        const savedCount = Number(data.savedCount ?? 0);
+        const nextCampaignId = (data.campaign as { id?: string } | undefined)?.id;
+        if (nextCampaignId) {
+          campaignId = nextCampaignId;
+          finalCampaignId = nextCampaignId;
+          campaignName = undefined;
+        }
+
+        if (Array.isArray(data.excludeLists)) {
+          excludeLists = data.excludeLists as Array<{ id: string; count: number }>;
+        }
+
+        totalSaved += savedCount;
+        setSaveProgressLabel(
+          `Saving ${Math.min(totalSaved, targetCount).toLocaleString()} / ${targetCount.toLocaleString()}…`,
+        );
+
+        if (savedCount <= 0 || data.hasMore === false) {
+          break;
+        }
+      }
+
+      if (totalSaved <= 0) {
+        throw new Error("No contacts could be saved for this search.");
       }
 
       setCampaignModalOpen(false);
       setPendingSave(null);
-      router.push("/dashboard");
+      setSaveProgressLabel(null);
+      router.push(finalCampaignId ? `/campaigns/${finalCampaignId}` : "/dashboard");
     } catch (err) {
+      // Keep whatever was already saved — open the table instead of losing progress.
+      if (totalSaved > 0 && finalCampaignId) {
+        setCampaignModalOpen(false);
+        setPendingSave(null);
+        setSaveProgressLabel(null);
+        setCampaignSaveError(null);
+        router.push(
+          `/campaigns/${finalCampaignId}?saved=${totalSaved}&target=${targetCount}&partial=1`,
+        );
+        return;
+      }
+
       setCampaignSaveError(handleApiError(err));
+      setSaveProgressLabel(null);
     } finally {
       setSavingCampaign(false);
     }
@@ -334,11 +422,13 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
       <SelectCampaignModal
         open={campaignModalOpen}
         saving={savingCampaign}
+        savingLabel={saveProgressLabel}
         error={campaignSaveError}
         onClose={() => {
           if (savingCampaign) return;
           setCampaignModalOpen(false);
           setCampaignSaveError(null);
+          setSaveProgressLabel(null);
         }}
         onPrevious={handleCampaignPrevious}
         onSave={handleCampaignSave}

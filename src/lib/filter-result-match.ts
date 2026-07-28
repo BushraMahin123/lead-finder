@@ -237,6 +237,43 @@ export function personMatchesLocations(
   });
 }
 
+export function personMatchesExcludedName(
+  person: LeadPerson,
+  excludeName: string,
+): boolean {
+  const query = excludeName.trim().toLowerCase();
+  if (!query) return false;
+
+  const displayName = (
+    person.name ??
+    [person.first_name, person.last_name].filter(Boolean).join(" ")
+  )
+    .trim()
+    .toLowerCase();
+  if (!displayName) return false;
+
+  if (displayName.includes(query)) return true;
+
+  const tokens = query.split(/\s+/).filter(Boolean);
+  return tokens.length > 0 && tokens.every((token) => displayName.includes(token));
+}
+
+function splitNameList(value?: string): string[] {
+  return (value ?? "")
+    .split(",")
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+export function personMatchesAnyExcludedName(
+  person: LeadPerson,
+  excludeNames: string | undefined,
+): boolean {
+  const names = splitNameList(excludeNames);
+  if (names.length === 0) return false;
+  return names.some((name) => personMatchesExcludedName(person, name));
+}
+
 export function personMatchesSearchFilters(
   person: LeadPerson,
   filters: SearchFilters,
@@ -258,7 +295,18 @@ export function filterPeopleBySearchFilters(
 ): LeadPerson[] {
   const hasTitle = Boolean(filters.jobTitle?.trim());
   const hasLocation = Boolean(filters.locations?.length);
-  if (!hasTitle && !hasLocation) return people;
+  const hasNameExclude = Boolean(
+    filters.personNameExclude && filters.personName?.trim(),
+  );
+  if (!hasTitle && !hasLocation && !hasNameExclude) return people;
 
-  return people.filter((person) => personMatchesSearchFilters(person, filters));
+  return people.filter((person) => {
+    if (hasNameExclude && personMatchesAnyExcludedName(person, filters.personName)) {
+      return false;
+    }
+
+    if (!hasTitle && !hasLocation) return true;
+
+    return personMatchesSearchFilters(person, filters);
+  });
 }

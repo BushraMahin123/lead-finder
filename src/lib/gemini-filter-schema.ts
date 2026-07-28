@@ -3,7 +3,7 @@ import {
   DEPARTMENT_OPTIONS,
   EMPLOYEE_SIZE_OPTIONS,
   INDUSTRY_OPTIONS,
-  LANGUAGE_OPTIONS,
+  PERSON_LANGUAGE_OPTIONS as LANGUAGE_OPTIONS,
   SENIORITY_OPTIONS,
   normalizeEmployeeSizeValues,
 } from "@/lib/filter-options";

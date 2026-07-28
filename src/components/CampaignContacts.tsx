@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams, useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import AddAiColumnModal from "@/components/AddAiColumnModal";
 import { AISearchIconBadge } from "@/components/AISearchIcon";
@@ -18,6 +18,7 @@ import type { LeadPerson } from "@/types/lead";
 
 export default function CampaignContacts() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const params = useParams<{ id: string }>();
   const campaignId = params.id;
 
@@ -38,6 +39,7 @@ export default function CampaignContacts() {
   const [savingColumn, setSavingColumn] = useState(false);
   const [runningColumnId, setRunningColumnId] = useState<string | null>(null);
   const [columnNotice, setColumnNotice] = useState<string | null>(null);
+  const [partialSaveNotice, setPartialSaveNotice] = useState<string | null>(null);
 
   async function loadCampaign() {
     if (!campaignId) return;
@@ -75,6 +77,20 @@ export default function CampaignContacts() {
   useEffect(() => {
     void loadCampaign();
   }, [campaignId, router]);
+
+  useEffect(() => {
+    if (searchParams.get("partial") !== "1") return;
+    const saved = Number(searchParams.get("saved") ?? 0);
+    const target = Number(searchParams.get("target") ?? 0);
+    if (saved > 0) {
+      setPartialSaveNotice(
+        target > saved
+          ? `Saved ${saved.toLocaleString()} of ${target.toLocaleString()} contacts before a connection issue. You can continue saving more into this table from search.`
+          : `Saved ${saved.toLocaleString()} contacts.`,
+      );
+    }
+    router.replace(`/campaigns/${campaignId}`);
+  }, [campaignId, router, searchParams]);
 
   function handlePeopleUpdate(updated: LeadPerson[]) {
     setAllPeople((current) => {
@@ -387,6 +403,19 @@ export default function CampaignContacts() {
         {error && (
           <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
             {error}
+          </div>
+        )}
+
+        {partialSaveNotice && (
+          <div className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            <p>{partialSaveNotice}</p>
+            <button
+              type="button"
+              onClick={() => setPartialSaveNotice(null)}
+              className="shrink-0 text-amber-700 underline"
+            >
+              Dismiss
+            </button>
           </div>
         )}
 

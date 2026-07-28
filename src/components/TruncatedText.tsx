@@ -16,7 +16,7 @@ type TruncatedTextProps = {
 } & Omit<HTMLAttributes<HTMLElement>, "title" | "children" | "className">;
 
 /**
- * Renders truncated text and only sets the native tooltip when content overflows.
+ * Truncates overflowing text with an ellipsis and shows the full value on hover.
  */
 export default function TruncatedText({
   text,
@@ -25,16 +25,16 @@ export default function TruncatedText({
   ...rest
 }: TruncatedTextProps) {
   const ref = useRef<HTMLElement | null>(null);
-  const [tooltip, setTooltip] = useState<string | undefined>(undefined);
+  const [isTruncated, setIsTruncated] = useState(false);
 
   const updateOverflow = useCallback(() => {
     const el = ref.current;
     if (!el) {
-      setTooltip(undefined);
+      setIsTruncated(false);
       return;
     }
-    setTooltip(el.scrollWidth > el.clientWidth + 1 ? text : undefined);
-  }, [text]);
+    setIsTruncated(el.scrollWidth > el.clientWidth + 1);
+  }, []);
 
   useEffect(() => {
     updateOverflow();
@@ -45,16 +45,27 @@ export default function TruncatedText({
     const observer = new ResizeObserver(() => updateOverflow());
     observer.observe(el);
     return () => observer.disconnect();
-  }, [updateOverflow]);
+  }, [text, updateOverflow]);
 
   return (
-    <Tag
-      ref={ref}
-      className={className}
-      title={tooltip}
-      {...rest}
-    >
-      {text}
-    </Tag>
+    <div className="group/truncate relative min-w-0 max-w-full">
+      <Tag
+        ref={ref}
+        className={className}
+        title={isTruncated ? text : undefined}
+        aria-label={isTruncated ? text : undefined}
+        {...rest}
+      >
+        {text}
+      </Tag>
+      {isTruncated ? (
+        <span
+          role="tooltip"
+          className="pointer-events-none absolute bottom-full left-0 z-20 mb-1.5 hidden max-w-[min(20rem,70vw)] rounded-md bg-slate-900 px-2.5 py-1.5 text-xs font-medium leading-snug whitespace-normal text-white shadow-lg group-hover/truncate:block"
+        >
+          {text}
+        </span>
+      ) : null}
+    </div>
   );
 }
