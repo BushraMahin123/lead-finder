@@ -150,3 +150,26 @@ export function IconArrowRight({ className = "h-4 w-4 shrink-0" }: IconProps) {
     </svg>
   );
 }
+
+export function IconCopy({ className = "h-4 w-4 shrink-0" }: IconProps) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" className={className} aria-hidden>
+      <rect
+        x="9"
+        y="9"
+        width="13"
+        height="13"
+        rx="2"
+        stroke="currentColor"
+        strokeWidth="1.75"
+      />
+      <path
+        d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"
+        stroke="currentColor"
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+    </svg>
+  );
+}

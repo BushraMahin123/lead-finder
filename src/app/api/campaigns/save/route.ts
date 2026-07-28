@@ -5,7 +5,7 @@ import {
 } from "@/lib/ai-ark";
 import { getAuthenticatedUserId, unauthorizedResponse } from "@/lib/auth";
 import { insufficientTokensResponse } from "@/lib/billing/errors";
-import { calculateSaveTokenCost } from "@/lib/billing/token-rates";
+import { calculateSaveTokenCost, TOKEN_RATES } from "@/lib/billing/token-rates";
 import {
   assertSufficientTokens,
   debitTokens,
@@ -19,6 +19,7 @@ import {
   updateCampaignContactCount,
 } from "@/lib/campaigns";
 import { fetchContactsUpToServer } from "@/lib/fetch-contacts-server";
+import { enrichContactsWithPersistence, applyEnrichmentResults } from "@/lib/contact-enrichments";
 import { SEARCH_RESULTS_PER_PAGE } from "@/lib/paginated-search-client";
 import { SAVE_CONTACTS_PER_REQUEST } from "@/lib/save-contacts-config";
 import type { SearchFilters } from "@/types/lead";
@@ -113,6 +114,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
+    let { people } = await fetchContactsUpToServer(
     await assertSufficientTokens(
       userId,
       calculateSaveTokenCost(chunkCount, body.enrichEmail, body.enrichPhone)
@@ -160,6 +162,47 @@ export async function POST(request: NextRequest) {
     );
     await assertSufficientTokens(userId, tokenCost.total);
 
+    // Perform enrichment if requested and count successful extractions
+    let successfulEmailExtractions = 0;
+    let successfulPhoneExtractions = 0;
+    
+    if (body.enrichEmail || body.enrichPhone) {
+      const enrichmentResults: any[] = [];
+      
+      if (body.enrichEmail && body.enrichPhone) {
+        const results = await enrichContactsWithPersistence(people, "email");
+        successfulEmailExtractions = results.filter(r => r.email && !r.fromStorage).length;
+        enrichmentResults.push(...results);
+        const phoneResults = await enrichContactsWithPersistence(people, "phone");
+        successfulPhoneExtractions = phoneResults.filter(r => r.phone_numbers?.length && !r.fromStorage).length;
+        enrichmentResults.push(...phoneResults);
+      } else if (body.enrichEmail) {
+        const results = await enrichContactsWithPersistence(people, "email");
+        successfulEmailExtractions = results.filter(r => r.email && !r.fromStorage).length;
+        enrichmentResults.push(...results);
+      } else if (body.enrichPhone) {
+        const results = await enrichContactsWithPersistence(people, "phone");
+        successfulPhoneExtractions = results.filter(r => r.phone_numbers?.length && !r.fromStorage).length;
+        enrichmentResults.push(...results);
+      }
+      
+      people = applyEnrichmentResults(people, enrichmentResults);
+    }
+
+    // Calculate token cost based on actual successful extractions
+    const tokenCost = calculateSaveTokenCost(
+      people.length,
+      body.enrichEmail,
+      body.enrichPhone,
+    );
+    
+    // Override email and phone costs with actual successful extractions
+    tokenCost.email = successfulEmailExtractions * TOKEN_RATES.email;
+    tokenCost.phone = successfulPhoneExtractions * TOKEN_RATES.phone;
+    tokenCost.total = tokenCost.leads + tokenCost.email + tokenCost.phone;
+    
+    await assertSufficientTokens(userId, tokenCost.total);
+
     await insertCampaignContacts(campaign.id, people, campaign.contactCount);
     const contactCount = await updateCampaignContactCount(campaign.id);
 
@@ -179,6 +222,8 @@ export async function POST(request: NextRequest) {
         requestedCount: remainingRequested,
         enrichEmail: body.enrichEmail,
         enrichPhone: body.enrichPhone,
+        successfulEmailExtractions,
+        successfulPhoneExtractions,
         breakdown: tokenCost,
       },
       idempotencyKey: `save:${campaign.id}:${contactCount}:${Date.now()}`,

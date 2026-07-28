@@ -50,6 +50,8 @@ export interface LeadPerson {
   organization?: LeadOrganization;
   has_email?: boolean;
   has_direct_phone?: string | boolean;
+  email_extraction_failed?: boolean;
+  phone_extraction_failed?: boolean;
 }
 
 export type SearchMode = "people" | "linkedin";

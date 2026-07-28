@@ -7,6 +7,7 @@ import AddAiColumnModal from "@/components/AddAiColumnModal";
 import { AISearchIconBadge } from "@/components/AISearchIcon";
 import LeadResults from "@/components/LeadResults";
 import { ApiError, fetchJson } from "@/lib/fetch-json";
+import { notifyBillingBalanceRefresh } from "@/hooks/useBillingBalance";
 import { SEARCH_RESULTS_PER_PAGE } from "@/lib/paginated-search-client";
 import type {
   CampaignColumn,
@@ -255,6 +256,13 @@ export default function CampaignContacts() {
       });
 
       const successCount = results.filter((result) => result.status === "done").length;
+      
+      // Refresh token balance immediately after successful AI column enrichment
+      const tokensDebited = Number(data.tokensDebited ?? 0);
+      if (tokensDebited > 0) {
+        notifyBillingBalanceRefresh();
+      }
+      
       setColumnNotice(
         `Filled ${successCount} of ${personIds.length} cells for "${column?.name ?? "column"}".`,
       );
