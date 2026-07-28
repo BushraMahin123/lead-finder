@@ -19,6 +19,13 @@ const TAG_RULES: Array<{ label: string; isActive: (filters: Partial<SearchFilter
       typeof f.experienceYearsMin === "number" ||
       typeof f.experienceYearsMax === "number",
   },
+  {
+    label: "Revenue",
+    isActive: (f) =>
+      Boolean(f.annualRevenue?.trim()) ||
+      typeof f.annualRevenueMin === "number" ||
+      typeof f.annualRevenueMax === "number",
+  },
   { label: "Company name", isActive: (f) => Boolean(f.companyName?.trim()) },
   { label: "Seniority", isActive: (f) => Boolean(f.seniorities?.length) },
   { label: "Keywords", isActive: (f) => Boolean(f.keywords?.trim()) },
@@ -35,7 +42,7 @@ export function getAppliedFilterTags(filters: Partial<SearchFilters> | null | un
 }
 
 export function getPrimaryFilterTags(filters: Partial<SearchFilters> | null | undefined) {
-  const primary = ["Job title", "Location", "Industry", "Company size", "Experience"];
+  const primary = ["Job title", "Location", "Industry", "Company size", "Experience", "Revenue"];
   const active = new Set(getAppliedFilterTags(filters).map((tag) => tag.label));
 
   return primary.map((label) => ({

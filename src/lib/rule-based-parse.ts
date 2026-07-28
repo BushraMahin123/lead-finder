@@ -1,6 +1,9 @@
 import { hasAnySearchFilters } from "@/lib/gemini-filter-schema";
 import { parseLeadQuery } from "@/lib/parse-lead-query";
 import {
+  getUnsatisfiedFilterSignals,
+} from "@/lib/filter-signals";
+import {
   extractEmployeeSizesFromQuery,
   extractExperienceYearsFromQuery,
   extractIndustriesFromQuery,
@@ -8,9 +11,6 @@ import {
   extractLocationsFromQuery,
 } from "@/lib/refine-ai-filters";
 import type { SearchFilters } from "@/types/lead";
-
-const COMPLEX_QUERY_PATTERN =
-  /\b(exclude|except|not\s+in|without|series\s+[a-d]|funded|startup|unicorn|ycombinator|yc)\b/i;
 
 function normalizeTitle(value: string): string {
   return value.trim().toLowerCase().replace(/\s+/g, " ");
@@ -50,12 +50,22 @@ function countFilterDimensions(filters: Partial<SearchFilters>): number {
   ) {
     count++;
   }
+  if (
+    typeof filters.annualRevenueMin === "number" ||
+    typeof filters.annualRevenueMax === "number" ||
+    filters.annualRevenue?.trim()
+  ) {
+    count++;
+  }
   if (filters.companyName?.trim()) count++;
   if (filters.companyDomain?.trim()) count++;
   if (filters.seniorities?.length) count++;
   if (filters.departments?.length) count++;
   if (filters.linkedInUrls?.trim()) count++;
   if (filters.keywords?.trim()) count++;
+  if (filters.skills?.trim()) count++;
+  if (filters.funding?.trim()) count++;
+  if (filters.technology?.trim()) count++;
   return count;
 }
 
@@ -63,6 +73,11 @@ export function parseLeadQueryWithRules(query: string): Partial<SearchFilters> {
   return parseLeadQuery(query);
 }
 
+/**
+ * Rules are only sufficient for simple queries where every detected filter
+ * signal was mapped. Any unmapped signal (revenue, funding, size, etc.)
+ * forces Gemini so free-form wording is not lost.
+ */
 export function isRuleBasedParseSufficient(
   query: string,
   filters: Partial<SearchFilters>,
@@ -87,7 +102,6 @@ export function isRuleBasedParseSufficient(
   }
 
   const expectedLocations = extractLocationsFromQuery(query);
-  // Specific states may drop the country (United States) intentionally.
   const locationOk =
     expectedLocations.length === 0 ||
     expectedLocations.every(
@@ -117,26 +131,18 @@ export function isRuleBasedParseSufficient(
     }
   }
 
-  if (COMPLEX_QUERY_PATTERN.test(query) && countFilterDimensions(filters) < 2) {
+  // Permanent guard: any detected filter language without a mapped field → Gemini.
+  const unsatisfied = getUnsatisfiedFilterSignals(query, filters);
+  if (unsatisfied.length > 0) {
     return false;
   }
 
   const words = query.trim().split(/\s+/).filter(Boolean).length;
   const dimensions = countFilterDimensions(filters);
 
-  // Location/industry alone is not enough for short "role in place" queries
-  // when we failed to capture a job title (forces Gemini for edge cases).
-  if (
-    dimensions === 1 &&
-    !filters.jobTitle?.trim() &&
-    (filters.locations?.length ?? 0) > 0 &&
-    /\b[a-z][a-z0-9&/-]+\s+(?:in|at|from|near|based\s+in)\b/i.test(query)
-  ) {
-    return false;
-  }
-
+  // All detected signals are mapped — rules are enough (even for longer prompts).
   if (dimensions >= 2) return true;
-  if (dimensions >= 1 && words <= 10) return true;
+  if (dimensions >= 1 && words <= 8) return true;
 
   return false;
 }

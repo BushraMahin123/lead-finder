@@ -1,4 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
+import {
+  mergePeopleIntoExcludeLists,
+  type PeopleExcludeListState,
+} from "@/lib/ai-ark";
 import { getAuthenticatedUserId, unauthorizedResponse } from "@/lib/auth";
 import { insufficientTokensResponse } from "@/lib/billing/errors";
 import { calculateSaveTokenCost } from "@/lib/billing/token-rates";
@@ -11,10 +15,12 @@ import {
   createCampaign,
   getCampaignForUser,
   insertCampaignContacts,
+  listCampaignPersonIds,
   updateCampaignContactCount,
 } from "@/lib/campaigns";
 import { fetchContactsUpToServer } from "@/lib/fetch-contacts-server";
 import { SEARCH_RESULTS_PER_PAGE } from "@/lib/paginated-search-client";
+import { SAVE_CONTACTS_PER_REQUEST } from "@/lib/save-contacts-config";
 import type { SearchFilters } from "@/types/lead";
 
 export const maxDuration = 120;
@@ -28,6 +34,23 @@ interface SaveCampaignBody {
   enrichPhone: boolean;
   aiQuery?: string | null;
   totalEntries: number;
+  /** Reusable AI Ark exclude lists from prior chunks in this save session. */
+  excludeLists?: PeopleExcludeListState[];
+}
+
+function normalizeExcludeLists(
+  value: unknown,
+): PeopleExcludeListState[] {
+  if (!Array.isArray(value)) return [];
+  return value
+    .map((item) => {
+      if (!item || typeof item !== "object") return null;
+      const id = String((item as { id?: unknown }).id ?? "").trim();
+      const count = Number((item as { count?: unknown }).count ?? 0);
+      if (!id || !Number.isFinite(count) || count < 0) return null;
+      return { id, count: Math.floor(count) };
+    })
+    .filter((item): item is PeopleExcludeListState => Boolean(item));
 }
 
 export async function POST(request: NextRequest) {
@@ -39,12 +62,23 @@ export async function POST(request: NextRequest) {
 
     const body = (await request.json()) as SaveCampaignBody;
 
-    if (!body.filters || !body.contactCount) {
+    const requestedCount = Math.min(
+      Math.floor(Number(body.contactCount)),
+      SAVE_CONTACTS_PER_REQUEST,
+    );
+    if (!body.filters || !Number.isFinite(requestedCount) || requestedCount < 1) {
       return NextResponse.json(
         { error: "Missing search filters or contact count" },
         { status: 400 },
       );
     }
+
+    const maxAvailable = Math.max(
+      1,
+      Math.floor(Number(body.totalEntries) || requestedCount),
+    );
+    const remainingRequested = Math.min(requestedCount, maxAvailable);
+    const chunkCount = Math.min(remainingRequested, SAVE_CONTACTS_PER_REQUEST);
 
     const campaignId = body.campaignId?.trim();
     const name = body.name?.trim();
@@ -79,12 +113,19 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    const tokenCost = calculateSaveTokenCost(
-      body.contactCount,
-      body.enrichEmail,
-      body.enrichPhone,
+    await assertSufficientTokens(
+      userId,
+      calculateSaveTokenCost(chunkCount, body.enrichEmail, body.enrichPhone)
+        .total,
     );
-    await assertSufficientTokens(userId, tokenCost.total);
+
+    let excludeLists = normalizeExcludeLists(body.excludeLists);
+
+    // First chunk / resume without lists: build once from contacts already in the table.
+    if (excludeLists.length === 0 && campaign.contactCount > 0) {
+      const existingIds = await listCampaignPersonIds(campaign.id);
+      excludeLists = await mergePeopleIntoExcludeLists(existingIds, []);
+    }
 
     const { people } = await fetchContactsUpToServer(
       {
@@ -92,11 +133,40 @@ export async function POST(request: NextRequest) {
         page: 1,
         perPage: SEARCH_RESULTS_PER_PAGE,
       },
-      body.contactCount,
+      chunkCount,
+      {
+        excludePeopleListIds: excludeLists.map((list) => list.id),
+      },
     );
+
+    if (people.length === 0) {
+      return NextResponse.json({
+        campaign: {
+          ...campaign,
+          contactCount: campaign.contactCount,
+        },
+        savedCount: 0,
+        hasMore: false,
+        excludeLists,
+        tokensDebited: 0,
+        tokenBalance: null,
+      });
+    }
+
+    const tokenCost = calculateSaveTokenCost(
+      people.length,
+      body.enrichEmail,
+      body.enrichPhone,
+    );
+    await assertSufficientTokens(userId, tokenCost.total);
 
     await insertCampaignContacts(campaign.id, people, campaign.contactCount);
     const contactCount = await updateCampaignContactCount(campaign.id);
+
+    const nextExcludeLists = await mergePeopleIntoExcludeLists(
+      people.map((person) => person.id),
+      excludeLists,
+    );
 
     const balance = await debitTokens({
       userId,
@@ -106,11 +176,12 @@ export async function POST(request: NextRequest) {
       metadata: {
         campaignId: campaign.id,
         contactCount: people.length,
+        requestedCount: remainingRequested,
         enrichEmail: body.enrichEmail,
         enrichPhone: body.enrichPhone,
         breakdown: tokenCost,
       },
-      idempotencyKey: `save:${campaign.id}:${body.contactCount}:${Date.now()}`,
+      idempotencyKey: `save:${campaign.id}:${contactCount}:${Date.now()}`,
     });
 
     return NextResponse.json({
@@ -119,6 +190,8 @@ export async function POST(request: NextRequest) {
         contactCount,
       },
       savedCount: people.length,
+      hasMore: people.length >= chunkCount,
+      excludeLists: nextExcludeLists,
       tokensDebited: tokenCost.total,
       tokenBalance: balance,
     });

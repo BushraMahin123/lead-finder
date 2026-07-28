@@ -1,5 +1,6 @@
 import type { SearchFilters } from "@/types/lead";
 import {
+  extractAnnualRevenueFromQuery,
   extractEmployeeSizesFromQuery,
   extractExperienceYearsFromQuery,
   extractIndustriesFromQuery,
@@ -14,6 +15,7 @@ export function parseLeadQuery(query: string): Partial<SearchFilters> {
   if (!trimmed) return {};
 
   const experience = extractExperienceYearsFromQuery(trimmed);
+  const revenue = extractAnnualRevenueFromQuery(trimmed);
 
   const filters: Partial<SearchFilters> = {
     searchMode: "people",
@@ -29,6 +31,17 @@ export function parseLeadQuery(query: string): Partial<SearchFilters> {
       : {}),
     ...(experience?.max !== undefined
       ? { experienceYearsMax: experience.max }
+      : {}),
+    ...(revenue
+      ? {
+          annualRevenue: revenue.label,
+          ...(revenue.min !== undefined
+            ? { annualRevenueMin: revenue.min }
+            : {}),
+          ...(revenue.max !== undefined
+            ? { annualRevenueMax: revenue.max }
+            : {}),
+        }
       : {}),
   };
 

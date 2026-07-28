@@ -1,7 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import type { FilterOption } from "@/lib/filter-options";
+import {
+  FilterSearchInput,
+  matchesFilterSearch,
+} from "@/components/filter-panel-utils";
 
 interface FilterSectionProps {
   title: string;
@@ -12,7 +16,11 @@ interface FilterSectionProps {
   defaultOpen?: boolean;
   maxHeight?: string;
   embedded?: boolean;
+  searchable?: boolean;
+  searchPlaceholder?: string;
 }
+
+const SEARCHABLE_OPTION_THRESHOLD = 20;
 
 export default function FilterSection({
   title,
@@ -23,8 +31,12 @@ export default function FilterSection({
   defaultOpen = true,
   maxHeight = "max-h-48",
   embedded = false,
+  searchable,
+  searchPlaceholder,
 }: FilterSectionProps) {
   const [open, setOpen] = useState(defaultOpen);
+  const [searchQuery, setSearchQuery] = useState("");
+  const showSearch = searchable ?? options.length >= SEARCHABLE_OPTION_THRESHOLD;
 
   function toggle(value: string) {
     if (selected.includes(value)) {
@@ -34,26 +46,52 @@ export default function FilterSection({
     onChange([...selected, value]);
   }
 
+  const visibleOptions = useMemo(() => {
+    const query = searchQuery.trim();
+    if (!query) return options;
+
+    const selectedSet = new Set(selected);
+    return options.filter(
+      (option) =>
+        selectedSet.has(option.value) || matchesFilterSearch(option.label, query),
+    );
+  }, [options, searchQuery, selected]);
+
+  const optionGridClassName =
+    "grid grid-cols-2 gap-x-2 gap-y-1 overflow-y-auto pr-1 scrollbar-hidden";
+
+  const optionsList =
+    visibleOptions.length === 0 ? (
+      <p className="py-3 text-sm text-slate-500">No matches for your search.</p>
+    ) : (
+      visibleOptions.map((option) => (
+        <label
+          key={option.value}
+          className="flex cursor-pointer items-start gap-2 rounded-md border border-slate-100 bg-white px-2 py-1.5 text-sm hover:border-slate-200 hover:bg-slate-50"
+        >
+          <input
+            type="checkbox"
+            checked={selected.includes(option.value)}
+            onChange={() => toggle(option.value)}
+            className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-indigo-600"
+          />
+          <span className="min-w-0 flex-1 truncate text-slate-700">{option.label}</span>
+        </label>
+      ))
+    );
+
   if (embedded) {
     return (
       <div className="space-y-2">
         {description && <p className="text-xs text-slate-500">{description}</p>}
-        <div className={`space-y-1 overflow-y-auto pr-1 scrollbar-hidden ${maxHeight}`}>
-          {options.map((option) => (
-            <label
-              key={option.value}
-              className="flex cursor-pointer items-start gap-2 rounded-md px-1 py-1 text-sm hover:bg-white"
-            >
-              <input
-                type="checkbox"
-                checked={selected.includes(option.value)}
-                onChange={() => toggle(option.value)}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-indigo-600"
-              />
-              <span className="text-slate-700">{option.label}</span>
-            </label>
-          ))}
-        </div>
+        {showSearch && (
+          <FilterSearchInput
+            value={searchQuery}
+            onChange={setSearchQuery}
+            placeholder={searchPlaceholder ?? `Search ${title.toLowerCase()}…`}
+          />
+        )}
+        <div className={`${optionGridClassName} ${maxHeight}`}>{optionsList}</div>
         {selected.length > 0 && (
           <button
             type="button"
@@ -84,21 +122,15 @@ export default function FilterSection({
       </button>
 
       {open && (
-        <div className={`mt-2 space-y-1 overflow-y-auto pr-1 scrollbar-hidden ${maxHeight}`}>
-          {options.map((option) => (
-            <label
-              key={option.value}
-              className="flex cursor-pointer items-start gap-2 rounded-md px-1 py-1 text-sm hover:bg-slate-50"
-            >
-              <input
-                type="checkbox"
-                checked={selected.includes(option.value)}
-                onChange={() => toggle(option.value)}
-                className="mt-0.5 h-4 w-4 shrink-0 rounded border-slate-300 text-indigo-600"
-              />
-              <span className="text-slate-700">{option.label}</span>
-            </label>
-          ))}
+        <div className="mt-2 space-y-2">
+          {showSearch && (
+            <FilterSearchInput
+              value={searchQuery}
+              onChange={setSearchQuery}
+              placeholder={searchPlaceholder ?? `Search ${title.toLowerCase()}…`}
+            />
+          )}
+          <div className={`${optionGridClassName} ${maxHeight}`}>{optionsList}</div>
         </div>
       )}
 

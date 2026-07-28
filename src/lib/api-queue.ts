@@ -118,12 +118,18 @@ export function isRetryableError(error: unknown): boolean {
   if (error instanceof RetryableQueueError) return true;
 
   const message = error instanceof Error ? error.message : String(error);
+  const name = error instanceof Error ? error.name : "";
   return (
     /429|502|503|504/.test(message) ||
     /rate.?limit/i.test(message) ||
     /quota exceeded/i.test(message) ||
     /RESOURCE_EXHAUSTED/i.test(message) ||
-    /too many requests/i.test(message)
+    /too many requests/i.test(message) ||
+    /fetch failed/i.test(message) ||
+    /network|ECONNRESET|ETIMEDOUT|ECONNREFUSED|UND_ERR|AbortError/i.test(
+      message,
+    ) ||
+    name === "AbortError"
   );
 }
 

@@ -9,6 +9,8 @@
     "dev:turbo": "next dev --turbopack",
     "dev:webpack": "next dev --webpack",
     "dev:stop": "node scripts/stop-dev.mjs",
+    "generate:filters": "node scripts/generate-filter-data.mjs",
+    "prebuild": "node scripts/generate-filter-data.mjs",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
