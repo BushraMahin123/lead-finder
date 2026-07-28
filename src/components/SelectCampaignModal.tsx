@@ -11,6 +11,7 @@ export interface SelectCampaignPayload {
 interface SelectCampaignModalProps {
   open: boolean;
   saving?: boolean;
+  savingLabel?: string | null;
   error?: string | null;
   onClose: () => void;
   onPrevious: () => void;
@@ -20,6 +21,7 @@ interface SelectCampaignModalProps {
 export default function SelectCampaignModal({
   open,
   saving = false,
+  savingLabel = null,
   error = null,
   onClose,
   onPrevious,
@@ -246,7 +248,7 @@ export default function SelectCampaignModal({
             disabled={!canSave}
             className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50 disabled:cursor-not-allowed disabled:text-slate-400"
           >
-            {saving ? "Saving…" : "Save contacts"}
+            {saving ? savingLabel || "Saving…" : "Save contacts"}
           </button>
         </div>
       </div>

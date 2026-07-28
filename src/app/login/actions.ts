@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import type { AuthFormState } from "@/components/AuthForm";
+import { hasUserProfile } from "@/lib/signup/profile";
 import { createClient } from "@/lib/supabase/server";
 
 export async function login(
@@ -17,13 +18,21 @@ export async function login(
   }
 
   const supabase = await createClient();
-  const { error } = await supabase.auth.signInWithPassword({ email, password });
+  const { data, error } = await supabase.auth.signInWithPassword({
+    email,
+    password,
+  });
 
   if (error) {
     return { error: error.message };
   }
 
   revalidatePath("/", "layout");
+
+  const userId = data.user?.id;
+  if (userId && !(await hasUserProfile(userId))) {
+    redirect("/onboarding");
+  }
 
   const next = String(formData.get("next") ?? "").trim();
   const destination =

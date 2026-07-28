@@ -1,5 +1,4 @@
 import { fetchJson } from "@/lib/fetch-json";
-import { MAX_SAVE_CONTACTS } from "@/lib/save-contacts-config";
 import type { LeadPerson, SearchFilters } from "@/types/lead";
 
 export const SEARCH_RESULTS_PER_PAGE = 50;
@@ -8,6 +7,8 @@ export const AI_PREVIEW_PER_PAGE = 5;
 export interface SearchPageData {
   people: LeadPerson[];
   totalEntries: number;
+  /** Raw provider page size before title/location post-filter (for pagination). */
+  providerPageCount?: number;
   cached: boolean;
   cachedAt: string | null;
   tokensDebited?: number;
@@ -36,9 +37,14 @@ export async function fetchSearchPage(
     throw new Error(String(data.error ?? "Search failed"));
   }
 
+  const people = (data.people as LeadPerson[] | undefined) ?? [];
   return {
-    people: (data.people as LeadPerson[] | undefined) ?? [],
+    people,
     totalEntries: Number(data.totalEntries ?? 0),
+    providerPageCount:
+      typeof data.providerPageCount === "number"
+        ? data.providerPageCount
+        : people.length,
     cached: Boolean(data.cached),
     cachedAt: (data.cachedAt as string | undefined) ?? null,
     tokensDebited: Number(data.tokensDebited ?? 0),
@@ -49,8 +55,9 @@ export async function fetchContactsUpTo(
   filters: SearchFilters,
   targetCount: number,
 ): Promise<SearchPageData> {
-  const cap = Math.min(Math.max(1, targetCount), MAX_SAVE_CONTACTS);
-  const batchSize = Math.min(100, cap);
+  const cap = Math.max(1, Math.floor(targetCount));
+  // Fetch full pages so post-filters don't starve small save counts (e.g. save 2).
+  const batchSize = Math.min(100, Math.max(cap, SEARCH_RESULTS_PER_PAGE));
   const baseFilters = { ...filters, page: 1 };
 
   let people: LeadPerson[] = [];
@@ -71,12 +78,18 @@ export async function fetchContactsUpTo(
     cached = cached || data.cached;
     cachedAt = cachedAt ?? data.cachedAt;
     totalTokensDebited += (data.tokensDebited ?? 0);
+    const providerPageCount = data.providerPageCount ?? data.people.length;
 
-    if (data.people.length === 0) break;
+    if (providerPageCount === 0) break;
 
     people = [...people, ...data.people];
 
-    if (data.people.length < batchSize || people.length >= totalEntries) {
+    if (people.length >= cap || people.length >= totalEntries) {
+      break;
+    }
+
+    // Only stop when the provider page was short — filtered drops are not end-of-results.
+    if (providerPageCount < batchSize) {
       break;
     }
 

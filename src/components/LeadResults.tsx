@@ -11,6 +11,7 @@ import type {
 } from "@/types/campaign";
 import type { EnrichContactResult, EnrichType, LeadPerson, SearchFilters } from "@/types/lead";
 import AiColumnErrorIndicator from "@/components/AiColumnErrorIndicator";
+import TruncatedText from "@/components/TruncatedText";
 import {
   ContactNotesInput,
   ContactTrackingCell,

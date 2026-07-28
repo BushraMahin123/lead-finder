@@ -113,6 +113,12 @@ export async function updateSession(request: NextRequest) {
   const userId = getUserId(user);
   const { pathname } = request.nextUrl;
 
+  // Middleware redirects break Server Actions (client expects an action/RSC
+  // response). Refresh the session above, then let the action handle auth.
+  if (request.headers.has("next-action")) {
+    return supabaseResponse;
+  }
+
   if (!user) {
     if (pathname === ONBOARDING_PATH) {
       const url = request.nextUrl.clone();

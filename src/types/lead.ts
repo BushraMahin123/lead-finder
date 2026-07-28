@@ -78,17 +78,46 @@ export interface SearchFilters {
   languages?: string[];
   companyTypes?: string[];
   personName?: string;
+  /** When true, `personName` removes matching people from results instead of including them. */
+  personNameExclude?: boolean;
   skills?: string;
   linkedInBadge?: string;
   funding?: string;
   technology?: string;
   annualRevenue?: string;
+  /** Parsed minimum annual revenue in USD (for AI Ark revenue range). */
+  annualRevenueMin?: number;
+  /** Parsed maximum annual revenue in USD. */
+  annualRevenueMax?: number;
   productsServices?: string;
   education?: string;
   socialMedia?: string;
   certifications?: string;
   foundedYear?: string;
   headcountGrowth?: string;
+  /** Company LinkedIn page URLs (one per line). */
+  companyLinkedInUrls?: string;
+  /** Bulk company domains (one per line). */
+  companyDomainBulk?: string;
+  keywordSources?: string[];
+  fundingTypes?: string[];
+  fundingAmountMin?: number;
+  fundingAmountMax?: number;
+  educationSchool?: string;
+  educationDegrees?: string[];
+  educationFieldsOfStudy?: string[];
+  educationDateStart?: string;
+  educationDateEnd?: string;
+  companyLanguages?: string[];
+  foundedYearStart?: string;
+  foundedYearEnd?: string;
+  headcountGrowthJobFunctions?: string[];
+  headcountGrowthPercent?: string;
+  headcountGrowthTimeFrame?: string;
+  departmentEmployeeCountMin?: number;
+  departmentEmployeeCountMax?: number;
+  jobTitlePrimaryActiveRoleOnly?: boolean;
+  annualRevenueRanges?: string[];
   page?: number;
   perPage?: number;
   enrichContacts?: boolean;
@@ -97,6 +126,8 @@ export interface SearchFilters {
 export interface SearchResponse {
   people: LeadPerson[];
   totalEntries: number;
+  /** Raw provider page size before title/location post-filter (for pagination). */
+  providerPageCount?: number;
   page: number;
   perPage: number;
   cached?: boolean;

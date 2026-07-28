@@ -9,6 +9,7 @@ import {
   CREDIT_RATES,
   formatCredits,
   SAVE_AMOUNT_PRESETS,
+  SAVE_CONTACTS_PER_REQUEST,
 } from "@/lib/save-contacts-config";
 
 export interface SaveContactsConfirmPayload {
@@ -44,25 +45,30 @@ export default function SaveContactsModal({
   onClose,
   onConfirm,
 }: SaveContactsModalProps) {
-  const maxCount = Math.min(maxAvailable, 10_000);
+  const maxCount = Math.max(
+    1,
+    Math.min(Math.floor(maxAvailable), SAVE_CONTACTS_PER_REQUEST),
+  );
   const [amount, setAmount] = useState("");
   const [selectedPreset, setSelectedPreset] = useState<number | null>(null);
   const [enrichEmail, setEnrichEmail] = useState(true);
   const [enrichPhone, setEnrichPhone] = useState(true);
   const { balance, refresh } = useBillingBalance();
 
+  const presets = useMemo(() => {
+    const values = SAVE_AMOUNT_PRESETS.filter((preset) => preset < maxCount);
+    return [...values, maxCount];
+  }, [maxCount]);
+
   useEffect(() => {
     if (!open) return;
     void refresh();
-    const initial = clampSaveCount(
-      Math.min(100, maxCount),
-      maxCount,
-    );
+    const initial = clampSaveCount(Math.min(100, maxCount), maxCount);
     setAmount(String(initial));
-    setSelectedPreset(SAVE_AMOUNT_PRESETS.includes(initial as (typeof SAVE_AMOUNT_PRESETS)[number]) ? initial : null);
+    setSelectedPreset(presets.includes(initial) ? initial : null);
     setEnrichEmail(true);
     setEnrichPhone(true);
-  }, [open, maxCount, refresh]);
+  }, [open, maxCount, presets, refresh]);
 
   const parsedAmount = useMemo(() => {
     const value = Number(amount);
@@ -79,6 +85,12 @@ export default function SaveContactsModal({
   const insufficientCredits =
     parsedAmount > 0 && credits.total > availableCredits;
   const canContinue = parsedAmount > 0 && !insufficientCredits;
+  const amountExceedsMatches =
+    Number(amount) > maxCount && Number.isFinite(Number(amount));
+  const amountExceedsSingleSaveLimit =
+    Number(amount) > SAVE_CONTACTS_PER_REQUEST &&
+    Number.isFinite(Number(amount)) &&
+    Math.floor(maxAvailable) > SAVE_CONTACTS_PER_REQUEST;
 
   if (!open) return null;
 
@@ -122,7 +134,8 @@ export default function SaveContactsModal({
             Save contacts
           </h2>
           <p className="mt-1 text-sm text-slate-500">
-            Please confirm details before creating table.
+            You can save up to {SAVE_CONTACTS_PER_REQUEST.toLocaleString()} contacts
+            at a time. Save again into the same table to continue with the next batch.
           </p>
         </div>
 
@@ -131,7 +144,7 @@ export default function SaveContactsModal({
             <p className="text-sm font-medium text-slate-900">
               Select amount{" "}
               <span className="font-normal text-slate-500">
-                (max {maxCount.toLocaleString()})
+                ({maxCount.toLocaleString()} available)
               </span>
             </p>
             <label className="mt-3 block text-xs text-slate-500">
@@ -145,26 +158,35 @@ export default function SaveContactsModal({
                 className="mt-1.5 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
               />
             </label>
+            {amountExceedsMatches && (
+              <p className="mt-1.5 text-xs text-amber-700">
+                Only {Math.floor(maxAvailable).toLocaleString()} contacts match this search.
+                Amount will be capped to {maxCount.toLocaleString()}.
+              </p>
+            )}
+            {amountExceedsSingleSaveLimit && (
+              <p className="mt-1.5 text-xs text-slate-500">
+                Each save is limited to {SAVE_CONTACTS_PER_REQUEST.toLocaleString()} contacts.
+                Save again into the same table to continue from the next contacts.
+              </p>
+            )}
 
             <div className="mt-3 flex flex-wrap gap-2">
-              {SAVE_AMOUNT_PRESETS.map((preset) => {
-                const disabled = preset > maxCount;
+              {presets.map((preset) => {
                 const active = selectedPreset === preset;
+                const isAll = preset === maxCount;
                 return (
                   <button
                     key={preset}
                     type="button"
-                    disabled={disabled}
                     onClick={() => handlePreset(preset)}
                     className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
                       active
                         ? "border-slate-900 bg-slate-900 text-white"
-                        : disabled
-                          ? "cursor-not-allowed border-slate-100 bg-slate-50 text-slate-300"
-                          : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-slate-300"
                     }`}
                   >
-                    {preset.toLocaleString()}
+                    {isAll ? `All (${preset.toLocaleString()})` : preset.toLocaleString()}
                   </button>
                 );
               })}
@@ -176,11 +198,14 @@ export default function SaveContactsModal({
 
             {insufficientCredits && (
               <div className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-                <p className="font-medium">Oops! Looks like you don&apos;t have enough credits…</p>
+                <p className="font-medium">
+                  Not enough tokens to save {parsedAmount.toLocaleString()} contacts
+                </p>
                 <p className="mt-1 text-amber-800">
                   You need{" "}
-                  <CreditAmount value={credits.total - availableCredits} /> more tokens
-                  for this selection. Deselect paid options or{" "}
+                  <CreditAmount value={credits.total - availableCredits} /> more
+                  tokens for this selection. Lower the amount, turn off paid
+                  enrichment, or{" "}
                   <Link href="/pricing" className="font-medium underline">
                     upgrade your plan
                   </Link>

@@ -15,6 +15,7 @@ import type { EnrichContactResult, LeadPerson, SearchFilters } from "@/types/lea
 
 const CAMPAIGNS_TABLE = "campaigns";
 const CONTACTS_TABLE = "campaign_contacts";
+const CONTACTS_PAGE_SIZE = 1_000;
 
 interface CampaignRow {
   id: string;
@@ -180,6 +181,35 @@ export async function insertCampaignContacts(
   return inserted;
 }
 
+export async function listCampaignPersonIds(campaignId: string): Promise<string[]> {
+  const admin = getAdminOrThrow();
+  const ids: string[] = [];
+  let from = 0;
+
+  while (true) {
+    const { data, error } = await admin
+      .from(CONTACTS_TABLE)
+      .select("person_id")
+      .eq("campaign_id", campaignId)
+      .order("sort_order", { ascending: true })
+      .range(from, from + CONTACTS_PAGE_SIZE - 1);
+
+    if (error) throw new Error(error.message);
+
+    const rows = (data as Pick<ContactRow, "person_id">[] | null) ?? [];
+    if (rows.length === 0) break;
+
+    for (const row of rows) {
+      if (row.person_id) ids.push(row.person_id);
+    }
+
+    if (rows.length < CONTACTS_PAGE_SIZE) break;
+    from += CONTACTS_PAGE_SIZE;
+  }
+
+  return ids;
+}
+
 export async function updateCampaignContactCount(campaignId: string): Promise<number> {
   const admin = getAdminOrThrow();
 
@@ -211,16 +241,28 @@ export async function getCampaignWithContacts(
   if (!campaign) return null;
 
   const admin = getAdminOrThrow();
+  const rows: ContactRow[] = [];
+  let from = 0;
 
-  const { data, error } = await admin
-    .from(CONTACTS_TABLE)
-    .select("*")
-    .eq("campaign_id", campaignId)
-    .order("sort_order", { ascending: true });
+  while (true) {
+    const { data, error } = await admin
+      .from(CONTACTS_TABLE)
+      .select("*")
+      .eq("campaign_id", campaignId)
+      .order("sort_order", { ascending: true })
+      .range(from, from + CONTACTS_PAGE_SIZE - 1);
 
-  if (error) throw new Error(error.message);
+    if (error) throw new Error(error.message);
 
-  const rows = (data as ContactRow[] | null) ?? [];
+    const page = (data as ContactRow[] | null) ?? [];
+    if (page.length === 0) break;
+
+    rows.push(...page);
+
+    if (page.length < CONTACTS_PAGE_SIZE) break;
+    from += CONTACTS_PAGE_SIZE;
+  }
+
   const contacts = rows.map((row) => row.person_data);
   const contactMeta: Record<string, ContactRowMeta> = {};
 

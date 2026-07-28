@@ -3,9 +3,9 @@ import {
   formatTokenAmount,
   TOKEN_RATES,
 } from "@/lib/billing/token-rates";
-import { MAX_SAVE_CONTACTS, SAVE_AMOUNT_PRESETS } from "@/lib/save-contacts-limits";
+import { SAVE_AMOUNT_PRESETS, SAVE_CONTACTS_PER_REQUEST } from "@/lib/save-contacts-limits";
 
-export { MAX_SAVE_CONTACTS, SAVE_AMOUNT_PRESETS };
+export { SAVE_AMOUNT_PRESETS, SAVE_CONTACTS_PER_REQUEST };
 
 export const CREDIT_RATES = TOKEN_RATES;
 
@@ -34,7 +34,12 @@ export function formatCredits(value: number): string {
   return formatTokenAmount(value);
 }
 
+/** Clamp to available matches and the single-save cap. */
 export function clampSaveCount(value: number, maxAvailable: number): number {
-  const cap = Math.min(MAX_SAVE_CONTACTS, maxAvailable);
+  const cap = Math.max(
+    1,
+    Math.min(Math.floor(maxAvailable), SAVE_CONTACTS_PER_REQUEST),
+  );
+  if (!Number.isFinite(value) || value <= 0) return 1;
   return Math.max(1, Math.min(cap, Math.floor(value)));
 }

@@ -67,7 +67,7 @@ export default function SignupForm({ action }: SignupFormProps) {
       </div>
 
       <div className="space-y-6">
-        {state.error && <div className="alert-error">{state.error}</div>}
+        {state?.error && <div className="alert-error">{state.error}</div>}
 
         {step === 1 ? (
           <>

@@ -1,4 +1,5 @@
 import {
+  ANNUAL_REVENUE_OPTIONS,
   mapNumericRangeToEmployeeBuckets,
   parseFlexibleInt,
 } from "@/lib/filter-options";
@@ -375,6 +376,165 @@ export function extractExperienceYearsFromQuery(
   return null;
 }
 
+const REVENUE_RANGE_PATTERNS = [
+  /\$\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?\s*[-–—]\s*\$\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?/i,
+  /\$\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?\s+(?:to|and)\s+\$\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?/i,
+  /\b(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)\s+(?:to|and|[-–—])\s+(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)\b/i,
+];
+
+const REVENUE_MIN_PATTERNS = [
+  /(?:annual\s+)?revenue\s+(?:over|above|more\s+than|at\s+least|>=?)\s+\$?\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?/i,
+  /(?:over|above|more\s+than|at\s+least|>=?)\s+\$?\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?\s+(?:in\s+)?(?:annual\s+)?revenue/i,
+  /\$\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?\+/i,
+];
+
+const REVENUE_MAX_PATTERNS = [
+  /(?:annual\s+)?revenue\s+(?:under|below|less\s+than|up\s+to|<=?)\s+\$?\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?/i,
+  /(?:under|below|less\s+than|up\s+to|<=?)\s+\$?\s*(\d+(?:\.\d+)?)\s*(k|m|b|million|billion|thousand)?\s+(?:in\s+)?(?:annual\s+)?revenue/i,
+];
+
+function parseRevenueAmount(amount: string, unit?: string): number | null {
+  const value = Number(amount);
+  if (!Number.isFinite(value) || value <= 0) return null;
+
+  const normalizedUnit = (unit ?? "").toLowerCase();
+  if (normalizedUnit === "k" || normalizedUnit === "thousand") {
+    return Math.round(value * 1_000);
+  }
+  if (normalizedUnit === "m" || normalizedUnit === "million") {
+    return Math.round(value * 1_000_000);
+  }
+  if (normalizedUnit === "b" || normalizedUnit === "billion") {
+    return Math.round(value * 1_000_000_000);
+  }
+
+  if (value >= 1_000_000) return Math.round(value);
+  if (value >= 1_000) return Math.round(value);
+  return Math.round(value * 1_000_000);
+}
+
+function formatRevenueAmount(value: number): string {
+  if (value >= 1_000_000_000) {
+    const billions = value / 1_000_000_000;
+    return `$${billions % 1 === 0 ? billions : billions.toFixed(1)}B`;
+  }
+  if (value >= 1_000_000) {
+    const millions = value / 1_000_000;
+    return `$${millions % 1 === 0 ? millions : millions.toFixed(1)}M`;
+  }
+  if (value >= 1_000) {
+    const thousands = value / 1_000;
+    return `$${thousands % 1 === 0 ? thousands : thousands.toFixed(1)}K`;
+  }
+  return `$${value}`;
+}
+
+function formatRevenueLabel(min?: number, max?: number): string {
+  if (min !== undefined && max !== undefined) {
+    return `${formatRevenueAmount(min)} - ${formatRevenueAmount(max)}`;
+  }
+  if (min !== undefined) return `${formatRevenueAmount(min)}+`;
+  if (max !== undefined) return `Up to ${formatRevenueAmount(max)}`;
+  return "";
+}
+
+function findMatchingRevenueBucket(
+  min?: number,
+  max?: number,
+): string | null {
+  if (min === undefined && max === undefined) return null;
+
+  for (const option of ANNUAL_REVENUE_OPTIONS) {
+    const optionMin = option.start;
+    const optionMax = option.end;
+
+    if (min !== undefined && max !== undefined) {
+      if (min >= optionMin && max <= optionMax) return option.label;
+      if (min <= optionMax && max >= optionMin) return option.label;
+      continue;
+    }
+
+    if (min !== undefined) {
+      if (min >= optionMin && min <= optionMax) return option.label;
+      if (min <= optionMin && option.label.endsWith("+")) return option.label;
+      continue;
+    }
+
+    if (max !== undefined && max >= optionMin && max <= optionMax) {
+      return option.label;
+    }
+  }
+
+  return null;
+}
+
+export function extractAnnualRevenueFromQuery(query: string): {
+  label: string;
+  min?: number;
+  max?: number;
+} | null {
+  const normalized = query.trim();
+  if (!normalized) return null;
+
+  for (const pattern of REVENUE_RANGE_PATTERNS) {
+    const match = normalized.match(pattern);
+    if (!match) continue;
+
+    const min = parseRevenueAmount(match[1], match[2]);
+    const max = parseRevenueAmount(match[3], match[4]);
+    if (min === null || max === null || min > max) continue;
+
+    const bucket = findMatchingRevenueBucket(min, max);
+    return {
+      label: bucket ?? formatRevenueLabel(min, max),
+      min,
+      max,
+    };
+  }
+
+  for (const pattern of REVENUE_MIN_PATTERNS) {
+    const match = normalized.match(pattern);
+    if (!match) continue;
+
+    const min = parseRevenueAmount(match[1], match[2]);
+    if (min === null) continue;
+
+    const bucket = findMatchingRevenueBucket(min, undefined);
+    return {
+      label: bucket ?? formatRevenueLabel(min, undefined),
+      min,
+    };
+  }
+
+  for (const pattern of REVENUE_MAX_PATTERNS) {
+    const match = normalized.match(pattern);
+    if (!match) continue;
+
+    const max = parseRevenueAmount(match[1], match[2]);
+    if (max === null) continue;
+
+    const bucket = findMatchingRevenueBucket(undefined, max);
+    return {
+      label: bucket ?? formatRevenueLabel(undefined, max),
+      max,
+    };
+  }
+
+  for (const option of ANNUAL_REVENUE_OPTIONS) {
+    const escapedLabel = option.label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const labelPattern = new RegExp(`\\b${escapedLabel.replace(/\s+/g, "\\s+")}\\b`, "i");
+    if (labelPattern.test(normalized)) {
+      return {
+        label: option.label,
+        min: option.start,
+        max: option.end,
+      };
+    }
+  }
+
+  return null;
+}
+
 export function extractSenioritiesFromQuery(query: string): string[] {
   const seniorities = new Set<string>();
   if (/\b(?:c[\s-]?level|c[\s-]?suite)\b/i.test(query)) seniorities.add("c_suite");
@@ -660,6 +820,21 @@ export function refineFiltersFromQuery(
       refined.experienceYearsMax = extractedExperience.max;
     } else {
       delete refined.experienceYearsMax;
+    }
+  }
+
+  const extractedRevenue = extractAnnualRevenueFromQuery(query);
+  if (extractedRevenue) {
+    refined.annualRevenue = extractedRevenue.label;
+    if (typeof extractedRevenue.min === "number") {
+      refined.annualRevenueMin = extractedRevenue.min;
+    } else {
+      delete refined.annualRevenueMin;
+    }
+    if (typeof extractedRevenue.max === "number") {
+      refined.annualRevenueMax = extractedRevenue.max;
+    } else {
+      delete refined.annualRevenueMax;
     }
   }
 

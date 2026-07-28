@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState, type ReactNode } from "react";
 import { AISearchIconBadge } from "@/components/AISearchIcon";
+import TruncatedText from "@/components/TruncatedText";
 import {
   IconArrowRight,
   IconChevronRight,
@@ -57,7 +58,7 @@ function campaignSubtitle(campaign: Campaign): string | null {
   const query = campaign.aiQuery?.trim();
   if (!query) return null;
   if (query.toLowerCase() === campaign.name.trim().toLowerCase()) return null;
-  return query.length > 72 ? `${query.slice(0, 69)}…` : query;
+  return query;
 }
 
 interface DashboardContentProps {
@@ -381,48 +382,54 @@ function TableCard({ campaign }: { campaign: Campaign }) {
   return (
     <Link
       href={`/campaigns/${campaign.id}`}
-      className="group card-flat flex h-full flex-col p-5 transition hover:border-indigo-200 hover:shadow-md"
+      className="group card-flat flex h-full flex-col gap-4 p-5 transition hover:border-indigo-200 hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-3">
-        <div className="flex min-w-0 items-start gap-3">
+        <div className="flex min-w-0 flex-1 items-start gap-3 overflow-hidden">
           <span className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100 transition group-hover:bg-indigo-100">
             <IconTable className="h-5 w-5" />
           </span>
-          <div className="min-w-0">
-            <h3 className="truncate font-semibold text-slate-900 group-hover:text-indigo-700">
-              {campaign.name}
-            </h3>
+          <div className="min-w-0 flex-1 overflow-hidden">
+            <TruncatedText
+              as="h3"
+              text={campaign.name}
+              className="block w-full truncate font-semibold text-slate-900 group-hover:text-indigo-700"
+            />
             {subtitle && (
-              <p className="mt-0.5 line-clamp-2 text-xs leading-relaxed text-slate-500">
-                {subtitle}
-              </p>
+              <TruncatedText
+                as="p"
+                text={subtitle}
+                className="mt-0.5 block w-full truncate text-xs leading-relaxed text-slate-500"
+              />
             )}
           </div>
         </div>
-        <IconChevronRight className="text-slate-300 transition group-hover:text-indigo-500" />
+        <IconChevronRight className="mt-1 h-4 w-4 shrink-0 text-slate-300 transition group-hover:text-indigo-500" />
       </div>
 
-      <div className="mt-4 flex items-baseline gap-2">
-        <span className="text-3xl font-semibold tracking-tight text-slate-900">
-          {campaign.contactCount.toLocaleString()}
-        </span>
-        <span className="text-sm text-slate-500">contacts</span>
-      </div>
-
-      {pills.length > 0 && (
-        <div className="mt-3 flex flex-wrap gap-1.5">
-          {pills.map((pill) => (
-            <span
-              key={pill}
-              className="inline-flex max-w-full truncate rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs text-slate-600"
-            >
-              {pill}
-            </span>
-          ))}
+      <div className="flex min-h-0 flex-1 flex-col gap-3">
+        <div className="flex items-baseline gap-2">
+          <span className="text-3xl font-semibold tracking-tight text-slate-900">
+            {campaign.contactCount.toLocaleString()}
+          </span>
+          <span className="text-sm text-slate-500">contacts</span>
         </div>
-      )}
 
-      <div className="mt-auto flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 text-xs text-slate-500">
+        {pills.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {pills.map((pill) => (
+              <span
+                key={pill}
+                className="inline-flex max-w-full truncate rounded-full border border-slate-200 bg-slate-50 px-2.5 py-0.5 text-xs text-slate-600"
+              >
+                {pill}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 border-t border-slate-100 pt-4 text-xs text-slate-500">
         <span>Updated {formatRelativeDate(campaign.updatedAt)}</span>
         {campaign.enrichEmail && (
           <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-emerald-700 ring-1 ring-emerald-100">
