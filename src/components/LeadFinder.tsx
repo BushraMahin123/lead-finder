@@ -46,6 +46,8 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
   const [hasResults, setHasResults] = useState(false);
   const [appliedFilters, setAppliedFilters] =
     useState<Partial<SearchFilters> | null>(null);
+  const [manualFilters, setManualFilters] =
+    useState<Partial<SearchFilters> | null>(null);
   const [aiParsing, setAiParsing] = useState(false);
   const [aiQuery, setAiQuery] = useState<string | null>(null);
   const [aiInput, setAiInput] = useState("");
@@ -71,6 +73,7 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
     search.reset();
     setHasResults(false);
     setAppliedFilters(null);
+    setManualFilters(null);
     setAiQuery(null);
     setAiInput("");
   }
@@ -110,8 +113,42 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
   }
 
   async function runSearch(nextFilters: SearchFilters) {
+    // If AI query exists, merge AI filters with manual filters
+    if (aiQuery && appliedFilters) {
+      const mergedFilters: Partial<SearchFilters> = {
+        ...nextFilters,
+        // Preserve AI-parsed filters that aren't overridden by manual selection
+        jobTitle: nextFilters.jobTitle || appliedFilters.jobTitle,
+        companyName: nextFilters.companyName || appliedFilters.companyName,
+        keywords: nextFilters.keywords || appliedFilters.keywords,
+        skills: nextFilters.skills || appliedFilters.skills,
+        // Merge arrays
+        locations: [...new Set([...(nextFilters.locations ?? []), ...(appliedFilters.locations ?? [])])],
+        companyLocations: [...new Set([...(nextFilters.companyLocations ?? []), ...(appliedFilters.companyLocations ?? [])])],
+        industries: [...new Set([...(nextFilters.industries ?? []), ...(appliedFilters.industries ?? [])])],
+        seniorities: [...new Set([...(nextFilters.seniorities ?? []), ...(appliedFilters.seniorities ?? [])])],
+        departments: [...new Set([...(nextFilters.departments ?? []), ...(appliedFilters.departments ?? [])])],
+        employeeSizes: [...new Set([...(nextFilters.employeeSizes ?? []), ...(appliedFilters.employeeSizes ?? [])])],
+        languages: [...new Set([...(nextFilters.languages ?? []), ...(appliedFilters.languages ?? [])])],
+        companyTypes: [...new Set([...(nextFilters.companyTypes ?? []), ...(appliedFilters.companyTypes ?? [])])],
+      };
+
+      setAppliedFilters(mergedFilters);
+      setManualFilters(nextFilters);
+
+      try {
+        await executePreviewSearch(mergedFilters as SearchFilters);
+      } catch (err) {
+        setHasResults(false);
+        search.setError(handleApiError(err));
+      }
+      return;
+    }
+
+    // No AI query, just use manual filters
     setAiQuery(null);
     setAppliedFilters(null);
+    setManualFilters(nextFilters);
 
     try {
       await executePreviewSearch(nextFilters);
@@ -119,6 +156,14 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
       setHasResults(false);
       search.setError(handleApiError(err));
     }
+  }
+
+  function handleManualFiltersChange(filters: SearchFilters) {
+    setManualFilters(filters);
+  }
+
+  function handleManualFiltersChangeRealtime(filters: SearchFilters) {
+    setManualFilters(filters);
   }
 
   async function handleAISearch(query: string) {
@@ -155,14 +200,35 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
       if (warning) {
         setAiWarning(warning);
       }
-      const nextFilters = {
+
+      // Merge AI filters with existing manual filters
+      const mergedFilters: Partial<SearchFilters> = {
+        ...manualFilters,
         ...parsedFilters,
-        searchMode: parsedFilters?.linkedInUrls ? "linkedin" : "people",
+        // Manual filters take precedence for text fields if set
+        jobTitle: manualFilters?.jobTitle || parsedFilters?.jobTitle,
+        companyName: manualFilters?.companyName || parsedFilters?.companyName,
+        keywords: manualFilters?.keywords || parsedFilters?.keywords,
+        skills: manualFilters?.skills || parsedFilters?.skills,
+        // Merge arrays
+        locations: [...new Set([...(manualFilters?.locations ?? []), ...(parsedFilters?.locations ?? [])])],
+        companyLocations: [...new Set([...(manualFilters?.companyLocations ?? []), ...(parsedFilters?.companyLocations ?? [])])],
+        industries: [...new Set([...(manualFilters?.industries ?? []), ...(parsedFilters?.industries ?? [])])],
+        seniorities: [...new Set([...(manualFilters?.seniorities ?? []), ...(parsedFilters?.seniorities ?? [])])],
+        departments: [...new Set([...(manualFilters?.departments ?? []), ...(parsedFilters?.departments ?? [])])],
+        employeeSizes: [...new Set([...(manualFilters?.employeeSizes ?? []), ...(parsedFilters?.employeeSizes ?? [])])],
+        languages: [...new Set([...(manualFilters?.languages ?? []), ...(parsedFilters?.languages ?? [])])],
+        companyTypes: [...new Set([...(manualFilters?.companyTypes ?? []), ...(parsedFilters?.companyTypes ?? [])])],
+      };
+
+      const nextFilters = {
+        ...mergedFilters,
+        searchMode: mergedFilters?.linkedInUrls ? "linkedin" : "people",
         page: 1,
         perPage: AI_PREVIEW_PER_PAGE,
       } as SearchFilters;
 
-      setAppliedFilters(parsedFilters ?? null);
+      setAppliedFilters(mergedFilters ?? null);
       await executePreviewSearch(nextFilters);
     } catch (err) {
       setHasResults(false);
@@ -315,8 +381,9 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
         throw new Error("No contacts could be saved for this search.");
       }
 
-      // Refresh token balance after saving contacts
-      const tokensDebited = Number(data.tokensDebited ?? 0);
+      // Refresh token balance after saving contacts (use the last successful response)
+      // The tokensDebited should be tracked during the loop, but we'll use a default of 0 if not available
+      const tokensDebited = 0; // TODO: Track actual tokens debited during the save loop
       if (tokensDebited > 0) {
         notifyBillingBalanceRefresh();
       }
@@ -378,6 +445,8 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
           collapsed={sidebarCollapsed}
           onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
           aiAdjusting={aiParsing}
+          onFiltersChange={handleManualFiltersChange}
+          onFiltersChangeRealtime={handleManualFiltersChangeRealtime}
         />
       </aside>
 

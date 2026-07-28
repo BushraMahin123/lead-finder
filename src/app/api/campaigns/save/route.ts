@@ -114,7 +114,6 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    let { people } = await fetchContactsUpToServer(
     await assertSufficientTokens(
       userId,
       calculateSaveTokenCost(chunkCount, body.enrichEmail, body.enrichPhone)
@@ -129,7 +128,7 @@ export async function POST(request: NextRequest) {
       excludeLists = await mergePeopleIntoExcludeLists(existingIds, []);
     }
 
-    const { people } = await fetchContactsUpToServer(
+    let { people } = await fetchContactsUpToServer(
       {
         ...body.filters,
         page: 1,
@@ -154,13 +153,6 @@ export async function POST(request: NextRequest) {
         tokenBalance: null,
       });
     }
-
-    const tokenCost = calculateSaveTokenCost(
-      people.length,
-      body.enrichEmail,
-      body.enrichPhone,
-    );
-    await assertSufficientTokens(userId, tokenCost.total);
 
     // Perform enrichment if requested and count successful extractions
     let successfulEmailExtractions = 0;

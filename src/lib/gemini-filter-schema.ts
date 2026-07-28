@@ -62,12 +62,12 @@ Return ONLY valid JSON matching this shape (use null for unused string/number fi
 }
 
 Rules:
-- Extract as many relevant filters as possible from the user text.
+- ONLY extract filters that are EXPLICITLY mentioned in the user's query. Do not infer or assume filters.
 - jobTitle must contain ONLY the person's role/title (e.g. "Finance Manager"). Never include connector words like "working", "employed", "at", "in", company type, industry, location, employee count, or years of experience in jobTitle.
 - If the query says "Finance Managers working at eCommerce companies in California", jobTitle should be "Finance Manager" or "Finance Managers" only.
 - When a seniority word appears in the title (Senior, Director, VP, etc.), ALSO set seniorities to the matching allowed value (e.g. "senior").
 - Map SaaS / software companies to industries=["software development"], not into jobTitle or keywords. Do NOT set industry just because the job title contains "Software".
-- Map employee count phrases to employeeSizes using exact allowed values. Also include custom numeric ranges like "200-1000" in employeeSizes when needed. Examples:
+- ONLY set employeeSizes when the user EXPLICITLY mentions employee count or company size. Examples:
   - "1-50 employees" -> ["1-10", "11-50"]
   - "1-100 employees" -> ["1-10", "11-50", "51-200"]
   - "50-500 employees" -> ["51-200", "201-500"]
@@ -75,16 +75,18 @@ Rules:
   - "over 500 employees" / "more than 500 employees" -> ["501-1000", "1001-5000", "5001-10000", "10001+"]
   - "at least 500 employees" / "500+ employees" -> same buckets as over/at-least 500
   - "200 employees" or "201-500" -> matching bucket only
+- DO NOT set employeeSizes for general terms like "companies", "businesses", "startups", "enterprises" unless size is explicitly mentioned.
 - Ignore thousands separators in numbers (1,000 = 1000).
-- Map years-of-experience phrases to experienceYearsMin / experienceYearsMax:
+- ONLY set experienceYearsMin/experienceYearsMax when the user EXPLICITLY mentions years of experience:
   - "5+ years of experience" / "at least 5 years" -> experienceYearsMin=5, experienceYearsMax=null
   - "5-10 years experience" -> experienceYearsMin=5, experienceYearsMax=10
   - "more than 5 years" -> experienceYearsMin=6, experienceYearsMax=null
   - "5+ years of machine learning experience" -> experienceYearsMin=5 AND skills="Machine Learning"
-- Map annual revenue phrases to annualRevenueMin / annualRevenueMax in USD numbers, and set annualRevenue to a short display label:
+- ONLY set annual revenue filters (annualRevenueMin, annualRevenueMax, annualRevenue) when the user EXPLICITLY mentions revenue:
   - "annual revenue over $10 million" -> annualRevenueMin=10000000, annualRevenueMax=null, annualRevenue="Over $10M"
   - "revenue between $1M and $5M" -> annualRevenueMin=1000000, annualRevenueMax=5000000, annualRevenue="$1M–$5M"
   - "$10M+" -> annualRevenueMin=10000000, annualRevenue=" $10M+"
+- DO NOT set revenue filters for general business terms like "companies", "businesses", "startups" unless revenue is explicitly mentioned.
 - Map B2B / B2C into keywords. Map SaaS to industries=["software development"].
 - When the user says they are based in specific states/cities, put those in locations. Prefer specific states over the country when both are mentioned (e.g. California/Texas/New York, not also United States).
 - Do not put numeric ranges like "1-50" or "-50" into keywords.
