@@ -400,44 +400,134 @@ export function extractIndustriesFromQuery(query: string): string[] {
   return [...industries];
 }
 
+/** Calculate Levenshtein distance between two strings */
+function levenshteinDistance(a: string, b: string): number {
+  const matrix: number[][] = [];
+
+  for (let i = 0; i <= b.length; i++) {
+    matrix[i] = [i];
+  }
+
+  for (let j = 0; j <= a.length; j++) {
+    matrix[0][j] = j;
+  }
+
+  for (let i = 1; i <= b.length; i++) {
+    for (let j = 1; j <= a.length; j++) {
+      if (b.charAt(i - 1) === a.charAt(j - 1)) {
+        matrix[i][j] = matrix[i - 1][j - 1];
+      } else {
+        matrix[i][j] = Math.min(
+          matrix[i - 1][j - 1] + 1,
+          matrix[i][j - 1] + 1,
+          matrix[i - 1][j] + 1,
+        );
+      }
+    }
+  }
+
+  return matrix[b.length][a.length];
+}
+
+/** Find the best matching location from allowed values using fuzzy matching */
+function findBestLocationMatch(input: string, allowed: string[]): string | null {
+  const normalizedInput = input.toLowerCase().replace(/[^a-z0-9]/g, "");
+  let bestMatch: string | null = null;
+  let bestDistance = Infinity;
+
+  for (const value of allowed) {
+    const normalizedValue = value.toLowerCase().replace(/[^a-z0-9]/g, "");
+    const distance = levenshteinDistance(normalizedInput, normalizedValue);
+    
+    // Accept if distance is small relative to string length (max 30% difference)
+    const threshold = Math.max(2, Math.floor(normalizedValue.length * 0.3));
+    
+    if (distance < threshold && distance < bestDistance) {
+      bestDistance = distance;
+      bestMatch = value;
+    }
+  }
+
+  return bestMatch;
+}
+
+/** Normalize location text by fuzzy matching against allowed values */
+function normalizeLocationText(text: string, allowed: string[]): string {
+  const words = text.toLowerCase().split(/\s+/);
+  const normalizedWords: string[] = [];
+
+  for (const word of words) {
+    if (word.length < 3) {
+      normalizedWords.push(word);
+      continue;
+    }
+
+    const match = findBestLocationMatch(word, allowed);
+    if (match) {
+      normalizedWords.push(match);
+    } else {
+      normalizedWords.push(word);
+    }
+  }
+
+  return normalizedWords.join(" ");
+}
+
 export function extractLocationsFromQuery(query: string): string[] {
   const locations = new Set<string>();
+  
+  // Build allowed locations list
+  const allowedLocations: string[] = [REMOTE_LOCATION.value];
+  for (const region of PERSON_LOCATION_REGIONS) {
+    allowedLocations.push(region.value);
+    for (const city of region.cities ?? []) {
+      allowedLocations.push(city.value);
+    }
+    for (const state of region.states ?? []) {
+      allowedLocations.push(state.value);
+      for (const city of state.cities ?? []) {
+        allowedLocations.push(city.value);
+      }
+    }
+  }
+  
+  const normalizedQuery = normalizeLocationText(query, allowedLocations);
 
   for (const { pattern, values } of LOCATION_MULTI_PHRASES) {
-    if (pattern.test(query)) {
+    if (pattern.test(normalizedQuery)) {
       for (const value of values) locations.add(value);
     }
   }
 
   for (const { pattern, value } of LOCATION_PHRASES) {
-    if (pattern.test(query)) locations.add(value);
+    if (pattern.test(normalizedQuery)) locations.add(value);
   }
 
   for (const region of PERSON_LOCATION_REGIONS) {
-    if (locationMentionedInText(query, region.value)) {
+    if (locationMentionedInText(normalizedQuery, region.value)) {
       locations.add(region.value);
     }
 
     for (const city of region.cities ?? []) {
-      if (locationMentionedInText(query, city.value)) {
+      if (locationMentionedInText(normalizedQuery, city.value)) {
         locations.add(city.value);
       }
     }
 
     for (const state of region.states ?? []) {
-      if (locationMentionedInText(query, state.value)) {
+      if (locationMentionedInText(normalizedQuery, state.value)) {
         locations.add(state.value);
       }
 
       for (const city of state.cities ?? []) {
-        if (locationMentionedInText(query, city.value)) {
+        if (locationMentionedInText(normalizedQuery, city.value)) {
           locations.add(city.value);
         }
       }
     }
   }
 
-  if (/\bremote\b/i.test(query)) {
+  if (/\bremote\b/i.test(normalizedQuery)) {
     locations.add(REMOTE_LOCATION.value);
   }
 

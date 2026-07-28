@@ -69,19 +69,39 @@ function displayLocation(person: LeadPerson): string {
 function applyEnrichment(
   people: LeadPerson[],
   results: EnrichContactResult[],
+  type: EnrichType,
 ): LeadPerson[] {
   const byId = new Map(results.map((result) => [result.id, result]));
 
   return people.map((person) => {
     const update = byId.get(person.id);
-    if (!update || update.error) return person;
+    if (!update) return person;
 
-    return {
+    if (update.error) {
+      // Mark as failed
+      if (type === "email") {
+        return { ...person, email_extraction_failed: true };
+      } else {
+        return { ...person, phone_extraction_failed: true };
+      }
+    }
+
+    // Clear failed flag if data found
+    const updated = {
       ...person,
       email: update.email ?? person.email,
       email_status: update.email_status ?? person.email_status,
       phone_numbers: update.phone_numbers ?? person.phone_numbers,
     };
+
+    if (type === "email" && update.email) {
+      updated.email_extraction_failed = false;
+    }
+    if (type === "phone" && update.phone_numbers?.length) {
+      updated.phone_extraction_failed = false;
+    }
+
+    return updated;
   });
 }
 
@@ -216,7 +236,7 @@ export default function LeadResults({
       const failedCount = Number(data.failedCount ?? failed.length);
       const freshlyExtracted = enrichedCount - fromStorage;
 
-      onPeopleUpdate(applyEnrichment(people, results));
+      onPeopleUpdate(applyEnrichment(people, results, type));
       setSelectedIds(new Set());
 
       // Refresh token balance immediately after successful extraction
@@ -514,11 +534,30 @@ export default function LeadResults({
                     </>
                   )}
                   <td className={`px-3 py-3 ${isDone ? "opacity-60" : ""}`}>
-                    <div>{person.organization?.name ?? "—"}</div>
-                    {person.organization?.primary_domain && (
-                      <div className="text-xs text-slate-500">
-                        {person.organization.primary_domain}
-                      </div>
+                    {person.organization?.website_url ? (
+                      <a
+                        href={person.organization.website_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-indigo-600 hover:underline"
+                        data-no-row-select
+                      >
+                        <div>{person.organization?.name ?? "—"}</div>
+                        {person.organization?.primary_domain && (
+                          <div className="text-xs text-slate-500">
+                            {person.organization.primary_domain}
+                          </div>
+                        )}
+                      </a>
+                    ) : (
+                      <>
+                        <div>{person.organization?.name ?? "—"}</div>
+                        {person.organization?.primary_domain && (
+                          <div className="text-xs text-slate-500">
+                            {person.organization.primary_domain}
+                          </div>
+                        )}
+                      </>
                     )}
                   </td>
                   <td className={`px-3 py-3 ${isDone ? "opacity-60" : ""}`}>
@@ -557,6 +596,8 @@ export default function LeadResults({
                           </div>
                         )}
                       </div>
+                    ) : person.email_extraction_failed ? (
+                      <span className="text-xs text-red-600">No Email Found for this contact</span>
                     ) : (
                       <span className="text-slate-400">—</span>
                     )}
@@ -589,6 +630,8 @@ export default function LeadResults({
                           <span className="text-xs text-emerald-600 font-medium">Copied!</span>
                         )}
                       </div>
+                    ) : person.phone_extraction_failed ? (
+                      <span className="text-xs text-red-600">No Phone Number Found For this contact</span>
                     ) : (
                       <span className="text-slate-400">—</span>
                     )}

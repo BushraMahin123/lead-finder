@@ -302,7 +302,37 @@ export function applyEnrichmentResults(
   results: EnrichContactResult[],
 ): LeadPerson[] {
   const byId = new Map(results.map((result) => [result.id, result]));
-  return people.map((person) =>
-    mergeEnrichmentIntoPerson(person, byId.get(person.id)),
-  );
+  return people.map((person) => {
+    const result = byId.get(person.id);
+    if (!result) return person;
+
+    // If enrichment failed, mark as failed
+    if (result.error) {
+      if (result.email === undefined && result.phone_numbers === undefined) {
+        // Both failed - mark both
+        return {
+          ...person,
+          email_extraction_failed: true,
+          phone_extraction_failed: true,
+        };
+      }
+      if (result.email === undefined) {
+        return { ...person, email_extraction_failed: true };
+      }
+      if (result.phone_numbers === undefined) {
+        return { ...person, phone_extraction_failed: true };
+      }
+    }
+
+    // Clear failed flags if data found
+    const updated = mergeEnrichmentIntoPerson(person, result);
+    if (result.email) {
+      updated.email_extraction_failed = false;
+    }
+    if (result.phone_numbers?.length) {
+      updated.phone_extraction_failed = false;
+    }
+
+    return updated;
+  });
 }
