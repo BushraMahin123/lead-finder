@@ -64,11 +64,14 @@ Return ONLY valid JSON matching this shape (use null for unused string/number fi
 Rules:
 - ONLY extract filters that are EXPLICITLY mentioned in the user's query. Do not infer or assume filters.
 - jobTitle must contain ONLY the person's role/title (e.g. "Finance Manager"). Never include connector words like "working", "employed", "at", "in", company type, industry, location, employee count, or years of experience in jobTitle.
+- If the query is about a company type/industry with no person role (e.g. "call centers in Pakistan", "SaaS companies in Germany"), leave jobTitle empty/null and put the company type in industries.
 - If the query says "Finance Managers working at eCommerce companies in California", jobTitle should be "Finance Manager" or "Finance Managers" only.
 - When a seniority word appears in the title (Senior, Director, VP, etc.), ALSO set seniorities to the matching allowed value (e.g. "senior").
 - Map SaaS / software companies to industries=["software development"], not into jobTitle or keywords. Do NOT set industry just because the job title contains "Software".
+- Map "call center(s)" / "call centre(s)" to industries=["call center"].
 - ONLY set employeeSizes when the user EXPLICITLY mentions employee count or company size. Examples:
   - "1-50 employees" -> ["1-10", "11-50"]
+  - "employees 1 to 10" / "with employees 1 to 10" -> ["1-10"]
   - "1-100 employees" -> ["1-10", "11-50", "51-200"]
   - "50-500 employees" -> ["51-200", "201-500"]
   - "200-1000 employees" or "200–1,000 employees" -> ["201-500", "501-1000"] (or ["200-1000"])
@@ -100,6 +103,15 @@ Rules:
 - At least one filter field must be non-empty.
 
 Examples:
+Query: "call centers in Pakistan with employees 1 to 10"
+{
+  "jobTitle": null,
+  "locations": ["Pakistan"],
+  "industries": ["call center"],
+  "employeeSizes": ["1-10"],
+  "keywords": null
+}
+
 Query: "VP of Sales at SaaS companies with 1-100 employees"
 {
   "jobTitle": "VP of Sales",

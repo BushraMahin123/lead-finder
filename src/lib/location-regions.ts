@@ -4,14 +4,17 @@ import type {
   LocationState,
 } from "@/lib/location-regions-types";
 import { GENERATED_LOCATION_REGIONS } from "@/lib/generated/location-regions-data";
+import { withPakistanCities } from "@/lib/pakistan-location-cities";
 
 export type { LocationCity, LocationRegion, LocationState };
 
-export const PERSON_LOCATION_REGIONS: LocationRegion[] =
-  GENERATED_LOCATION_REGIONS;
+const LOCATION_REGIONS: LocationRegion[] = withPakistanCities(
+  GENERATED_LOCATION_REGIONS,
+);
 
-export const COMPANY_LOCATION_REGIONS: LocationRegion[] =
-  GENERATED_LOCATION_REGIONS;
+export const PERSON_LOCATION_REGIONS: LocationRegion[] = LOCATION_REGIONS;
+
+export const COMPANY_LOCATION_REGIONS: LocationRegion[] = LOCATION_REGIONS;
 
 export const REMOTE_LOCATION = { value: "Remote", label: "Remote" };
 
@@ -60,10 +63,11 @@ export function locationMentionedInText(
   text: string,
   locationValue: string,
 ): boolean {
-  const parts = locationValue.split(/[\s/-]+/).filter(Boolean);
+  // Commas split too, so "Punjab, Pakistan" matches "punjab pakistan".
+  const parts = locationValue.split(/[\s/,-]+/).filter(Boolean);
   if (parts.length === 0) return false;
 
-  const flexible = parts.map(escapeRegExp).join("[\\s/_-]*");
+  const flexible = parts.map(escapeRegExp).join("[\\s/_,-]*");
   return new RegExp(`\\b${flexible}\\b`, "i").test(text);
 }
 

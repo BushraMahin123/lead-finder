@@ -156,7 +156,17 @@ async function arkRequest(
         );
       }
       if (error instanceof TypeError && /fetch failed/i.test(error.message)) {
-        throw new RetryableQueueError(error.message, 503);
+        // Node hides the real reason (DNS, reset, TLS) in `cause`; surface it so
+        // logs and retries are diagnosable instead of a bare "fetch failed".
+        const cause = (error as { cause?: { code?: string; message?: string } })
+          .cause;
+        const reason = cause?.code ?? cause?.message;
+        throw new RetryableQueueError(
+          `Could not reach the search provider (network error${
+            reason ? `: ${reason}` : ""
+          }). Please retry in a moment.`,
+          503,
+        );
       }
       throw error;
     } finally {

@@ -98,50 +98,45 @@ export default function LocationFilterSection({
     onChange([...selected, value]);
   }
 
-  function toggleCountry(region: LocationRegion) {
-    const countrySelected = selected.includes(region.value);
+  /**
+   * Only the narrowest picked level is kept: a country makes its states/cities
+   * redundant, and a state makes its cities redundant. Keeping both would widen
+   * the search, since the API treats every value as an OR.
+   */
+  function selectOnly(value: string, redundant: string[]) {
+    const toRemove = new Set(redundant);
+    onChange([...selected.filter((item) => !toRemove.has(item)), value]);
+  }
 
-    if (countrySelected) {
+  function toggleCountry(region: LocationRegion) {
+    if (selected.includes(region.value)) {
       onChange(selected.filter((item) => item !== region.value));
       return;
     }
 
-    onChange([...selected, region.value]);
+    selectOnly(region.value, allValuesInRegion(region));
   }
 
   function toggleState(region: LocationRegion, state: LocationState) {
-    const stateSelected = selected.includes(state.value);
-    const cityValues = allCityValues(state);
-    const anyCitySelected = cityValues.some((value) => selected.includes(value));
-
-    if (stateSelected || anyCitySelected) {
-      const toRemove = new Set([state.value, ...cityValues]);
-      onChange(selected.filter((item) => !toRemove.has(item)));
+    if (selected.includes(state.value)) {
+      onChange(selected.filter((item) => item !== state.value));
       return;
     }
 
-    onChange([...selected, state.value]);
+    selectOnly(state.value, [region.value, ...allCityValues(state)]);
   }
 
-  function toggleCity(region: LocationRegion, state: LocationState, cityValue: string) {
-    const citySelected = selected.includes(cityValue);
-    const otherCities = allCityValues(state).filter((value) => value !== cityValue);
-
-    if (citySelected) {
-      let next = selected.filter((item) => item !== cityValue);
-      if (next.includes(state.value)) {
-        next = next.filter((item) => item !== state.value);
-        next = [...new Set([...next, ...otherCities])];
-      }
-      onChange(next);
+  function toggleCity(
+    region: LocationRegion,
+    state: LocationState,
+    cityValue: string,
+  ) {
+    if (selected.includes(cityValue)) {
+      onChange(selected.filter((item) => item !== cityValue));
       return;
     }
 
-    let next = [...selected, cityValue];
-    if (next.includes(state.value)) {
-      next = next.filter((item) => item !== state.value);
-    }
-    onChange(next);
+    selectOnly(cityValue, [region.value, state.value]);
   }
 
   function toggleExpandedCountry(countryValue: string) {
@@ -164,14 +159,29 @@ export default function LocationFilterSection({
 
   const visibleRegions = useMemo(() => {
     const query = searchQuery.trim();
-    if (!query) return regions;
+    const selectedSet = new Set(selected);
 
-    return regions.filter(
-      (region) =>
-        selected.includes(region.value) ||
-        allValuesInRegion(region).some((value) => selected.includes(value)) ||
-        regionMatchesSearch(region, query),
-    );
+    function regionIsSelected(region: LocationRegion): boolean {
+      return (
+        selectedSet.has(region.value) ||
+        allValuesInRegion(region).some((value) => selectedSet.has(value))
+      );
+    }
+
+    const base = !query
+      ? [...regions]
+      : regions.filter(
+          (region) =>
+            regionIsSelected(region) || regionMatchesSearch(region, query),
+        );
+
+    if (selectedSet.size === 0) return base;
+
+    return base.sort((a, b) => {
+      const aSelected = regionIsSelected(a) ? 0 : 1;
+      const bSelected = regionIsSelected(b) ? 0 : 1;
+      return aSelected - bSelected;
+    });
   }, [regions, searchQuery, selected]);
 
 
@@ -197,7 +207,33 @@ export default function LocationFilterSection({
           const countryChecked = countrySelected;
           const isExpanded = expandedCountries.has(region.value);
 
-          const visibleStates = region.states ?? [];
+          const visibleStates = (() => {
+            const states = [...(region.states ?? [])];
+            if (selected.length === 0) return states;
+            return states.sort((a, b) => {
+              const aOn =
+                selected.includes(a.value) ||
+                allCityValues(a).some((value) => selected.includes(value))
+                  ? 0
+                  : 1;
+              const bOn =
+                selected.includes(b.value) ||
+                allCityValues(b).some((value) => selected.includes(value))
+                  ? 0
+                  : 1;
+              return aOn - bOn;
+            });
+          })();
+
+          const visibleDirectCities = (() => {
+            const cities = [...(region.cities ?? [])];
+            if (selected.length === 0) return cities;
+            return cities.sort((a, b) => {
+              const aOn = selected.includes(a.value) ? 0 : 1;
+              const bOn = selected.includes(b.value) ? 0 : 1;
+              return aOn - bOn;
+            });
+          })();
 
           return (
             <div key={region.value} className="rounded-lg">
@@ -260,6 +296,16 @@ export default function LocationFilterSection({
                     const stateExpanded =
                       expandedStates.has(state.value) || stateIndeterminate;
 
+                    const visibleCities = (() => {
+                      const cities = [...(state.cities ?? [])];
+                      if (selected.length === 0) return cities;
+                      return cities.sort((a, b) => {
+                        const aOn = selected.includes(a.value) ? 0 : 1;
+                        const bOn = selected.includes(b.value) ? 0 : 1;
+                        return aOn - bOn;
+                      });
+                    })();
+
                     return (
                       <div key={state.value}>
                         <div className="flex items-center gap-1 rounded-md px-1 py-1 hover:bg-slate-50">
@@ -310,9 +356,8 @@ export default function LocationFilterSection({
 
                         {stateExpanded && hasCities && (
                           <div className="ml-3 space-y-0.5 border-l border-slate-200 pl-2">
-                            {state.cities!.map((city) => {
-                              const cityChecked =
-                                stateSelected || selected.includes(city.value);
+                            {visibleCities.map((city) => {
+                              const cityChecked = selected.includes(city.value);
 
                               return (
                                 <label
@@ -323,11 +368,10 @@ export default function LocationFilterSection({
                                   <input
                                     type="checkbox"
                                     checked={cityChecked}
-                                    disabled={stateSelected}
                                     onChange={() =>
                                       toggleCity(region, state, city.value)
                                     }
-                                    className="h-4 w-4 shrink-0 rounded border-slate-300 text-indigo-600 disabled:opacity-60"
+                                    className="h-4 w-4 shrink-0 rounded border-slate-300 text-indigo-600"
                                   />
                                   <span className="text-slate-700">{city.label}</span>
                                 </label>
@@ -343,7 +387,7 @@ export default function LocationFilterSection({
 
               {isExpanded && !hasStates && hasDirectCities && (
                 <div className="ml-3 space-y-0.5 border-l border-slate-200 pl-2">
-                  {region.cities!.map((city) => {
+                  {visibleDirectCities.map((city) => {
                     const cityChecked = selected.includes(city.value);
                     return (
                       <label

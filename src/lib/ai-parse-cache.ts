@@ -6,6 +6,12 @@ import type { SearchFilters } from "@/types/lead";
 
 const TABLE = "ai_parse_cache";
 
+/**
+ * Bump this whenever parsing rules change, so previously cached filters are not
+ * replayed for up to the full cache TTL.
+ */
+const PARSER_VERSION = 2;
+
 export interface CachedAiParse {
   filters: Partial<SearchFilters>;
   source: Exclude<AiParseSource, "cache">;
@@ -17,7 +23,9 @@ function normalizeQuery(query: string): string {
 }
 
 export function aiParseCacheKey(query: string): string {
-  return createHash("sha256").update(normalizeQuery(query)).digest("hex");
+  return createHash("sha256")
+    .update(`v${PARSER_VERSION}|${normalizeQuery(query)}`)
+    .digest("hex");
 }
 
 interface CacheRow {
