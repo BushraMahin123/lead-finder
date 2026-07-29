@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useParams, useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import AddAiColumnModal from "@/components/AddAiColumnModal";
 import { AISearchIconBadge } from "@/components/AISearchIcon";
+import ExportContactsButton from "@/components/ExportContactsButton";
 import LeadResults from "@/components/LeadResults";
 import { ApiError, fetchJson } from "@/lib/fetch-json";
 import { notifyBillingBalanceRefresh } from "@/hooks/useBillingBalance";
@@ -41,6 +42,8 @@ export default function CampaignContacts() {
   const [runningColumnId, setRunningColumnId] = useState<string | null>(null);
   const [columnNotice, setColumnNotice] = useState<string | null>(null);
   const [partialSaveNotice, setPartialSaveNotice] = useState<string | null>(null);
+  const contactMetaRequestIds = useRef<Map<string, number>>(new Map());
+  const contactMetaQueues = useRef<Map<string, Promise<void>>>(new Map());
 
   async function loadCampaign() {
     if (!campaignId) return;
@@ -293,30 +296,46 @@ export default function CampaignContacts() {
     }
   }
 
-  async function handleContactMetaUpdate(
+  function handleContactMetaUpdate(
     personId: string,
     updates: Partial<Pick<ContactRowMeta, "status" | "notes" | "rowColor" | "isDone">>,
   ) {
     if (!campaignId) return;
 
     const previous = contactMeta[personId];
-    const optimistic: ContactRowMeta = {
-      personId,
-      status: updates.status ?? previous?.status ?? "not_contacted",
-      notes: updates.notes ?? previous?.notes ?? "",
-      rowColor:
-        updates.rowColor !== undefined
-          ? updates.rowColor
-          : (previous?.rowColor ?? null),
-      isDone: updates.isDone ?? previous?.isDone ?? false,
-      updatedAt: new Date().toISOString(),
-    };
+    const requestId = (contactMetaRequestIds.current.get(personId) ?? 0) + 1;
+    contactMetaRequestIds.current.set(personId, requestId);
 
-    setContactMeta((current) => ({
-      ...current,
-      [personId]: optimistic,
-    }));
+    setContactMeta((current) => {
+      const base = current[personId];
+      return {
+        ...current,
+        [personId]: {
+          personId,
+          status: updates.status ?? base?.status ?? "not_contacted",
+          notes: updates.notes ?? base?.notes ?? "",
+          rowColor:
+            updates.rowColor !== undefined
+              ? updates.rowColor
+              : (base?.rowColor ?? null),
+          isDone: updates.isDone ?? base?.isDone ?? false,
+          updatedAt: new Date().toISOString(),
+        },
+      };
+    });
 
+    // Saves for one contact run one at a time so rapid clicks land in order.
+    const queued = (contactMetaQueues.current.get(personId) ?? Promise.resolve())
+      .then(() => saveContactMeta(personId, updates, requestId, previous));
+    contactMetaQueues.current.set(personId, queued);
+  }
+
+  async function saveContactMeta(
+    personId: string,
+    updates: Partial<Pick<ContactRowMeta, "status" | "notes" | "rowColor" | "isDone">>,
+    requestId: number,
+    previous: ContactRowMeta | undefined,
+  ) {
     try {
       const { response, data } = await fetchJson(
         `/api/campaigns/${campaignId}/contacts/${encodeURIComponent(personId)}`,
@@ -331,12 +350,17 @@ export default function CampaignContacts() {
         throw new Error(String(data.error ?? "Failed to save contact update"));
       }
 
+      // A newer click for this contact already won — keep its state.
+      if (contactMetaRequestIds.current.get(personId) !== requestId) return;
+
       const meta = data.meta as ContactRowMeta;
       setContactMeta((current) => ({
         ...current,
         [personId]: meta,
       }));
     } catch (err) {
+      if (contactMetaRequestIds.current.get(personId) !== requestId) return;
+
       setContactMeta((current) => {
         if (!previous) {
           const next = { ...current };
@@ -397,12 +421,23 @@ export default function CampaignContacts() {
               )}
             </div>
 
-            {campaign?.aiQuery && (
-              <span className="inline-flex shrink-0 items-center gap-1.5 self-start rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
-                <AISearchIconBadge size="sm" className="!h-5 !w-5 !rounded-md" />
-                AI Search
-              </span>
-            )}
+            <div className="flex shrink-0 flex-wrap items-center gap-2 self-start">
+              {!loading && allPeople.length > 0 && (
+                <ExportContactsButton
+                  people={allPeople}
+                  contactMeta={contactMeta}
+                  aiColumns={aiColumns}
+                  columnValues={columnValues}
+                  tableName={campaign?.name ?? "contacts"}
+                />
+              )}
+              {campaign?.aiQuery && (
+                <span className="inline-flex items-center gap-1.5 rounded-full border border-indigo-200 bg-indigo-50 px-3 py-1 text-xs font-medium text-indigo-700">
+                  <AISearchIconBadge size="sm" className="!h-5 !w-5 !rounded-md" />
+                  AI Search
+                </span>
+              )}
+            </div>
           </div>
         </div>
       </div>

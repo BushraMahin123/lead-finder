@@ -10,7 +10,10 @@ import {
   debitTokens,
   InsufficientTokensError,
 } from "@/lib/billing/tokens";
-import { updateCampaignContactEnrichments } from "@/lib/campaigns";
+import {
+  getDoneCampaignPersonIds,
+  updateCampaignContactEnrichments,
+} from "@/lib/campaigns";
 import { enrichContactsWithPersistence } from "@/lib/contact-enrichments";
 import { updateCachedSearchEnrichments } from "@/lib/search-cache";
 import type { EnrichContactResult, EnrichType, LeadPerson, SearchFilters } from "@/types/lead";
@@ -41,7 +44,7 @@ export async function POST(request: NextRequest) {
       type?: EnrichType;
       campaignId?: string;
     };
-    const people = body.people ?? [];
+    let people = body.people ?? [];
     const type = body.type;
     const campaignId = body.campaignId?.trim();
 
@@ -62,6 +65,28 @@ export async function POST(request: NextRequest) {
     if (people.length > 25) {
       return NextResponse.json(
         { error: "You can extract up to 25 contacts at a time." },
+        { status: 400 },
+      );
+    }
+
+    // Done contacts are not enrichable and must not count toward email/phone billing.
+    if (campaignId) {
+      const doneIds = await getDoneCampaignPersonIds(
+        campaignId,
+        userId,
+        people.map((person) => person.id),
+      );
+      if (doneIds.size > 0) {
+        people = people.filter((person) => !doneIds.has(person.id));
+      }
+    }
+
+    if (people.length === 0) {
+      return NextResponse.json(
+        {
+          error:
+            "Selected contacts are marked done and are not counted for email or phone extraction.",
+        },
         { status: 400 },
       );
     }
