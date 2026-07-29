@@ -443,7 +443,7 @@ export function ContactTrackingCell({
   onMetaUpdate,
 }: ContactTrackingCellProps) {
   return (
-    <div className="flex min-w-[13rem] items-center gap-1.5">
+    <div className="flex min-w-[13rem] items-center gap-1.5" data-no-row-select>
       <ContactRowColorPicker
         value={meta?.rowColor ?? null}
         onChange={(rowColor) => onMetaUpdate({ rowColor })}

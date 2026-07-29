@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApiError, fetchJson } from "@/lib/fetch-json";
 import { notifyBillingBalanceRefresh } from "@/hooks/useBillingBalance";
 import type {
@@ -11,7 +11,7 @@ import type {
 } from "@/types/campaign";
 import type { EnrichContactResult, EnrichType, LeadPerson, SearchFilters } from "@/types/lead";
 import AiColumnErrorIndicator from "@/components/AiColumnErrorIndicator";
-import TruncatedText from "@/components/TruncatedText";
+import AiColumnValueCell from "@/components/AiColumnValueCell";
 import {
   ContactNotesInput,
   ContactTrackingCell,
@@ -48,6 +48,10 @@ interface LeadResultsProps {
 function displayName(person: LeadPerson): string {
   if (person.name) return person.name;
   return [person.first_name, person.last_name].filter(Boolean).join(" ") || "—";
+}
+
+function isContactDone(meta: ContactRowMeta | undefined): boolean {
+  return Boolean(meta?.isDone || meta?.status === "done");
 }
 
 function displayPhone(person: LeadPerson): string {
@@ -128,7 +132,7 @@ function stickyBodyClass(
 }
 
 function isInteractiveRowTarget(target: EventTarget | null): boolean {
-  if (!(target instanceof HTMLElement)) return false;
+  if (!(target instanceof Element)) return false;
   return Boolean(
     target.closest(
       "a, button, input, select, textarea, [data-no-row-select]",
@@ -175,6 +179,41 @@ export default function LeadResults({
   const [enrichNotice, setEnrichNotice] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
+  const tableScrollRef = useRef<HTMLDivElement>(null);
+  const horizontalScrollRef = useRef<HTMLDivElement>(null);
+  const [horizontalScroll, setHorizontalScroll] = useState({
+    visible: false,
+    contentWidth: 0,
+    tableMaxHeight: 320,
+  });
+
+  const updateHorizontalScroll = useCallback(() => {
+    const scroller = tableScrollRef.current;
+    if (!scroller) return;
+
+    const hasHorizontalOverflow = scroller.scrollWidth > scroller.clientWidth + 1;
+    const tableTop = scroller.getBoundingClientRect().top;
+    const scrollbarSpace = hasHorizontalOverflow ? 24 : 8;
+    const next = {
+      visible: hasHorizontalOverflow,
+      contentWidth: scroller.scrollWidth,
+      tableMaxHeight: Math.max(
+        180,
+        Math.floor(window.innerHeight - tableTop - scrollbarSpace),
+      ),
+    };
+
+    setHorizontalScroll((current) => {
+      if (
+        current.visible === next.visible &&
+        current.contentWidth === next.contentWidth &&
+        current.tableMaxHeight === next.tableMaxHeight
+      ) {
+        return current;
+      }
+      return next;
+    });
+  }, []);
 
   const peopleIds = useMemo(
     () => people.map((person) => person.id).join(","),
@@ -189,7 +228,45 @@ export default function LeadResults({
     setProcessingIds(new Set());
   }, [peopleIds]);
 
+  useEffect(() => {
+    updateHorizontalScroll();
+
+    const scroller = tableScrollRef.current;
+    const observer =
+      scroller && typeof ResizeObserver !== "undefined"
+        ? new ResizeObserver(updateHorizontalScroll)
+        : null;
+    if (scroller) observer?.observe(scroller);
+
+    window.addEventListener("resize", updateHorizontalScroll);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", updateHorizontalScroll);
+    };
+  }, [people, aiColumns, updateHorizontalScroll]);
+
+  useEffect(() => {
+    if (!horizontalScroll.visible) return;
+    const tableScroller = tableScrollRef.current;
+    const horizontalScroller = horizontalScrollRef.current;
+    if (tableScroller && horizontalScroller) {
+      horizontalScroller.scrollLeft = tableScroller.scrollLeft;
+    }
+  }, [horizontalScroll.visible]);
+
   const someSelected = selectedIds.size > 0;
+  const extractableSelectedPeople = useMemo(
+    () =>
+      people.filter(
+        (person) =>
+          selectedIds.has(person.id) && !isContactDone(contactMeta[person.id]),
+      ),
+    [people, selectedIds, contactMeta],
+  );
+  const extractableSelectedCount = extractableSelectedPeople.length;
+  const showExtractActions =
+    enableEnrichment && someSelected && extractableSelectedCount > 0;
 
   function toggleOne(id: string) {
     setSelectedIds((current) => {
@@ -200,8 +277,32 @@ export default function LeadResults({
     });
   }
 
+  function syncFromTable() {
+    const tableScroller = tableScrollRef.current;
+    const horizontalScroller = horizontalScrollRef.current;
+    if (
+      tableScroller &&
+      horizontalScroller &&
+      horizontalScroller.scrollLeft !== tableScroller.scrollLeft
+    ) {
+      horizontalScroller.scrollLeft = tableScroller.scrollLeft;
+    }
+  }
+
+  function syncFromHorizontalScrollbar() {
+    const tableScroller = tableScrollRef.current;
+    const horizontalScroller = horizontalScrollRef.current;
+    if (
+      tableScroller &&
+      horizontalScroller &&
+      tableScroller.scrollLeft !== horizontalScroller.scrollLeft
+    ) {
+      tableScroller.scrollLeft = horizontalScroller.scrollLeft;
+    }
+  }
+
   async function handleExtract(type: EnrichType) {
-    const selectedPeople = people.filter((person) => selectedIds.has(person.id));
+    const selectedPeople = extractableSelectedPeople;
     if (selectedPeople.length === 0) return;
 
     setEnrichingType(type);
@@ -355,26 +456,30 @@ export default function LeadResults({
                     : `Run ${column.name} (${selectedIds.size})`}
                 </button>
               ))}
-              <button
-                type="button"
-                onClick={() => handleExtract("email")}
-                disabled={enrichingType !== null || runningColumnId !== null}
-                className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {enrichingType === "email"
-                  ? "Extracting emails…"
-                  : `Extract emails (${selectedIds.size})`}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleExtract("phone")}
-                disabled={enrichingType !== null || runningColumnId !== null}
-                className="rounded-lg border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {enrichingType === "phone"
-                  ? "Extracting phones…"
-                  : `Extract phone numbers (${selectedIds.size})`}
-              </button>
+              {showExtractActions && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => handleExtract("email")}
+                    disabled={enrichingType !== null || runningColumnId !== null}
+                    className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {enrichingType === "email"
+                      ? "Extracting emails…"
+                      : `Extract emails (${extractableSelectedCount})`}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleExtract("phone")}
+                    disabled={enrichingType !== null || runningColumnId !== null}
+                    className="rounded-lg border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60"
+                  >
+                    {enrichingType === "phone"
+                      ? "Extracting phones…"
+                      : `Extract phone numbers (${extractableSelectedCount})`}
+                  </button>
+                </>
+              )}
             </div>
           )}
         </div>
@@ -408,7 +513,14 @@ export default function LeadResults({
         )}
       </div>
 
-      <div className="overflow-x-auto max-h-[calc(100vh-12rem)] overflow-y-auto">
+      <div
+        ref={tableScrollRef}
+        tabIndex={0}
+        aria-label="Contacts table"
+        onScroll={syncFromTable}
+        className="scrollbar-hidden overflow-auto overscroll-contain"
+        style={{ maxHeight: horizontalScroll.tableMaxHeight }}
+      >
         <table className="min-w-full border-separate border-spacing-0 text-left text-sm">
           <colgroup>
             <col className="w-44" />
@@ -487,7 +599,7 @@ export default function LeadResults({
             {people.map((person) => {
               const selected = selectedIds.has(person.id);
               const meta = contactMeta[person.id];
-              const isDone = meta?.isDone || meta?.status === "done";
+              const isDone = isContactDone(meta);
 
               return (
                 <tr
@@ -519,9 +631,17 @@ export default function LeadResults({
                         <ContactTrackingCell
                           personLabel={displayName(person)}
                           meta={meta}
-                          onMetaUpdate={(updates) =>
-                            onContactMetaUpdate?.(person.id, updates)
-                          }
+                          onMetaUpdate={(updates) => {
+                            if (updates.isDone) {
+                              setSelectedIds((current) => {
+                                if (!current.has(person.id)) return current;
+                                const next = new Set(current);
+                                next.delete(person.id);
+                                return next;
+                              });
+                            }
+                            onContactMetaUpdate?.(person.id, updates);
+                          }}
                         />
                       </td>
                       <td className="px-3 py-2.5">
@@ -672,7 +792,7 @@ export default function LeadResults({
                             message={cell.error ?? "AI enrichment failed"}
                           />
                         ) : cell?.value ? (
-                          <span className="line-clamp-3 text-sm">{cell.value}</span>
+                          <AiColumnValueCell value={cell.value} />
                         ) : (
                           <span className="text-xs text-slate-400">—</span>
                         )}
@@ -686,6 +806,20 @@ export default function LeadResults({
           </tbody>
         </table>
       </div>
+      {horizontalScroll.visible && (
+        <div
+          ref={horizontalScrollRef}
+          aria-label="Scroll table horizontally"
+          tabIndex={0}
+          onScroll={syncFromHorizontalScrollbar}
+          className="h-5 overflow-x-auto overflow-y-hidden border-t border-slate-200 bg-slate-50"
+        >
+          <div
+            className="h-px"
+            style={{ width: horizontalScroll.contentWidth }}
+          />
+        </div>
+      )}
     </div>
   );
 }

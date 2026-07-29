@@ -52,6 +52,7 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
   const [aiQuery, setAiQuery] = useState<string | null>(null);
   const [aiInput, setAiInput] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false);
   const [saveModalOpen, setSaveModalOpen] = useState(false);
   const [campaignModalOpen, setCampaignModalOpen] = useState(false);
   const [pendingSave, setPendingSave] = useState<PendingSaveContext | null>(null);
@@ -60,6 +61,17 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
   const [campaignSaveError, setCampaignSaveError] = useState<string | null>(null);
   const [aiWarning, setAiWarning] = useState<string | null>(null);
   const templateHandled = useRef(false);
+
+  useEffect(() => {
+    if (!mobileFiltersOpen) return;
+
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setMobileFiltersOpen(false);
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [mobileFiltersOpen]);
 
   function openSearchView() {
     router.push("/?view=search");
@@ -428,22 +440,45 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
   }
 
   return (
-    <div className="flex h-full min-h-0 overflow-hidden bg-slate-50/50">
+    <div className="relative flex h-full min-h-0 overflow-hidden bg-slate-50/50">
+      {mobileFiltersOpen && (
+        <button
+          type="button"
+          aria-label="Close filters"
+          onClick={() => setMobileFiltersOpen(false)}
+          className="fixed inset-0 z-[60] bg-slate-950/35 backdrop-blur-[1px] lg:hidden"
+        />
+      )}
       <aside
-        className={`flex h-full shrink-0 flex-col transition-all ${
-          sidebarCollapsed ? "w-12" : "w-full max-w-[18rem] lg:max-w-[20rem]"
+        className={`h-full shrink-0 flex-col bg-white transition-all ${
+          mobileFiltersOpen
+            ? "fixed inset-y-0 left-0 z-[70] flex w-[min(22rem,calc(100vw-1rem))] shadow-2xl"
+            : "hidden"
+        } ${
+          sidebarCollapsed
+            ? "lg:static lg:z-auto lg:flex lg:w-12 lg:shadow-none"
+            : "lg:static lg:z-auto lg:flex lg:w-full lg:max-w-[20rem] lg:shadow-none"
         }`}
       >
         <FilterPanel
           loading={search.loading}
-          onSearch={runSearch}
+          onSearch={(filters) => {
+            setMobileFiltersOpen(false);
+            return runSearch(filters);
+          }}
           onBack={openLandingView}
           appliedFilters={appliedFilters}
           aiQuery={aiQuery}
           onAISearch={handleAISearch}
           onClearFilters={handleClearFilters}
           collapsed={sidebarCollapsed}
-          onToggleCollapse={() => setSidebarCollapsed((c) => !c)}
+          onToggleCollapse={() => {
+            if (window.innerWidth < 1024) {
+              setMobileFiltersOpen(false);
+              return;
+            }
+            setSidebarCollapsed((current) => !current);
+          }}
           aiAdjusting={aiParsing}
           onFiltersChange={handleManualFiltersChange}
           onFiltersChangeRealtime={handleManualFiltersChangeRealtime}
@@ -451,6 +486,34 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
       </aside>
 
       <div className="flex min-h-0 min-w-0 flex-1 flex-col bg-white">
+        <div className="flex items-center justify-between border-b border-slate-200 bg-white px-4 py-2 lg:hidden">
+          <button
+            type="button"
+            onClick={() => {
+              setSidebarCollapsed(false);
+              setMobileFiltersOpen(true);
+            }}
+            className="inline-flex items-center gap-2 rounded-lg border border-slate-300 bg-white px-3 py-2 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-indigo-300 hover:bg-indigo-50 hover:text-indigo-700"
+          >
+            <svg
+              viewBox="0 0 20 20"
+              fill="none"
+              className="h-4 w-4"
+              aria-hidden
+            >
+              <path
+                d="M3 5h14M5.5 10h9M8 15h4"
+                stroke="currentColor"
+                strokeWidth="1.6"
+                strokeLinecap="round"
+              />
+            </svg>
+            Filters
+          </button>
+          <span className="text-xs text-slate-500">
+            Open to refine results
+          </span>
+        </div>
         <AISearchBar
           value={aiInput}
           onChange={setAiInput}

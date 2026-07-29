@@ -21,6 +21,7 @@ export default function AISearchSidebar({
   onClear,
 }: AISearchSidebarProps) {
   const [draft, setDraft] = useState(query);
+  const [expanded, setExpanded] = useState(false);
   const tags = getPrimaryFilterTags(appliedFilters);
 
   useEffect(() => {
@@ -41,36 +42,55 @@ export default function AISearchSidebar({
   }
 
   return (
-    <div className="border-b border-slate-200 bg-white px-4 py-4">
-      <div className="mb-3">
+    <div className="border-b border-slate-200 bg-white px-4 py-3">
+      <div className="flex items-center justify-between gap-3">
         <AISearchHeading />
+        <button
+          type="button"
+          onClick={() => setExpanded((current) => !current)}
+          aria-expanded={expanded}
+          className="shrink-0 rounded-md px-2 py-1 text-xs font-semibold text-indigo-600 transition hover:bg-indigo-50"
+        >
+          {expanded ? "Hide" : "Edit"}
+        </button>
       </div>
 
-      <div className="relative">
-        <textarea
-          name="aiQuery"
-          value={draft}
-          onChange={(event) => setDraft(event.target.value)}
-          onKeyDown={handleKeyDown}
-          rows={3}
-          disabled={loading}
-          className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 pr-12 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 disabled:opacity-60"
-        />
-        <div className="absolute bottom-3 right-3">
-          <AISearchSubmitButton
-            size="sm"
-            disabled={loading || !draft.trim()}
-            onClick={() => void submitQuery()}
-            ariaLabel="Search again with AI"
+      {expanded ? (
+        <div className="relative mt-3">
+          <textarea
+            name="aiQuery"
+            value={draft}
+            onChange={(event) => setDraft(event.target.value)}
+            onKeyDown={handleKeyDown}
+            rows={3}
+            disabled={loading}
+            className="w-full resize-none rounded-xl border border-slate-200 bg-slate-50 px-3 py-3 pr-12 text-sm text-slate-900 outline-none transition focus:border-indigo-400 focus:bg-white focus:ring-2 focus:ring-indigo-100 disabled:opacity-60"
           />
+          <div className="absolute bottom-3 right-3">
+            <AISearchSubmitButton
+              size="sm"
+              disabled={loading || !draft.trim()}
+              onClick={() => void submitQuery()}
+              ariaLabel="Search again with AI"
+            />
+          </div>
         </div>
-      </div>
+      ) : (
+        <button
+          type="button"
+          onClick={() => setExpanded(true)}
+          title={query}
+          className="mt-2 block w-full truncate rounded-lg bg-slate-50 px-3 py-2 text-left text-xs text-slate-600 transition hover:bg-slate-100"
+        >
+          {query}
+        </button>
+      )}
 
-      <div className="mt-3 flex flex-wrap gap-2">
+      <div className="mt-3 flex flex-wrap gap-1.5">
         {tags.map((tag) => (
           <span
             key={tag.label}
-            className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs ${
+            className={`inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] ${
               tag.active
                 ? "border-emerald-200 bg-emerald-50 text-emerald-800"
                 : "border-slate-200 bg-white text-slate-400"
@@ -90,13 +110,15 @@ export default function AISearchSidebar({
         ))}
       </div>
 
-      <button
-        type="button"
-        onClick={onClear}
-        className="mt-4 text-sm font-medium text-slate-500 transition hover:text-slate-700"
-      >
-        Clear filters
-      </button>
+      <div className="mt-2 flex justify-end">
+        <button
+          type="button"
+          onClick={onClear}
+          className="text-xs font-medium text-slate-500 transition hover:text-slate-700"
+        >
+          Clear filters
+        </button>
+      </div>
     </div>
   );
 }

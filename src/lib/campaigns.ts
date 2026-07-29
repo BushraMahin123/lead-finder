@@ -277,6 +277,36 @@ export async function getCampaignWithContacts(
   };
 }
 
+/** Returns person IDs among `personIds` that are marked done in the campaign. */
+export async function getDoneCampaignPersonIds(
+  campaignId: string,
+  userId: string,
+  personIds: string[],
+): Promise<Set<string>> {
+  const doneIds = new Set<string>();
+  if (personIds.length === 0) return doneIds;
+
+  const campaign = await getCampaignForUser(campaignId, userId);
+  if (!campaign) return doneIds;
+
+  const admin = getAdminOrThrow();
+  const { data, error } = await admin
+    .from(CONTACTS_TABLE)
+    .select("person_id, is_done, contact_status")
+    .eq("campaign_id", campaignId)
+    .in("person_id", personIds);
+
+  if (error) throw new Error(error.message);
+
+  for (const row of (data as Pick<ContactRow, "person_id" | "is_done" | "contact_status">[] | null) ?? []) {
+    if (row.is_done || row.contact_status === "done") {
+      doneIds.add(row.person_id);
+    }
+  }
+
+  return doneIds;
+}
+
 export async function updateCampaignContactMeta(input: {
   campaignId: string;
   personId: string;
