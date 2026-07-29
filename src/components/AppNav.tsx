@@ -36,6 +36,12 @@ export default function AppNav() {
         >
           Pricing
         </Link>
+        <Link
+          href="/contact"
+          className={navItemClass(pathname === "/contact")}
+        >
+          Contact
+        </Link>
       </nav>
     </div>
   );

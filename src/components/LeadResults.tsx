@@ -37,6 +37,7 @@ interface LeadResultsProps {
   onRunColumn?: (columnId: string, personIds: string[]) => void;
   onEditColumn?: (column: CampaignColumn) => void;
   onDeleteColumn?: (columnId: string) => void;
+  onDismissColumnError?: (personId: string, columnId: string) => void;
   enableTracking?: boolean;
   contactMeta?: Record<string, ContactRowMeta>;
   onContactMetaUpdate?: (
@@ -79,11 +80,19 @@ function applyEnrichment(
     if (!update) return person;
 
     if (update.error) {
-      // Mark as failed
+      // Mark as failed and store message
       if (type === "email") {
-        return { ...person, email_extraction_failed: true };
+        return { 
+          ...person, 
+          email: "No Email Found",
+          email_extraction_failed: true 
+        };
       } else {
-        return { ...person, phone_extraction_failed: true };
+        return { 
+          ...person, 
+          phone_numbers: [{ raw_number: "No Phone number found" }],
+          phone_extraction_failed: true 
+        };
       }
     }
 
@@ -164,6 +173,7 @@ export default function LeadResults({
   onRunColumn,
   onEditColumn,
   onDeleteColumn,
+  onDismissColumnError,
   enableTracking = false,
   contactMeta = {},
   onContactMetaUpdate,
@@ -566,7 +576,7 @@ export default function LeadResults({
                       <div className="flex items-center justify-center">
                         <img src="/lead.png" alt="Loading" className="h-5 w-5 animate-pulse" />
                       </div>
-                    ) : person.email ? (
+                    ) : person.email && person.email !== "No Email Found" ? (
                       <div className="flex items-center gap-2">
                         <a
                           href={`mailto:${person.email}`}
@@ -578,7 +588,9 @@ export default function LeadResults({
                           type="button"
                           onClick={(e) => {
                             e.stopPropagation();
-                            copyToClipboard(person.email, `${person.id}-email`, setCopiedField);
+                            if (person.email) {
+                              copyToClipboard(person.email, `${person.id}-email`, setCopiedField);
+                            }
                           }}
                           className="text-slate-400 hover:text-slate-600 transition-colors"
                           title="Copy email"
@@ -598,7 +610,7 @@ export default function LeadResults({
                         )}
                       </div>
                     ) : person.email_extraction_failed ? (
-                      <span className="text-xs text-red-600">No Email Found for this contact</span>
+                      <span className="text-xs text-red-600">No Email Found</span>
                     ) : (
                       <span className="text-slate-400">—</span>
                     )}
@@ -608,7 +620,7 @@ export default function LeadResults({
                       <div className="flex items-center justify-center">
                         <img src="/lead.png" alt="Loading" className="h-5 w-5 animate-pulse" />
                       </div>
-                    ) : person.phone_numbers && person.phone_numbers.length > 0 ? (
+                    ) : person.phone_numbers && person.phone_numbers.length > 0 && person.phone_numbers[0].raw_number !== "No Phone number found" ? (
                       <div className="flex items-center gap-2">
                         <span>{displayPhone(person)}</span>
                         <button
@@ -632,7 +644,7 @@ export default function LeadResults({
                         )}
                       </div>
                     ) : person.phone_extraction_failed ? (
-                      <span className="text-xs text-red-600">No Phone Number Found For this contact</span>
+                      <span className="text-xs text-red-600">No Phone Number Found </span>
                     ) : (
                       <span className="text-slate-400">—</span>
                     )}
@@ -663,14 +675,27 @@ export default function LeadResults({
                         className="max-w-xs px-3 py-3 text-slate-700"
                       >
                         {isRunning ? (
-                          <span className="inline-flex items-center gap-2 text-xs text-violet-600">
-                            <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-violet-200 border-t-violet-600" />
-                            Running…
-                          </span>
+                          <div className="flex items-center justify-center">
+                            <img src="/lead.png" alt="Loading" className="h-5 w-5 animate-pulse" />
+                          </div>
                         ) : cell?.status === "error" ? (
-                          <AiColumnErrorIndicator
-                            message={cell.error ?? "AI enrichment failed"}
-                          />
+                          <div className="flex items-start gap-2">
+                            <AiColumnErrorIndicator
+                              message={cell.error ?? "AI enrichment failed"}
+                            />
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onDismissColumnError?.(person.id, column.id);
+                              }}
+                              className="text-slate-400 hover:text-slate-600 transition-colors"
+                              title="Dismiss"
+                              data-no-row-select
+                            >
+                              ×
+                            </button>
+                          </div>
                         ) : cell?.value ? (
                           <span className="line-clamp-3 text-sm">{cell.value}</span>
                         ) : (

@@ -349,6 +349,22 @@ export default function CampaignContacts() {
     }
   }
 
+  function handleDismissColumnError(personId: string, columnId: string) {
+    setColumnValues((current) => {
+      const next = { ...current };
+      const personValues = next[personId];
+      if (!personValues?.[columnId]) return current;
+
+      const { [columnId]: _removed, ...rest } = personValues;
+      if (Object.keys(rest).length === 0) {
+        delete next[personId];
+      } else {
+        next[personId] = rest;
+      }
+      return next;
+    });
+  }
+
   const visiblePeople = useMemo(() => {
     const start = (page - 1) * SEARCH_RESULTS_PER_PAGE;
     return allPeople.slice(start, start + SEARCH_RESULTS_PER_PAGE);
@@ -409,8 +425,16 @@ export default function CampaignContacts() {
 
       <div className="mx-auto max-w-screen-2xl px-3 py-6 sm:px-4 lg:px-6">
         {error && (
-          <div className="mb-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-            {error}
+          <div className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+            <p>{error}</p>
+            <button
+              type="button"
+              onClick={() => setError(null)}
+              className="shrink-0 text-red-400 hover:text-red-600 transition-colors"
+              title="Dismiss"
+            >
+              ×
+            </button>
           </div>
         )}
 
@@ -428,8 +452,16 @@ export default function CampaignContacts() {
         )}
 
         {columnNotice && (
-          <div className="mb-4 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-            {columnNotice}
+          <div className="mb-4 flex items-start justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
+            <p>{columnNotice}</p>
+            <button
+              type="button"
+              onClick={() => setColumnNotice(null)}
+              className="shrink-0 text-emerald-600 hover:text-emerald-800 transition-colors"
+              title="Dismiss"
+            >
+              ×
+            </button>
           </div>
         )}
 
@@ -455,6 +487,7 @@ export default function CampaignContacts() {
             setColumnModalOpen(true);
           }}
           onDeleteColumn={handleDeleteColumn}
+          onDismissColumnError={handleDismissColumnError}
           enableTracking
           contactMeta={contactMeta}
           onContactMetaUpdate={handleContactMetaUpdate}

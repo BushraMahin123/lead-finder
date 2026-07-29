@@ -2,7 +2,7 @@ import Link from "next/link";
 import BrandLogo from "@/components/BrandLogo";
 
 type PublicHeaderProps = {
-  active?: "home" | "pricing";
+  active?: "home" | "pricing" | "contact";
   waitlistMode?: boolean;
 };
 
@@ -34,12 +34,20 @@ export default function PublicHeader({
                 </Link>
               </>
             ) : (
-              <Link
-                href="/pricing"
-                className={navLinkClass(active === "pricing")}
-              >
-                Pricing
-              </Link>
+              <>
+                <Link
+                  href="/pricing"
+                  className={navLinkClass(active === "pricing")}
+                >
+                  Pricing
+                </Link>
+                <Link
+                  href="/contact"
+                  className={navLinkClass(active === "contact")}
+                >
+                  Contact
+                </Link>
+              </>
             )}
           </nav>
         </div>
