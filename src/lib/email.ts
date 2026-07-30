@@ -5,7 +5,7 @@ export function isEmailConfigured(): boolean {
   return Boolean(process.env.RESEND_API_KEY?.trim());
 }
 
-function getFromAddress(): string {
+export function getFromAddress(): string {
   // Env UIs sometimes insert line breaks into long values; collapse them.
   const configured = process.env.EMAIL_FROM?.replace(/\s+/g, " ").trim();
   return configured || "LEADMAGPRO <onboarding@resend.dev>";

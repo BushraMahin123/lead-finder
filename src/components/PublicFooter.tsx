@@ -30,6 +30,9 @@ export default function PublicFooter({ waitlistMode = false }: PublicFooterProps
               <Link href="/pricing" className="transition hover:text-slate-800">
                 Pricing
               </Link>
+              <Link href="/contact" className="transition hover:text-slate-800">
+                Contact
+              </Link>
               <Link href="/login" className="transition hover:text-slate-800">
                 Sign in
               </Link>

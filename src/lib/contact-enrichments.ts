@@ -376,7 +376,11 @@ export async function saveEnrichment(
 
 ): Promise<boolean> {
 
-  if (!hasStoredContacts(result)) return false;
+  // Save even if enrichment failed to store "No Email Found" / "No Phone number found" messages
+  const hasFailureMessage = result.email === "No Email Found" || 
+    (result.phone_numbers?.[0]?.raw_number === "No Phone number found");
+
+  if (!hasStoredContacts(result) && !hasFailureMessage) return false;
 
 
 
@@ -458,16 +462,21 @@ export function mergeEnrichmentIntoPerson(
 
 ): LeadPerson {
 
-  if (!enrichment || !hasStoredContacts(enrichment)) return person;
+  if (!enrichment) return person;
 
+  // Check if enrichment has actual data (not just failure messages)
+  const hasActualEmail = enrichment.email && enrichment.email !== "No Email Found";
+  const hasActualPhone = enrichment.phone_numbers && enrichment.phone_numbers.length > 0 && 
+    enrichment.phone_numbers[0].raw_number !== "No Phone number found";
 
+  if (!hasActualEmail && !hasActualPhone) {
+    // Only has failure messages or no data, don't override existing data
+    return person;
+  }
 
   const phones =
-
-    enrichment.phone_numbers && enrichment.phone_numbers.length > 0
-
+    hasActualPhone
       ? enrichment.phone_numbers
-
       : person.phone_numbers;
 
 
@@ -476,9 +485,8 @@ export function mergeEnrichmentIntoPerson(
 
     ...person,
 
-    email: enrichment.email ?? person.email,
-
-    email_status: enrichment.email_status ?? person.email_status,
+    email: hasActualEmail ? enrichment.email : person.email,
+    email_status: hasActualEmail ? enrichment.email_status : person.email_status,
 
     phone_numbers: phones,
 
@@ -569,14 +577,20 @@ export async function enrichContactsWithPersistence(
     } catch (error) {
 
       // Return error result instead of throwing to avoid failing entire batch
-
-      return {
-
+      const failureResult: EnrichContactResult = {
         id: person.id,
-
         error: error instanceof Error ? error.message : "Enrichment failed",
-
       };
+
+      // Save failure message to Supabase
+      if (type === "email") {
+        failureResult.email = "No Email Found";
+      } else {
+        failureResult.phone_numbers = [{ raw_number: "No Phone number found" }];
+      }
+      await saveEnrichment(person, failureResult);
+
+      return failureResult;
 
     }
 
@@ -614,19 +628,23 @@ export function applyEnrichmentResults(
 
 
 
-    // If enrichment failed, mark as failed
+    // If enrichment failed, mark as failed and store message
 
     if (result.error) {
 
       if (result.email === undefined && result.phone_numbers === undefined) {
 
-        // Both failed - mark both
+        // Both failed - mark both and store messages
 
         return {
 
           ...person,
 
+          email: "No Email Found",
+
           email_extraction_failed: true,
+
+          phone_numbers: [{ raw_number: "No Phone number found" }],
 
           phone_extraction_failed: true,
 
@@ -636,13 +654,29 @@ export function applyEnrichmentResults(
 
       if (result.email === undefined) {
 
-        return { ...person, email_extraction_failed: true };
+        return { 
+
+          ...person, 
+
+          email: "No Email Found",
+
+          email_extraction_failed: true 
+
+        };
 
       }
 
       if (result.phone_numbers === undefined) {
 
-        return { ...person, phone_extraction_failed: true };
+        return { 
+
+          ...person, 
+
+          phone_numbers: [{ raw_number: "No Phone number found" }],
+
+          phone_extraction_failed: true 
+
+        };
 
       }
 
