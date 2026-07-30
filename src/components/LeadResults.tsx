@@ -602,7 +602,7 @@ function isInteractiveRowTarget(target: EventTarget | null): boolean {
 
 
 
-async function copyToClipboard(text: string, fieldId: string, onCopied: (fieldId: string) => void): Promise<boolean> {
+async function copyToClipboard(text: string, fieldId: string, onCopied: (fieldId: string | null) => void): Promise<boolean> {
 
 
 
@@ -3001,11 +3001,11 @@ export default function LeadResults({
 
 
 
-                            const phone = person.phone_numbers[0];
+                            const phone = person.phone_numbers?.[0];
 
 
 
-                            const phoneToCopy = phone.sanitized_number || phone.raw_number;
+                            const phoneToCopy = phone?.sanitized_number || phone?.raw_number;
 
 
 
