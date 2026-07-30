@@ -27,13 +27,28 @@ export const FILTER_SIGNALS: FilterSignal[] = [
   {
     id: "jobTitle",
     label: "Job title",
-    detect: (query) =>
-      /\b(?:ceo|cfo|cto|coo|cmo|founder|director|manager|engineer|scientist|marketer|designer|analyst|vp|vice\s+president|head\s+of|owner|partner)\b/i.test(
+    detect: (query) => {
+      if (
+        /\b(?:ceo|cfo|cto|coo|cmo|founder|director|manager|engineer|scientist|marketer|designer|analyst|vp|vice\s+president|head\s+of|owner|partner)\b/i.test(
+          query,
+        )
+      ) {
+        return true;
+      }
+
+      // "call centers in Pakistan" is industry+location, not a job title.
+      if (
+        /\b(?:call\s+cent(?:er|re)s?|saas|fintech|healthcare|e[\s-]?commerce|ecommerce|software\s+compan(?:y|ies)|retail|consulting)\s+(?:in|at|from|near|based\s+in)\b/i.test(
+          query,
+        )
+      ) {
+        return false;
+      }
+
+      return /\b[a-z][a-z0-9&/-]*(?:\s+[a-z][a-z0-9&/-]*){0,3}\s+(?:in|at|from|near|working\s+at|based\s+in)\b/i.test(
         query,
-      ) ||
-      /\b[a-z][a-z0-9&/-]*(?:\s+[a-z][a-z0-9&/-]*){0,3}\s+(?:in|at|from|near|working\s+at|based\s+in)\b/i.test(
-        query,
-      ),
+      );
+    },
     isSatisfied: (f) => hasText(f.jobTitle),
   },
   {
@@ -50,7 +65,7 @@ export const FILTER_SIGNALS: FilterSignal[] = [
     id: "industry",
     label: "Industry",
     detect: (query) =>
-      /\b(?:saas|fintech|healthcare|e[\s-]?commerce|ecommerce|software\s+compan|retail|consulting|b2b|b2c)\b/i.test(
+      /\b(?:saas|fintech|healthcare|e[\s-]?commerce|ecommerce|software\s+compan|retail|consulting|b2b|b2c|call\s+cent(?:er|re)s?)\b/i.test(
         query,
       ),
     isSatisfied: (f) => hasList(f.industries) || hasText(f.keywords),

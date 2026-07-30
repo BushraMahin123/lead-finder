@@ -48,13 +48,23 @@ export default function FilterSection({
 
   const visibleOptions = useMemo(() => {
     const query = searchQuery.trim();
-    if (!query) return options;
-
     const selectedSet = new Set(selected);
-    return options.filter(
-      (option) =>
-        selectedSet.has(option.value) || matchesFilterSearch(option.label, query),
-    );
+
+    const base = !query
+      ? [...options]
+      : options.filter(
+          (option) =>
+            selectedSet.has(option.value) ||
+            matchesFilterSearch(option.label, query),
+        );
+
+    if (selectedSet.size === 0) return base;
+
+    return base.sort((a, b) => {
+      const aSelected = selectedSet.has(a.value) ? 0 : 1;
+      const bSelected = selectedSet.has(b.value) ? 0 : 1;
+      return aSelected - bSelected;
+    });
   }, [options, searchQuery, selected]);
 
   const optionGridClassName =

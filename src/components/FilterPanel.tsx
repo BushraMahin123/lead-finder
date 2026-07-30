@@ -278,17 +278,6 @@ export default function FilterPanel({
     onFiltersChangeRealtime,
   ]);
 
-  const visibleFilters = useMemo(() => {
-    const query = filterSearch.trim().toLowerCase();
-    if (!query) return FILTER_DEFINITIONS;
-    return FILTER_DEFINITIONS.filter((filter) =>
-      filter.label.toLowerCase().includes(query),
-    );
-  }, [filterSearch]);
-
-  const hasLinkedInMode =
-    linkedInUrls.trim().length > 0 || companyLinkedInUrls.trim().length > 0;
-
   const filterHasValue: Record<FilterId, boolean> = {
     annualRevenue:
       listFilters.annualRevenueRanges.length > 0 ||
@@ -347,6 +336,17 @@ export default function FilterPanel({
   };
 
   const activeFilterCount = Object.values(filterHasValue).filter(Boolean).length;
+
+  const visibleFilters = useMemo(() => {
+    const query = filterSearch.trim().toLowerCase();
+    if (!query) return FILTER_DEFINITIONS;
+    return FILTER_DEFINITIONS.filter((filter) =>
+      filter.label.toLowerCase().includes(query),
+    );
+  }, [filterSearch]);
+
+  const hasLinkedInMode =
+    linkedInUrls.trim().length > 0 || companyLinkedInUrls.trim().length > 0;
 
   function parseOptionalNumber(value: string): number | undefined {
     const trimmed = value.trim();

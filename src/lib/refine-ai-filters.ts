@@ -87,7 +87,7 @@ const TITLE_ORG_STOPWORDS = new Set([
   "titles",
 ]);
 
-/** Single tokens that are industries/topics, not job titles. */
+/** Single tokens / short phrases that are industries/topics, not job titles. */
 const TITLE_INDUSTRY_ONLY = new Set([
   "saas",
   "software",
@@ -95,7 +95,36 @@ const TITLE_INDUSTRY_ONLY = new Set([
   "healthcare",
   "retail",
   "consulting",
+  "call center",
+  "call centers",
+  "ecommerce",
+  "e-commerce",
+  "e commerce",
 ]);
+
+/** Words that end the job-title part of a query and start the company part. */
+const TITLE_COMPANY_CLAUSE_STARTERS = new Set([
+  "at",
+  "for",
+  "with",
+  "working",
+  "from",
+]);
+
+/**
+ * Person-role nouns. A phrase ending in one of these is a job title even when it
+ * also mentions an industry word ("software developers", "healthcare recruiters").
+ */
+const ROLE_NOUN_PATTERN =
+  /\b(?:ceo|cfo|cto|coo|cmo|cro|cio|cpo|cso|vp|svp|evp|gm|founders?|co-?founders?|owners?|partners?|presidents?|chair(?:man|woman|person)s?|directors?|managers?|heads?|leads?|chiefs?|officers?|executives?|supervisors?|principals?|engineers?|developers?|programmers?|architects?|designers?|scientists?|analysts?|researchers?|consultants?|advisors?|advisers?|specialists?|strategists?|marketers?|recruiters?|accountants?|bookkeepers?|attorneys?|lawyers?|doctors?|physicians?|nurses?|dentists?|therapists?|teachers?|professors?|writers?|editors?|copywriters?|photographers?|videographers?|producers?|agents?|brokers?|realtors?|reps?|representatives?|salespersons?|coordinators?|administrators?|assistants?|technicians?|operators?|chefs?|trainers?|coaches|auditors?|controllers?|treasurers?|buyers?|planners?|generalists?)\s*$/i;
+
+/** Whether a phrase names a person's role rather than a company type. */
+function looksLikeRolePhrase(phrase: string): boolean {
+  const normalized = phrase.trim().toLowerCase();
+  if (!normalized) return false;
+  if (EXECUTIVE_ACRONYMS.has(normalized.replace(/[^a-z]/g, ""))) return true;
+  return ROLE_NOUN_PATTERN.test(normalized);
+}
 
 const TITLE_BEFORE_LOCATION_PATTERN =
   /\b((?:[a-z][a-z0-9&/-]*\s+){0,6}[a-z][a-z0-9&/-]*)\s+(?:in|at|from|near|based\s+in)\b/i;
@@ -108,6 +137,18 @@ const EMPLOYEE_RANGE_PATTERNS = [
     "i",
   ),
   new RegExp(String.raw`\bemploy\w*\s+${NUMBER}\s*[-–—]\s*${NUMBER}\b`, "i"),
+  new RegExp(
+    String.raw`\bemploy\w*\s+${NUMBER}\s+(?:to|and)\s+${NUMBER}\b`,
+    "i",
+  ),
+  new RegExp(
+    String.raw`\bwith\s+employ\w*\s+${NUMBER}\s*[-–—]\s*${NUMBER}\b`,
+    "i",
+  ),
+  new RegExp(
+    String.raw`\bwith\s+employ\w*\s+${NUMBER}\s+(?:to|and)\s+${NUMBER}\b`,
+    "i",
+  ),
   new RegExp(
     String.raw`\b${NUMBER}\s*[-–—]\s*${NUMBER}\s+employ\w*\b`,
     "i",
@@ -125,6 +166,11 @@ const EMPLOYEE_RANGE_PATTERNS = [
     "i",
   ),
   new RegExp(String.raw`\b${NUMBER}\s+to\s+${NUMBER}\s+employ\w*\b`, "i"),
+  // "employee size 1 to 10", "company size 1-10", "team size 5 to 20", "headcount 1-10"
+  new RegExp(
+    String.raw`\b(?:employ\w*|compan\w*|team|staff|headcount)?\s*(?:size|count)\s+(?:of\s+)?${NUMBER}\s*(?:[-–—]|to|and)\s*${NUMBER}\b`,
+    "i",
+  ),
 ];
 
 const INDUSTRY_PHRASES: Array<{ pattern: RegExp; value: string }> = [
@@ -134,6 +180,8 @@ const INDUSTRY_PHRASES: Array<{ pattern: RegExp; value: string }> = [
   { pattern: /\bhealthcare\b|\bhealth care\b/i, value: "hospitals and health care" },
   { pattern: /\bretail\b/i, value: "retail" },
   { pattern: /\bconsulting\b/i, value: "management consulting" },
+  { pattern: /\bcall\s+cent(?:er|re)s?\b/i, value: "call center" },
+  { pattern: /\be[\s-]?commerce\b/i, value: "e-commerce" },
 ];
 
 const LOCATION_PHRASES: Array<{ pattern: RegExp; value: string }> = [
@@ -229,6 +277,13 @@ function extractTitleBeforeLocation(query: string): string | undefined {
     words.shift();
   }
 
+  // "hr managers at healthcare companies" -> the title is only what precedes "at".
+  const companyClauseStart = words.findIndex((word) =>
+    TITLE_COMPANY_CLAUSE_STARTERS.has(word.toLowerCase()),
+  );
+  if (companyClauseStart === 0) return undefined;
+  if (companyClauseStart > 0) words.length = companyClauseStart;
+
   while (
     words.length > 0 &&
     TITLE_ORG_STOPWORDS.has(words[words.length - 1].toLowerCase())
@@ -243,8 +298,14 @@ function extractTitleBeforeLocation(query: string): string | undefined {
     return undefined;
   }
 
-  if (words.length === 1 && TITLE_INDUSTRY_ONLY.has(lowerWords[0])) {
-    return undefined;
+  const joined = lowerWords.join(" ");
+  if (TITLE_INDUSTRY_ONLY.has(joined)) return undefined;
+
+  // Industry phrases like "call centers" / "saas companies" are not job titles,
+  // but "software developers" / "healthcare recruiters" still are.
+  if (!looksLikeRolePhrase(joined)) {
+    if (TITLE_INDUSTRY_ONLY.has(lowerWords[0])) return undefined;
+    if (extractIndustriesFromQuery(joined).length > 0) return undefined;
   }
 
   return formatExtractedTitle(words.join(" "));
@@ -589,20 +650,123 @@ function levenshteinDistance(a: string, b: string): number {
   return matrix[b.length][a.length];
 }
 
+/**
+ * Search vocabulary that must never be fuzzy-matched to a place name.
+ * Without this, "size" becomes Turkey's province "Rize".
+ */
+const NON_LOCATION_WORDS = new Set([
+  ...TITLE_ORG_STOPWORDS,
+  "size",
+  "sizes",
+  "staff",
+  "headcount",
+  "count",
+  "range",
+  "between",
+  "with",
+  "without",
+  "from",
+  "and",
+  "the",
+  "for",
+  "any",
+  "all",
+  "more",
+  "most",
+  "less",
+  "least",
+  "than",
+  "over",
+  "under",
+  "above",
+  "below",
+  "about",
+  "call",
+  "calls",
+  "center",
+  "centers",
+  "centre",
+  "centres",
+  "industry",
+  "industries",
+  "revenue",
+  "funding",
+  "funded",
+  "series",
+  "seed",
+  "raised",
+  "software",
+  "saas",
+  "fintech",
+  "healthcare",
+  "retail",
+  "consulting",
+  "ecommerce",
+  "commerce",
+  "agency",
+  "agencies",
+  "sales",
+  "marketing",
+  "finance",
+  "engineering",
+  "design",
+  "legal",
+  "operations",
+  "manager",
+  "managers",
+  "director",
+  "directors",
+  "founder",
+  "founders",
+  "owner",
+  "owners",
+  "head",
+  "heads",
+  "senior",
+  "junior",
+  "level",
+  "years",
+  "year",
+  "experience",
+  "email",
+  "emails",
+  "phone",
+  "phones",
+  "small",
+  "large",
+  "medium",
+  "top",
+  "best",
+  "find",
+  "list",
+  "need",
+  "want",
+  "using",
+  "based",
+  "located",
+  "living",
+  "near",
+  "remote",
+]);
+
 /** Find the best matching location from allowed values using fuzzy matching */
 function findBestLocationMatch(input: string, allowed: string[]): string | null {
   const normalizedInput = input.toLowerCase().replace(/[^a-z0-9]/g, "");
+  if (normalizedInput.length < 5) return null;
+  if (NON_LOCATION_WORDS.has(normalizedInput)) return null;
+
   let bestMatch: string | null = null;
   let bestDistance = Infinity;
 
   for (const value of allowed) {
     const normalizedValue = value.toLowerCase().replace(/[^a-z0-9]/g, "");
+    // Only correct typos in names long enough that a near-miss is unambiguous.
+    if (normalizedValue.length < 5) continue;
+
     const distance = levenshteinDistance(normalizedInput, normalizedValue);
-    
-    // Accept if distance is small relative to string length (max 30% difference)
-    const threshold = Math.max(2, Math.floor(normalizedValue.length * 0.3));
-    
-    if (distance < threshold && distance < bestDistance) {
+    const maxDistance = normalizedValue.length >= 9 ? 2 : 1;
+
+    if (distance <= maxDistance && distance < bestDistance) {
       bestDistance = distance;
       bestMatch = value;
     }
@@ -617,7 +781,7 @@ function normalizeLocationText(text: string, allowed: string[]): string {
   const normalizedWords: string[] = [];
 
   for (const word of words) {
-    if (word.length < 3) {
+    if (word.length < 5 || NON_LOCATION_WORDS.has(word)) {
       normalizedWords.push(word);
       continue;
     }
@@ -719,6 +883,12 @@ function cleanJobTitle(value: string | undefined): string | undefined {
   if (!cleaned || cleaned.length > 60) return undefined;
   if (/\bemployees?\b/i.test(cleaned)) return undefined;
 
+  const lower = cleaned.toLowerCase();
+  if (TITLE_INDUSTRY_ONLY.has(lower)) return undefined;
+  if (!looksLikeRolePhrase(cleaned) && extractIndustriesFromQuery(cleaned).length > 0) {
+    return undefined;
+  }
+
   return titleCase(cleaned);
 }
 
@@ -764,18 +934,37 @@ function shouldReplaceJobTitle(current: string | undefined, extracted: string | 
   );
 }
 
-function preferSpecificLocations(locations: string[]): string[] {
-  const usStates = new Set(
-    (
-      PERSON_LOCATION_REGIONS.find((region) => region.value === "United States")
-        ?.states ?? []
-    ).map((state) => state.value),
-  );
-  const hasUsStates = locations.some((location) => usStates.has(location));
-  if (hasUsStates && locations.includes("United States")) {
-    return locations.filter((location) => location !== "United States");
+/** Country/state each value sits under, so "Punjab Pakistan" keeps only the province. */
+const LOCATION_ANCESTORS = new Map<string, string[]>();
+for (const region of PERSON_LOCATION_REGIONS) {
+  for (const city of region.cities ?? []) {
+    LOCATION_ANCESTORS.set(city.value, [region.value]);
   }
-  return locations;
+  for (const state of region.states ?? []) {
+    LOCATION_ANCESTORS.set(state.value, [region.value]);
+    for (const city of state.cities ?? []) {
+      LOCATION_ANCESTORS.set(city.value, [region.value, state.value]);
+    }
+  }
+}
+
+function preferSpecificLocations(locations: string[]): string[] {
+  const coveredCountries = new Set(
+    locations.flatMap((location) => LOCATION_ANCESTORS.get(location) ?? []),
+  );
+
+  // "Punjab, Pakistan" makes the same-named Indian province irrelevant.
+  const qualifiedNames = new Set(
+    locations
+      .filter((location) => location.includes(","))
+      .map((location) => location.split(",")[0].trim().toLowerCase()),
+  );
+
+  return locations.filter(
+    (location) =>
+      !coveredCountries.has(location) &&
+      !(!location.includes(",") && qualifiedNames.has(location.toLowerCase())),
+  );
 }
 
 export function refineFiltersFromQuery(
