@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Resend } from "resend";
-import { isEmailConfigured, getFromAddress } from "@/lib/email";
+import { getFromAddress, isEmailConfigured, sendEmail } from "@/lib/email";
 
 export const dynamic = "force-dynamic";
 
@@ -145,6 +144,19 @@ function buildContactEmailText(data: ContactFormData): string {
   ].join("\n");
 }
 
+function getContactRecipientAddress(): string {
+  const configured = process.env.CONTACT_EMAIL_TO?.replace(/\s+/g, "").trim();
+  if (configured) return configured;
+
+  const fromAddress = getFromAddress();
+  const bracketedAddress = fromAddress.match(/<([^<>]+)>$/)?.[1]?.trim();
+  if (bracketedAddress) return bracketedAddress;
+
+  return fromAddress.includes("@")
+    ? fromAddress
+    : "contact@leadmagpro.com";
+}
+
 export async function POST(request: NextRequest) {
   try {
     const body: ContactFormData = await request.json();
@@ -177,24 +189,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const apiKey = process.env.RESEND_API_KEY?.trim();
-    console.log("[contact] API Key configured:", Boolean(apiKey));
-    
-    const toEmail = process.env.CONTACT_EMAIL_TO || process.env.EMAIL_FROM?.split("<")[1]?.replace(">", "") || "onboarding@resend.dev";
+    const toEmail = getContactRecipientAddress();
     console.log("[contact] Sending to:", toEmail);
 
-    const resend = new Resend(apiKey);
     const html = buildContactEmailHtml(body);
     const text = buildContactEmailText(body);
 
-    // Use Resend's test sender for testing (no domain verification needed)
-    // Note: Test sender only delivers to your Resend account email
-    const fromAddress = "onboarding@resend.dev";
-
-    console.log("[contact] Sending email via Resend from:", fromAddress);
-    console.log("[contact] NOTE: Test sender only delivers to your Resend account email");
-    const { error } = await resend.emails.send({
-      from: fromAddress,
+    const result = await sendEmail({
       to: toEmail,
       subject: `Contact Form: ${body.subject} - ${body.name}`,
       text,
@@ -202,10 +203,10 @@ export async function POST(request: NextRequest) {
       replyTo: body.email,
     });
 
-    if (error) {
-      console.error("[contact] Email send failed:", error.message);
+    if (!result.ok) {
+      console.error("[contact] Email send failed:", result.error);
       return NextResponse.json(
-        { error: `Failed to send message: ${error.message}` },
+        { error: `Failed to send message: ${result.error}` },
         { status: 500 }
       );
     }

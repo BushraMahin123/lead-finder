@@ -11,6 +11,43 @@ export function getFromAddress(): string {
   return configured || "LEADMAGPRO <onboarding@resend.dev>";
 }
 
+type SendEmailInput = {
+  to: string | string[];
+  subject: string;
+  text: string;
+  html: string;
+  replyTo?: string;
+};
+
+export async function sendEmail(
+  input: SendEmailInput,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+  const apiKey = process.env.RESEND_API_KEY?.trim();
+  if (!apiKey) {
+    return {
+      ok: false,
+      error:
+        "Email is not configured. Set RESEND_API_KEY to send email automatically.",
+    };
+  }
+
+  const resend = new Resend(apiKey);
+  const { error } = await resend.emails.send({
+    from: getFromAddress(),
+    to: input.to,
+    subject: input.subject,
+    text: input.text,
+    html: input.html,
+    replyTo: input.replyTo,
+  });
+
+  if (error) {
+    return { ok: false, error: error.message };
+  }
+
+  return { ok: true };
+}
+
 export function renderAccountCredentialsEmail(input: {
   firstName: string;
   email: string;
@@ -45,36 +82,23 @@ export async function sendAccountCredentialsEmail(input: {
   email: string;
   password: string;
 }): Promise<{ ok: true } | { ok: false; error: string }> {
-  const apiKey = process.env.RESEND_API_KEY?.trim();
-  if (!apiKey) {
-    return {
-      ok: false,
-      error:
-        "Email is not configured. Set RESEND_API_KEY to send credentials automatically.",
-    };
-  }
-
   const rendered = renderAccountCredentialsEmail({
     firstName: input.firstName,
     email: input.email,
     password: input.password,
   });
-  const resend = new Resend(apiKey);
-
-  const { error } = await resend.emails.send({
-    from: getFromAddress(),
+  const result = await sendEmail({
     to: input.to,
     subject: rendered.subject,
     text: rendered.text,
     html: rendered.html,
   });
 
-  if (error) {
-    console.error("[email] credentials send failed:", error.message);
-    return { ok: false, error: error.message };
+  if (!result.ok) {
+    console.error("[email] credentials send failed:", result.error);
   }
 
-  return { ok: true };
+  return result;
 }
 
 function buildCredentialsText(input: {
