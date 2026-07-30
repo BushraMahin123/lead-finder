@@ -34,6 +34,8 @@ export function usePaginatedSearch(options: UsePaginatedSearchOptions = {}) {
     new Map(),
   );
   const prefetchingRef = useRef<Set<string>>(new Set());
+  const filtersRef = useRef<SearchFilters | null>(null);
+  filtersRef.current = filters;
 
   function trimSearchCaches() {
     const cache = pageCacheRef.current;
@@ -105,6 +107,14 @@ export function usePaginatedSearch(options: UsePaginatedSearchOptions = {}) {
     [],
   );
 
+  const clearResults = useCallback(() => {
+    setPeople([]);
+    setTotalEntries(0);
+    setFromCache(false);
+    setCachedAt(null);
+    setError(null);
+  }, []);
+
   const runSearch = useCallback(
     async (
       nextFilters: SearchFilters,
@@ -114,6 +124,10 @@ export function usePaginatedSearch(options: UsePaginatedSearchOptions = {}) {
       const searchKey = getSearchQueryKey(nextFilters);
       const pages = getPageCache(searchKey);
       const cachedPage = pages.get(page);
+      const previousKey = filtersRef.current
+        ? getSearchQueryKey(filtersRef.current)
+        : null;
+      const isNewSearch = previousKey !== searchKey;
 
       setFilters(nextFilters);
 
@@ -124,6 +138,11 @@ export function usePaginatedSearch(options: UsePaginatedSearchOptions = {}) {
           void prefetchPages(nextFilters, searchKey, cachedPage.totalEntries);
         }
         return;
+      }
+
+      // Drop the previous prompt's rows immediately so the UI can show a loader.
+      if (isNewSearch) {
+        clearResults();
       }
 
       setLoading(true);
@@ -165,7 +184,7 @@ export function usePaginatedSearch(options: UsePaginatedSearchOptions = {}) {
         setLoading(false);
       }
     },
-    [applyPageData, prefetchPages],
+    [applyPageData, clearResults, prefetchPages],
   );
 
   const loadPage = useCallback(
@@ -214,6 +233,7 @@ export function usePaginatedSearch(options: UsePaginatedSearchOptions = {}) {
     fromCache,
     cachedAt,
     setError,
+    clearResults,
     runSearch,
     loadPage,
     updatePeople,

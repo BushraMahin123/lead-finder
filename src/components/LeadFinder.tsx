@@ -46,8 +46,6 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
   const [hasResults, setHasResults] = useState(false);
   const [appliedFilters, setAppliedFilters] =
     useState<Partial<SearchFilters> | null>(null);
-  const [manualFilters, setManualFilters] =
-    useState<Partial<SearchFilters> | null>(null);
   const [aiParsing, setAiParsing] = useState(false);
   const [aiQuery, setAiQuery] = useState<string | null>(null);
   const [aiInput, setAiInput] = useState("");
@@ -85,7 +83,6 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
     search.reset();
     setHasResults(false);
     setAppliedFilters(null);
-    setManualFilters(null);
     setAiQuery(null);
     setAiInput("");
   }
@@ -124,44 +121,10 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
     setHasResults(true);
   }
 
+  // The panel is already seeded from the AI parse, so nextFilters carries the
+  // AI-derived values plus any manual edits. Merging appliedFilters back in here
+  // would resurrect values the user just removed.
   async function runSearch(nextFilters: SearchFilters) {
-    // If AI query exists, merge AI filters with manual filters
-    if (aiQuery && appliedFilters) {
-      const mergedFilters: Partial<SearchFilters> = {
-        ...nextFilters,
-        // Preserve AI-parsed filters that aren't overridden by manual selection
-        jobTitle: nextFilters.jobTitle || appliedFilters.jobTitle,
-        companyName: nextFilters.companyName || appliedFilters.companyName,
-        keywords: nextFilters.keywords || appliedFilters.keywords,
-        skills: nextFilters.skills || appliedFilters.skills,
-        // Merge arrays
-        locations: [...new Set([...(nextFilters.locations ?? []), ...(appliedFilters.locations ?? [])])],
-        companyLocations: [...new Set([...(nextFilters.companyLocations ?? []), ...(appliedFilters.companyLocations ?? [])])],
-        industries: [...new Set([...(nextFilters.industries ?? []), ...(appliedFilters.industries ?? [])])],
-        seniorities: [...new Set([...(nextFilters.seniorities ?? []), ...(appliedFilters.seniorities ?? [])])],
-        departments: [...new Set([...(nextFilters.departments ?? []), ...(appliedFilters.departments ?? [])])],
-        employeeSizes: [...new Set([...(nextFilters.employeeSizes ?? []), ...(appliedFilters.employeeSizes ?? [])])],
-        languages: [...new Set([...(nextFilters.languages ?? []), ...(appliedFilters.languages ?? [])])],
-        companyTypes: [...new Set([...(nextFilters.companyTypes ?? []), ...(appliedFilters.companyTypes ?? [])])],
-      };
-
-      setAppliedFilters(mergedFilters);
-      setManualFilters(nextFilters);
-
-      try {
-        await executePreviewSearch(mergedFilters as SearchFilters);
-      } catch (err) {
-        setHasResults(false);
-        search.setError(handleApiError(err));
-      }
-      return;
-    }
-
-    // No AI query, just use manual filters
-    setAiQuery(null);
-    setAppliedFilters(null);
-    setManualFilters(nextFilters);
-
     try {
       await executePreviewSearch(nextFilters);
     } catch (err) {
@@ -170,20 +133,14 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
     }
   }
 
-  function handleManualFiltersChange(filters: SearchFilters) {
-    setManualFilters(filters);
-  }
-
-  function handleManualFiltersChangeRealtime(filters: SearchFilters) {
-    setManualFilters(filters);
-  }
-
   async function handleAISearch(query: string) {
     setAiParsing(true);
     setAiQuery(query);
     setAiInput(query);
-    search.setError(null);
     setAiWarning(null);
+    setHasResults(false);
+    search.clearResults();
+    search.setError(null);
 
     if (view !== "search") {
       router.push("/?view=search");
@@ -213,34 +170,19 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
         setAiWarning(warning);
       }
 
-      // Merge AI filters with existing manual filters
-      const mergedFilters: Partial<SearchFilters> = {
-        ...manualFilters,
-        ...parsedFilters,
-        // Manual filters take precedence for text fields if set
-        jobTitle: manualFilters?.jobTitle || parsedFilters?.jobTitle,
-        companyName: manualFilters?.companyName || parsedFilters?.companyName,
-        keywords: manualFilters?.keywords || parsedFilters?.keywords,
-        skills: manualFilters?.skills || parsedFilters?.skills,
-        // Merge arrays
-        locations: [...new Set([...(manualFilters?.locations ?? []), ...(parsedFilters?.locations ?? [])])],
-        companyLocations: [...new Set([...(manualFilters?.companyLocations ?? []), ...(parsedFilters?.companyLocations ?? [])])],
-        industries: [...new Set([...(manualFilters?.industries ?? []), ...(parsedFilters?.industries ?? [])])],
-        seniorities: [...new Set([...(manualFilters?.seniorities ?? []), ...(parsedFilters?.seniorities ?? [])])],
-        departments: [...new Set([...(manualFilters?.departments ?? []), ...(parsedFilters?.departments ?? [])])],
-        employeeSizes: [...new Set([...(manualFilters?.employeeSizes ?? []), ...(parsedFilters?.employeeSizes ?? [])])],
-        languages: [...new Set([...(manualFilters?.languages ?? []), ...(parsedFilters?.languages ?? [])])],
-        companyTypes: [...new Set([...(manualFilters?.companyTypes ?? []), ...(parsedFilters?.companyTypes ?? [])])],
-      };
+      // A new query fully defines its own filter set. Carrying anything over
+      // from the previous search would leave stale filters applied.
+      const queryFilters: Partial<SearchFilters> = { ...parsedFilters };
 
       const nextFilters = {
-        ...mergedFilters,
-        searchMode: mergedFilters?.linkedInUrls ? "linkedin" : "people",
+        ...queryFilters,
+        searchMode: queryFilters.linkedInUrls ? "linkedin" : "people",
         page: 1,
         perPage: AI_PREVIEW_PER_PAGE,
       } as SearchFilters;
 
-      setAppliedFilters(mergedFilters ?? null);
+      setAppliedFilters(queryFilters);
+      setAiParsing(false);
       await executePreviewSearch(nextFilters);
     } catch (err) {
       setHasResults(false);
@@ -424,7 +366,7 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
     }
   }
 
-  const showPreview = hasResults || (search.loading && !aiParsing);
+  const showPreview = hasResults || search.loading || aiParsing;
   const showEmpty = !hasResults && !search.loading && !aiParsing;
 
   if (view === "landing") {
@@ -468,6 +410,7 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
           }}
           onBack={openLandingView}
           appliedFilters={appliedFilters}
+          searchedFilters={search.filters}
           aiQuery={aiQuery}
           onAISearch={handleAISearch}
           onClearFilters={handleClearFilters}
@@ -480,8 +423,6 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
             setSidebarCollapsed((current) => !current);
           }}
           aiAdjusting={aiParsing}
-          onFiltersChange={handleManualFiltersChange}
-          onFiltersChangeRealtime={handleManualFiltersChangeRealtime}
         />
       </aside>
 
@@ -527,7 +468,7 @@ export default function LeadFinder({ userEmail = null }: LeadFinderProps) {
         />
 
         <main className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          {aiParsing && !hasResults ? (
+          {aiParsing ? (
             <div className="flex flex-1 items-center justify-center text-sm text-slate-600">
               <div className="text-center">
                 <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />

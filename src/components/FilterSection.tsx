@@ -68,7 +68,7 @@ export default function FilterSection({
   }, [options, searchQuery, selected]);
 
   const optionGridClassName =
-    "grid grid-cols-2 gap-x-2 gap-y-1 overflow-y-auto pr-1 scrollbar-hidden";
+    "grid grid-cols-1 gap-y-1 overflow-y-auto pr-1 scrollbar-hidden";
 
   const optionsList =
     visibleOptions.length === 0 ? (

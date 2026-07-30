@@ -37,6 +37,10 @@ yarn-error.log*
 .env
 .env.*
 !.env.example
+env.live
+
+# local secret dumps
+keys.txt
 
 # vercel
 .vercel
