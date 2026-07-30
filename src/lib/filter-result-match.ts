@@ -94,6 +94,51 @@ function splitCsv(value?: string): string[] {
     .filter(Boolean);
 }
 
+/**
+ * A job title filter can list alternatives ("Head of Marketing or Marketing
+ * Director"); any one of them is a match.
+ */
+export function splitJobTitleAlternatives(value?: string): string[] {
+  return (value ?? "")
+    .split(/\s*,\s*|\s+or\s+/i)
+    .map((part) => part.trim())
+    .filter(Boolean);
+}
+
+/**
+ * Providers return long-form titles ("Vice President of Sales") for acronym
+ * queries ("VP of Sales"), so both sides are canonicalized before comparison.
+ * Seniority stays a separate token, keeping "VP of Sales" a match for
+ * "Senior VP of Sales" but not for "Head of Sales".
+ */
+const TITLE_PHRASE_ALIASES: Array<[RegExp, string]> = [
+  [/\bchief executive officer\b/g, "ceo"],
+  [/\bchief financial officer\b/g, "cfo"],
+  [/\bchief technology officer\b/g, "cto"],
+  [/\bchief technical officer\b/g, "cto"],
+  [/\bchief operating officer\b/g, "coo"],
+  [/\bchief marketing officer\b/g, "cmo"],
+  [/\bchief revenue officer\b/g, "cro"],
+  [/\bchief information officer\b/g, "cio"],
+  [/\bchief product officer\b/g, "cpo"],
+  [/\bsenior vice president\b/g, "senior vp"],
+  [/\bexecutive vice president\b/g, "executive vp"],
+  [/\bassistant vice president\b/g, "assistant vp"],
+  [/\bvice president\b/g, "vp"],
+  [/\bsvp\b/g, "senior vp"],
+  [/\bevp\b/g, "executive vp"],
+  [/\bavp\b/g, "assistant vp"],
+  [/\bhuman resources\b/g, "hr"],
+];
+
+function canonicalizeTitleText(text: string): string {
+  let normalized = text.toLowerCase();
+  for (const [pattern, replacement] of TITLE_PHRASE_ALIASES) {
+    normalized = normalized.replace(pattern, replacement);
+  }
+  return normalized;
+}
+
 function singularizeToken(token: string): string {
   if (token.length <= 3) return token;
   if (token.endsWith("ies") && token.length > 4) {
@@ -114,8 +159,7 @@ function singularizeToken(token: string): string {
 }
 
 function normalizeTitleTokens(text: string): string[] {
-  return text
-    .toLowerCase()
+  return canonicalizeTitleText(text)
     .replace(/[^a-z0-9\s&/-]/g, " ")
     .split(/[\s/-]+/)
     .map((token) => token.trim())
@@ -132,7 +176,7 @@ export function personMatchesJobTitle(
   personTitle: string | undefined,
   filterJobTitle: string | undefined,
 ): boolean {
-  const filterTitles = splitCsv(filterJobTitle);
+  const filterTitles = splitJobTitleAlternatives(filterJobTitle);
   if (filterTitles.length === 0) return true;
   if (!personTitle?.trim()) return false;
 

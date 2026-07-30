@@ -1,5 +1,6 @@
 import {
   ANNUAL_REVENUE_OPTIONS,
+  INDUSTRY_OPTIONS,
   mapNumericRangeToEmployeeBuckets,
   parseFlexibleInt,
 } from "@/lib/filter-options";
@@ -182,7 +183,132 @@ const INDUSTRY_PHRASES: Array<{ pattern: RegExp; value: string }> = [
   { pattern: /\bconsulting\b/i, value: "management consulting" },
   { pattern: /\bcall\s+cent(?:er|re)s?\b/i, value: "call center" },
   { pattern: /\be[\s-]?commerce\b/i, value: "e-commerce" },
+  {
+    pattern: /\btech(?:nology)?(?=\s+(?:compan(?:y|ies)|firms?|business(?:es)?|startups?|vendors?|providers?|agenc(?:y|ies)|organi[sz]ations?|sectors?|industr(?:y|ies)|space)\b)/i,
+    value: "technology, information and internet",
+  },
+  {
+    pattern: /\bcyber[\s-]?security\b/i,
+    value: "cyber security",
+  },
 ];
+
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Nouns that mark the preceding word as a company descriptor. */
+const INDUSTRY_CONTEXT_SUFFIX = String.raw`\s+(?:compan(?:y|ies)|firms?|business(?:es)?|startups?|vendors?|providers?|agenc(?:y|ies)|organi[sz]ations?|sectors?|industr(?:y|ies)|space)`;
+
+/** Words that describe a company without naming its industry. */
+const NON_INDUSTRY_DESCRIPTORS = new Set([
+  "big",
+  "small",
+  "large",
+  "mid",
+  "midsize",
+  "medium",
+  "new",
+  "old",
+  "top",
+  "best",
+  "good",
+  "great",
+  "growing",
+  "leading",
+  "local",
+  "global",
+  "national",
+  "international",
+  "remote",
+  "private",
+  "public",
+  "other",
+  "these",
+  "those",
+  "their",
+  "your",
+  "our",
+  "all",
+  "any",
+  "some",
+  "many",
+  "most",
+  "more",
+  "such",
+  "similar",
+  "different",
+  "various",
+  "multiple",
+  "several",
+]);
+
+/**
+ * Catalog industries, longest first. Single-word values ("sales", "legal",
+ * "b2b") collide with ordinary query wording, so they only count when an
+ * industry noun follows — "B2B companies" is an industry, "VP of Sales" is not.
+ */
+const CATALOG_INDUSTRY_MATCHERS: Array<{ value: string; pattern: RegExp }> =
+  INDUSTRY_OPTIONS.map((option) => option.value.trim().toLowerCase())
+    .filter(Boolean)
+    .filter((value) => !NON_INDUSTRY_DESCRIPTORS.has(value))
+    .sort((a, b) => b.length - a.length)
+    .map((value) => {
+      const escaped = escapeRegExp(value).replace(/\s+/g, "\\s+");
+      const needsContext = value.split(/\s+/).filter(Boolean).length < 2;
+      const body = needsContext
+        ? `${escaped}(?=${INDUSTRY_CONTEXT_SUFFIX})`
+        : escaped;
+      return {
+        value,
+        pattern: new RegExp(`(?<![a-z0-9])${body}(?![a-z0-9])`, "ig"),
+      };
+    });
+
+const CATALOG_INDUSTRY_VALUES = INDUSTRY_OPTIONS.map((option) =>
+  option.value.trim().toLowerCase(),
+).filter(Boolean);
+
+const CONTEXT_TERM_PATTERN = new RegExp(
+  String.raw`(?<![a-z0-9])([a-z][a-z0-9&+.-]{2,})(?=${INDUSTRY_CONTEXT_SUFFIX})`,
+  "ig",
+);
+
+/**
+ * "technology companies" has no exact catalog entry, so fall back to the
+ * closest real industry — one that names the term as a whole word, preferring
+ * the entry the term heads ("technology, information and internet").
+ */
+function findRelatedCatalogIndustry(term: string): string | undefined {
+  if (NON_INDUSTRY_DESCRIPTORS.has(term)) return undefined;
+
+  const wordPattern = new RegExp(
+    `(?<![a-z0-9])${escapeRegExp(term)}(?![a-z0-9])`,
+    "i",
+  );
+  const candidates = CATALOG_INDUSTRY_VALUES.filter((value) =>
+    wordPattern.test(value),
+  );
+  if (candidates.length === 0) return undefined;
+
+  const headed = candidates.filter((value) => value.startsWith(`${term}`));
+  if (headed.length > 0) {
+    return [...headed].sort((a, b) => a.length - b.length)[0];
+  }
+
+  const firstToken = candidates.filter(
+    (value) => value.split(/[\s,/-]+/)[0] === term,
+  );
+  if (firstToken.length > 0) {
+    return [...firstToken].sort((a, b) => a.length - b.length)[0];
+  }
+
+  // Short abbreviations like "tech" have too many incidental hits
+  // ("sex tech", "legal tech") to trust a loose contains-match.
+  if (term.length <= 4) return undefined;
+
+  return [...candidates].sort((a, b) => a.length - b.length)[0];
+}
 
 const LOCATION_PHRASES: Array<{ pattern: RegExp; value: string }> = [
   {
@@ -615,9 +741,45 @@ export function extractSenioritiesFromQuery(query: string): string[] {
 
 export function extractIndustriesFromQuery(query: string): string[] {
   const industries = new Set<string>();
+
   for (const { pattern, value } of INDUSTRY_PHRASES) {
     if (pattern.test(query)) industries.add(value);
   }
+
+  // Longest catalog match wins so "truck transportation" beats "transportation".
+  const occupied: Array<{ start: number; end: number }> = [];
+  for (const { value, pattern } of CATALOG_INDUSTRY_MATCHERS) {
+    pattern.lastIndex = 0;
+    for (const match of query.matchAll(pattern)) {
+      const start = match.index ?? -1;
+      if (start < 0) continue;
+      const end = start + match[0].length;
+      const overlaps = occupied.some(
+        (range) => start < range.end && end > range.start,
+      );
+      if (overlaps) continue;
+      occupied.push({ start, end });
+      industries.add(value);
+    }
+  }
+
+  CONTEXT_TERM_PATTERN.lastIndex = 0;
+  for (const match of query.matchAll(CONTEXT_TERM_PATTERN)) {
+    const start = match.index ?? -1;
+    if (start < 0) continue;
+    const end = start + match[0].length;
+    const alreadyMatched = occupied.some(
+      (range) => start < range.end && end > range.start,
+    );
+    if (alreadyMatched) continue;
+
+    const related = findRelatedCatalogIndustry(match[1].toLowerCase());
+    if (related) {
+      occupied.push({ start, end });
+      industries.add(related);
+    }
+  }
+
   return [...industries];
 }
 

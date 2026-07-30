@@ -45,10 +45,15 @@ export default function AISearchPreview({
       ? `${Math.floor(totalEntries / 1000)}K+`
       : totalEntries.toLocaleString();
 
-  if (loading && previewPeople.length === 0) {
+  if (loading) {
     return (
       <div className="flex h-full flex-1 items-center justify-center px-6 py-12 text-sm text-slate-500">
-        Fetching sample contacts…
+        <div className="text-center">
+          <div className="mx-auto h-8 w-8 animate-spin rounded-full border-2 border-indigo-200 border-t-indigo-600" />
+          <p className="mt-3 font-medium text-indigo-700">
+            Fetching sample contacts…
+          </p>
+        </div>
       </div>
     );
   }

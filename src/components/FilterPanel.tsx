@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import FilterNavRow from "@/components/FilterNavRow";
 import AISearchSidebar from "@/components/AISearchSidebar";
 import FilterSection from "@/components/FilterSection";
@@ -52,14 +52,13 @@ interface FilterPanelProps {
   onSearch: (filters: SearchFilters) => void;
   onBack?: () => void;
   appliedFilters?: Partial<SearchFilters> | null;
+  searchedFilters?: Partial<SearchFilters> | null;
   aiQuery?: string | null;
   onAISearch?: (query: string) => void | Promise<void>;
   onClearFilters?: () => void;
   collapsed?: boolean;
   onToggleCollapse?: () => void;
   aiAdjusting?: boolean;
-  onFiltersChange?: (filters: SearchFilters) => void;
-  onFiltersChangeRealtime?: (filters: SearchFilters) => void;
 }
 
 const EMPTY_LIST_FILTERS = {
@@ -94,14 +93,13 @@ export default function FilterPanel({
   onSearch,
   onBack,
   appliedFilters,
+  searchedFilters,
   aiQuery,
   onAISearch,
   onClearFilters,
   collapsed = false,
   onToggleCollapse,
   aiAdjusting = false,
-  onFiltersChange,
-  onFiltersChangeRealtime,
 }: FilterPanelProps) {
   const [activeFilter, setActiveFilter] = useState<FilterId | null>(null);
   const [filterSearch, setFilterSearch] = useState("");
@@ -224,59 +222,6 @@ export default function FilterPanel({
     if (!appliedFilters) return;
     applyExternalFilters(appliedFilters);
   }, [appliedFilters]);
-
-  // Notify parent of real-time filter changes (with debouncing to avoid infinite loops)
-  const prevFiltersRef = useRef<SearchFilters | null>(null);
-  useEffect(() => {
-    if (onFiltersChangeRealtime) {
-      const currentFilters = buildFilters();
-
-      // Only notify if filters actually changed (deep comparison)
-      const prev = prevFiltersRef.current;
-      const hasChanged = !prev || JSON.stringify(currentFilters) !== JSON.stringify(prev);
-
-      if (hasChanged) {
-        prevFiltersRef.current = currentFilters;
-        onFiltersChangeRealtime(currentFilters);
-      }
-    }
-  }, [
-    personName,
-    personNameExclude,
-    linkedInUrls,
-    companyLinkedInUrls,
-    companyName,
-    companyDomain,
-    companyDomainBulk,
-    jobTitle,
-    jobTitlePrimaryActiveRoleOnly,
-    keywords,
-    skills,
-    funding,
-    technology,
-    annualRevenue,
-    productsServices,
-    educationSchool,
-    education,
-    educationDateStart,
-    educationDateEnd,
-    certifications,
-    foundedYearStart,
-    foundedYearEnd,
-    headcountGrowthPercent,
-    headcountGrowthTimeFrame,
-    headcountGrowth,
-    employeeCountMin,
-    employeeCountMax,
-    departmentEmployeeCountMin,
-    departmentEmployeeCountMax,
-    annualRevenueMin,
-    annualRevenueMax,
-    fundingAmountMin,
-    fundingAmountMax,
-    listFilters,
-    onFiltersChangeRealtime,
-  ]);
 
   const filterHasValue: Record<FilterId, boolean> = {
     annualRevenue:
@@ -1243,7 +1188,7 @@ export default function FilterPanel({
       {aiQuery && onAISearch && onClearFilters && (
         <AISearchSidebar
           query={aiQuery}
-          appliedFilters={appliedFilters ?? null}
+          appliedFilters={searchedFilters ?? appliedFilters ?? null}
           loading={loading}
           onSearch={onAISearch}
           onClear={() => {

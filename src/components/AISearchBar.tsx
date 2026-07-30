@@ -1,5 +1,6 @@
 "use client";
 
+import LiveFilterTags from "@/components/LiveFilterTags";
 import { AISearchIconBadge } from "@/components/AISearchIcon";
 
 interface AISearchBarProps {
@@ -55,6 +56,8 @@ export default function AISearchBar({
             {loading ? "Building…" : "Search"}
           </button>
         </div>
+
+        {!loading && <LiveFilterTags query={value ?? ""} className="mt-2.5" />}
 
         {loadingMessage && (
           <p className="mt-2 text-center text-xs font-medium text-indigo-600">

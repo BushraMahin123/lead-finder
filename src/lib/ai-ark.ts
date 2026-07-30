@@ -1,5 +1,8 @@
 import { parseEmployeeSizeRange } from "@/lib/filter-options";
-import { filterPeopleBySearchFilters } from "@/lib/filter-result-match";
+import {
+  filterPeopleBySearchFilters,
+  splitJobTitleAlternatives,
+} from "@/lib/filter-result-match";
 import {
   enqueueAiArk,
   isRetryableHttpStatus,
@@ -430,7 +433,9 @@ function buildSearchBody(
     };
   }
 
-  const titles = splitCsv(filters.jobTitle).flatMap(titleSearchVariants);
+  const titles = splitJobTitleAlternatives(filters.jobTitle).flatMap(
+    titleSearchVariants,
+  );
   const hasExperienceYears =
     typeof filters.experienceYearsMin === "number" ||
     typeof filters.experienceYearsMax === "number";

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useState } from "react";
 import DashboardMockup from "@/components/DashboardMockup";
+import LiveFilterTags from "@/components/LiveFilterTags";
 import { AISearchIconBadge } from "@/components/AISearchIcon";
 import { useBillingBalance } from "@/hooks/useBillingBalance";
 import { SEARCH_TEMPLATES } from "@/lib/search-templates";
@@ -102,6 +103,9 @@ export default function LandingHero({
                   {submitting ? "Searching…" : "Search"}
                 </button>
               </div>
+              {!submitting && (
+                <LiveFilterTags query={query} className="mt-2.5" />
+              )}
               <p className="mt-2.5 text-xs text-slate-500">
                 AI builds your filters instantly.{" "}
                 <button

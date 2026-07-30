@@ -10,6 +10,12 @@ import type { EnrichContactResult, SearchFilters, SearchResponse } from "@/types
 const CACHE_TTL_MS = 90 * 24 * 60 * 60 * 1000;
 const TABLE = "search_cache";
 
+/**
+ * Bump whenever result post-filtering changes, so pages cached under the old
+ * matching rules are not replayed for the full TTL.
+ */
+const MATCHER_VERSION = 2;
+
 function sortList(values?: string[]): string[] {
   return [...(values ?? [])].map((v) => v.trim().toLowerCase()).sort();
 }
@@ -46,7 +52,7 @@ function normalizeFilters(filters: SearchFilters) {
 function cacheKey(filters: SearchFilters): string {
   const normalized = normalizeFilters(filters);
   return createHash("sha256")
-    .update(JSON.stringify(normalized))
+    .update(`v${MATCHER_VERSION}|${JSON.stringify(normalized)}`)
     .digest("hex");
 }
 

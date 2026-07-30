@@ -1,4 +1,5 @@
 import type { SearchFilters } from "@/types/lead";
+import { extractIndustriesFromQuery } from "@/lib/refine-ai-filters";
 
 /**
  * Maps free-form query language → required SearchFilters fields.
@@ -23,31 +24,44 @@ function hasList(values?: string[]): boolean {
   return Boolean(values?.length);
 }
 
+const ROLE_SIGNAL_PATTERN =
+  /\b(?:ceo|cfo|cto|coo|cmo|founder|co-?founder|director|manager|engineer|scientist|marketer|designer|analyst|vp|vice\s+president|head\s+of|owners?|partners?|presidents?|recruiters?|developers?|consultants?)\b/i;
+
+const TITLE_BEFORE_LOCATION_SIGNAL =
+  /\b[a-z][a-z0-9&/-]*(?:\s+[a-z][a-z0-9&/-]*){0,3}\s+(?:in|at|from|near|working\s+at|based\s+in)\b/i;
+
+const PHRASE_BEFORE_LOCATION_PATTERN =
+  /\b((?:[a-z][a-z0-9&/-]*\s+){0,6}[a-z][a-z0-9&/-]*)\s+(?:in|at|from|near|based\s+in)\b/i;
+
+function isIndustryBeforeLocation(query: string): boolean {
+  if (
+    /\b(?:call\s+cent(?:er|re)s?|saas|fintech|healthcare|e[\s-]?commerce|ecommerce|software\s+compan(?:y|ies)|retail|consulting)\s+(?:in|at|from|near|based\s+in)\b/i.test(
+      query,
+    )
+  ) {
+    return true;
+  }
+
+  const match = query.match(PHRASE_BEFORE_LOCATION_PATTERN);
+  if (!match?.[1]) return false;
+  return extractIndustriesFromQuery(match[1]).length > 0;
+}
+
 export const FILTER_SIGNALS: FilterSignal[] = [
   {
     id: "jobTitle",
     label: "Job title",
     detect: (query) => {
-      if (
-        /\b(?:ceo|cfo|cto|coo|cmo|founder|director|manager|engineer|scientist|marketer|designer|analyst|vp|vice\s+president|head\s+of|owner|partner)\b/i.test(
-          query,
-        )
-      ) {
+      if (ROLE_SIGNAL_PATTERN.test(query)) {
         return true;
       }
 
-      // "call centers in Pakistan" is industry+location, not a job title.
-      if (
-        /\b(?:call\s+cent(?:er|re)s?|saas|fintech|healthcare|e[\s-]?commerce|ecommerce|software\s+compan(?:y|ies)|retail|consulting)\s+(?:in|at|from|near|based\s+in)\b/i.test(
-          query,
-        )
-      ) {
+      // "truck transportation in Canada" is industry+location, not a job title.
+      if (isIndustryBeforeLocation(query)) {
         return false;
       }
 
-      return /\b[a-z][a-z0-9&/-]*(?:\s+[a-z][a-z0-9&/-]*){0,3}\s+(?:in|at|from|near|working\s+at|based\s+in)\b/i.test(
-        query,
-      );
+      return TITLE_BEFORE_LOCATION_SIGNAL.test(query);
     },
     isSatisfied: (f) => hasText(f.jobTitle),
   },
@@ -67,7 +81,7 @@ export const FILTER_SIGNALS: FilterSignal[] = [
     detect: (query) =>
       /\b(?:saas|fintech|healthcare|e[\s-]?commerce|ecommerce|software\s+compan|retail|consulting|b2b|b2c|call\s+cent(?:er|re)s?)\b/i.test(
         query,
-      ),
+      ) || extractIndustriesFromQuery(query).length > 0,
     isSatisfied: (f) => hasList(f.industries) || hasText(f.keywords),
   },
   {
