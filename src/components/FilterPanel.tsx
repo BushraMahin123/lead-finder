@@ -45,7 +45,7 @@ import {
   parseRevenueSizeRange,
 } from "@/lib/filter-options";
 import { SEARCH_RESULTS_PER_PAGE } from "@/lib/paginated-search-client";
-import type { SearchFilters } from "@/types/lead";
+import type { SearchFilters, SearchMode } from "@/types/lead";
 
 interface FilterPanelProps {
   loading: boolean;
@@ -349,8 +349,10 @@ export default function FilterPanel({
       mergedLinkedInBadge,
     );
 
+    const searchMode: SearchMode = hasLinkedInMode ? "linkedin" : "people";
+
     const filters = {
-      searchMode: hasLinkedInMode ? "linkedin" : "people",
+      searchMode,
       linkedInUrls,
       companyLinkedInUrls: companyLinkedInUrls || undefined,
       companyName,
