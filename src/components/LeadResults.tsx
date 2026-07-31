@@ -752,18 +752,15 @@ export default function LeadResults({
 
   const [enrichNotice, setEnrichNotice] = useState<string | null>(null);
 
-
-
   const [copiedField, setCopiedField] = useState<string | null>(null);
-
-
 
   const [processingIds, setProcessingIds] = useState<Set<string>>(new Set());
 
+  const [searchQuery, setSearchQuery] = useState<string>("");
 
+  const [isExpanded, setIsExpanded] = useState<boolean>(false);
 
   const tableScrollRef = useRef<HTMLDivElement>(null);
-
 
 
   const horizontalScrollRef = useRef<HTMLDivElement>(null);
@@ -907,49 +904,48 @@ export default function LeadResults({
 
 
   const peopleIds = useMemo(
-
-
-
     () => people.map((person) => person.id).join(","),
-
-
-
     [people],
-
-
-
   );
 
-
-
+  const filteredPeople = useMemo(() => {
+    if (!searchQuery.trim()) return people;
+    
+    const query = searchQuery.toLowerCase();
+    return people.filter((person) => {
+      const name = displayName(person).toLowerCase();
+      const title = (person.title ?? "").toLowerCase();
+      const company = (person.organization?.name ?? "").toLowerCase();
+      const email = (person.email ?? "").toLowerCase();
+      const location = displayLocation(person).toLowerCase();
+      const phones = person.phone_numbers ?? [];
+      const phoneNumbers = phones
+        .map((phone) => phone.sanitized_number || phone.raw_number)
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+      
+      return (
+        name.includes(query) ||
+        title.includes(query) ||
+        company.includes(query) ||
+        email.includes(query) ||
+        location.includes(query) ||
+        phoneNumbers.includes(query)
+      );
+    });
+  }, [people, searchQuery]);
 
 
 
 
   useEffect(() => {
-
-
-
     setSelectedIds(new Set());
-
-
-
     setEnrichError(null);
-
-
-
     setEnrichNotice(null);
-
-
-
     setCopiedField(null);
-
-
-
     setProcessingIds(new Set());
-
-
-
+    setSearchQuery("");
   }, [peopleIds]);
 
 
@@ -1738,7 +1734,7 @@ export default function LeadResults({
 
 
 
-    <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+    <div className={`overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm ${isExpanded ? "fixed inset-0 z-50 rounded-none border-0" : ""}`}>
 
 
 
@@ -1747,60 +1743,57 @@ export default function LeadResults({
 
 
         <div className="flex flex-wrap items-center justify-between gap-3">
-
-
-
           <div>
-
-
 
             <h2 className="text-lg font-semibold text-slate-900">Results</h2>
 
-
-
             <p className="text-sm text-slate-500">
-
-
-
-              Showing {people.length} of {totalEntries.toLocaleString()} matches
-
-
-
-              {someSelected && (
-
-
-
+              Showing {filteredPeople.length} of {totalEntries.toLocaleString()} matches
+              {searchQuery && (
                 <span className="text-slate-700">
-
-
-
-                  {" "}
-
-
-
-                  · {selectedIds.size} selected
-
-
-
+                  {" "}(filtered from {people.length})
                 </span>
-
-
-
               )}
-
-
-
+              {someSelected && (
+                <span className="text-slate-700">
+                  {" "}
+                  · {selectedIds.size} selected
+                </span>
+              )}
             </p>
-
-
 
           </div>
 
-
-
-
-
-
+          <div className="flex items-center gap-3">
+            <input
+              type="text"
+              placeholder="Search contacts..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+            />
+            <button
+              type="button"
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="rounded-lg border border-slate-300 bg-white p-2 text-slate-700 transition hover:bg-slate-50 hover:border-slate-400"
+              title={isExpanded ? "Compress table" : "Expand table"}
+            >
+              {isExpanded ? (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M15 3h6v6"/>
+                  <path d="M9 21H3v-6"/>
+                  <path d="M21 3l-7 7"/>
+                  <path d="M3 21l7-7"/>
+                </svg>
+              ) : (
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 15v6h-6"/>
+                  <path d="M3 9v-6h6"/>
+                  <path d="M21 3l-7 7"/>
+                  <path d="M3 21l7-7"/>
+                </svg>
+              )}
+            </button>
 
           {enableEnrichment && someSelected && (
 
@@ -1973,6 +1966,8 @@ export default function LeadResults({
           )}
 
 
+
+          </div>
 
         </div>
 
@@ -2165,7 +2160,7 @@ export default function LeadResults({
 
 
 
-              <th className={`px-3 py-3 font-medium ${STICKY_HEADER_CLASSES[0]}`}>
+              <th className={`border border-slate-200 px-3 py-2 font-medium ${STICKY_HEADER_CLASSES[0]}`}>
 
 
 
@@ -2177,7 +2172,7 @@ export default function LeadResults({
 
 
 
-              <th className={`px-3 py-3 font-medium ${STICKY_HEADER_CLASSES[1]}`}>
+              <th className={`border border-slate-200 px-3 py-2 font-medium ${STICKY_HEADER_CLASSES[1]}`}>
 
 
 
@@ -2197,7 +2192,7 @@ export default function LeadResults({
 
 
 
-                  <th className="min-w-[14rem] border-l border-slate-200/80 bg-slate-50/90 px-3 py-3 font-medium text-slate-700 sticky top-0">
+                  <th className="min-w-[14rem] border border-slate-200 bg-slate-50/90 px-3 py-2 font-medium text-slate-700 sticky top-0">
 
 
 
@@ -2209,7 +2204,7 @@ export default function LeadResults({
 
 
 
-                  <th className="min-w-[12rem] bg-slate-50/90 px-3 py-3 font-medium text-slate-700 sticky top-0">
+                  <th className="min-w-[12rem] border border-slate-200 bg-slate-50/90 px-3 py-2 font-medium text-slate-700 sticky top-0">
 
 
 
@@ -2229,23 +2224,23 @@ export default function LeadResults({
 
 
 
-              <th className="px-3 py-3 font-medium sticky top-0 bg-slate-50">Company</th>
+              <th className="border border-slate-200 px-3 py-2 font-medium sticky top-0 bg-slate-50">Company</th>
 
 
 
-              <th className="px-3 py-3 font-medium sticky top-0 bg-slate-50">Email</th>
+              <th className="border border-slate-200 px-3 py-2 font-medium sticky top-0 bg-slate-50">Email</th>
 
 
 
-              <th className="px-3 py-3 font-medium sticky top-0 bg-slate-50">Phone</th>
+              <th className="border border-slate-200 px-3 py-2 font-medium sticky top-0 bg-slate-50">Phone</th>
 
 
 
-              <th className="px-3 py-3 font-medium sticky top-0 bg-slate-50">Location</th>
+              <th className="border border-slate-200 px-3 py-2 font-medium sticky top-0 bg-slate-50">Location</th>
 
 
 
-              <th className="px-3 py-3 font-medium sticky top-0 bg-slate-50">LinkedIn</th>
+              <th className="border border-slate-200 px-3 py-2 font-medium sticky top-0 bg-slate-50">LinkedIn</th>
 
 
 
@@ -2261,7 +2256,7 @@ export default function LeadResults({
 
 
 
-                  className="min-w-[10rem] px-3 py-3 font-medium text-violet-800 sticky top-0 bg-slate-50"
+                  className="min-w-[10rem] border border-slate-200 px-3 py-2 font-medium text-violet-800 sticky top-0 bg-slate-50"
 
 
 
@@ -2385,7 +2380,7 @@ export default function LeadResults({
 
 
 
-                <th className="px-3 py-3 font-medium sticky top-0 bg-slate-50">
+                <th className="border border-slate-200 px-3 py-2 font-medium sticky top-0 bg-slate-50">
 
 
 
@@ -2437,7 +2432,7 @@ export default function LeadResults({
 
 
 
-            {people.map((person) => {
+            {filteredPeople.map((person) => {
 
 
 
@@ -2509,7 +2504,7 @@ export default function LeadResults({
 
 
 
-                    className={`max-w-44 truncate px-3 py-3 font-medium ${stickyBodyClass(0, selected, meta)} ${isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-900"
+                    className={`max-w-44 truncate border border-slate-200 px-3 py-2 font-medium ${stickyBodyClass(0, selected, meta)} ${isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-900"
 
 
 
@@ -2533,7 +2528,7 @@ export default function LeadResults({
 
 
 
-                    className={`max-w-52 truncate px-3 py-3 ${stickyBodyClass(1, selected, meta)} ${isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-700"
+                    className={`max-w-52 truncate border border-slate-200 px-3 py-2 ${stickyBodyClass(1, selected, meta)} ${isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-700"
 
 
 
@@ -2561,7 +2556,7 @@ export default function LeadResults({
 
 
 
-                      <td className="border-l border-slate-200/60 px-3 py-2.5">
+                      <td className="border border-slate-200 px-3 py-2">
 
 
 
@@ -2629,7 +2624,7 @@ export default function LeadResults({
 
 
 
-                      <td className="px-3 py-2.5">
+                      <td className="border border-slate-200 px-3 py-2">
 
 
 
@@ -2669,7 +2664,7 @@ export default function LeadResults({
 
 
 
-                  <td className={`px-3 py-3 ${isDone ? "opacity-60" : ""}`}>
+                  <td className={`border border-slate-200 px-3 py-2 ${isDone ? "opacity-60" : ""}`}>
 
 
 
@@ -2777,7 +2772,7 @@ export default function LeadResults({
 
 
 
-                  <td className={`px-3 py-3 ${isDone ? "opacity-60" : ""}`}>
+                  <td className={`border border-slate-200 px-3 py-2 ${isDone ? "opacity-60" : ""}`}>
 
 
 
@@ -2953,7 +2948,7 @@ export default function LeadResults({
 
 
 
-                  <td className={`px-3 py-3 text-slate-700 ${isDone ? "opacity-60" : ""}`}>
+                  <td className={`border border-slate-200 px-3 py-2 text-slate-700 whitespace-nowrap ${isDone ? "opacity-60" : ""}`}>
 
 
 
@@ -3089,11 +3084,11 @@ export default function LeadResults({
 
 
 
-                  <td className={`px-3 py-3 text-slate-700 ${isDone ? "opacity-60" : ""}`}>{displayLocation(person)}</td>
+                  <td className={`border border-slate-200 px-3 py-2 text-slate-700 whitespace-nowrap ${isDone ? "opacity-60" : ""}`}>{displayLocation(person)}</td>
 
 
 
-                  <td className={`px-3 py-3 ${isDone ? "opacity-60" : ""}`}>
+                  <td className={`border border-slate-200 px-3 py-2 ${isDone ? "opacity-60" : ""}`}>
 
 
 
@@ -3181,7 +3176,7 @@ export default function LeadResults({
 
 
 
-                        className="max-w-xs px-3 py-3 text-slate-700"
+                        className="max-w-xs border border-slate-200 px-3 py-2 text-slate-700"
 
 
 
