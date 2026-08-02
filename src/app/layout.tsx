@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import SoftphoneProvider from "@/components/SoftphoneProvider";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -35,7 +36,7 @@ export default function RootLayout({
       suppressHydrationWarning
     >
       <body className="min-h-full flex flex-col font-sans text-slate-900" suppressHydrationWarning>
-        {children}
+        <SoftphoneProvider>{children}</SoftphoneProvider>
       </body>
     </html>
   );
