@@ -498,11 +498,11 @@ const STICKY_HEADER_CLASSES = [
 
 
 
-  "sticky left-0 z-30 w-44 min-w-44 bg-slate-50",
+  "w-36 min-w-36 sm:sticky sm:left-0 sm:z-30 sm:w-44 sm:min-w-44 bg-slate-50",
 
 
 
-  `sticky left-44 z-30 w-52 min-w-52 bg-slate-50 ${STICKY_SHADOW}`,
+  `w-40 min-w-40 sm:sticky sm:left-44 sm:z-30 sm:w-52 sm:min-w-52 bg-slate-50 ${STICKY_SHADOW}`,
 
 
 
@@ -542,11 +542,11 @@ function stickyBodyClass(
 
 
 
-    `sticky left-0 z-10 w-44 min-w-44 ${bg}`,
+    `w-36 min-w-36 sm:sticky sm:left-0 sm:z-10 sm:w-44 sm:min-w-44 ${bg}`,
 
 
 
-    `sticky left-44 z-10 w-52 min-w-52 ${bg} ${STICKY_SHADOW}`,
+    `w-40 min-w-40 sm:sticky sm:left-44 sm:z-10 sm:w-52 sm:min-w-52 ${bg} ${STICKY_SHADOW}`,
 
 
 
@@ -649,6 +649,10 @@ async function copyToClipboard(text: string, fieldId: string, onCopied: (fieldId
 
 
 
+
+function isMobile(): boolean {
+  return typeof window !== 'undefined' && window.innerWidth < 640;
+}
 
 export default function LeadResults({
 
@@ -1775,7 +1779,7 @@ export default function LeadResults({
             <button
               type="button"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="rounded-lg border border-slate-300 bg-white p-2 text-slate-700 transition hover:bg-slate-50 hover:border-slate-400"
+              className="rounded-lg border border-slate-300 bg-white p-2 text-slate-700 transition hover:bg-slate-50 hover:border-slate-400 sm:min-h-[44px] sm:min-w-[44px]"
               title={isExpanded ? "Compress table" : "Expand table"}
             >
               {isExpanded ? (
@@ -1835,7 +1839,7 @@ export default function LeadResults({
 
 
 
-                  className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-800 transition hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-800 transition hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-[44px]"
 
 
 
@@ -1887,7 +1891,7 @@ export default function LeadResults({
 
 
 
-                    className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-[44px]"
 
 
 
@@ -1927,7 +1931,7 @@ export default function LeadResults({
 
 
 
-                    className="rounded-lg border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60"
+                    className="rounded-lg border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-[44px]"
 
 
 
@@ -2113,7 +2117,7 @@ export default function LeadResults({
 
 
 
-        className="table-scroll-vertical-only overflow-y-auto overflow-x-hidden overscroll-contain"
+        className="table-scroll-vertical-only overflow-y-auto overflow-x-auto sm:overflow-x-hidden overscroll-contain"
 
 
 
@@ -2140,11 +2144,11 @@ export default function LeadResults({
 
 
 
-            <col className="w-44" />
+            <col className="w-36 sm:w-44" />
 
 
 
-            <col className="w-52" />
+            <col className="w-40 sm:w-52" />
 
 
 
@@ -2160,7 +2164,7 @@ export default function LeadResults({
 
 
 
-              <th className={`border border-slate-200 px-3 py-2 font-medium ${STICKY_HEADER_CLASSES[0]}`}>
+              <th className={`border border-slate-200 px-3 py-2 font-medium bg-slate-50 ${STICKY_HEADER_CLASSES[0]}`}>
 
 
 
@@ -2172,7 +2176,7 @@ export default function LeadResults({
 
 
 
-              <th className={`border border-slate-200 px-3 py-2 font-medium ${STICKY_HEADER_CLASSES[1]}`}>
+              <th className={`border border-slate-200 px-3 py-2 font-medium bg-slate-50 ${STICKY_HEADER_CLASSES[1]}`}>
 
 
 
@@ -2300,7 +2304,7 @@ export default function LeadResults({
 
 
 
-                        className="ml-auto text-xs font-medium text-slate-400 hover:text-slate-600"
+                        className="ml-auto text-xs font-medium text-slate-400 hover:text-slate-600 sm:p-1 sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
 
 
 
@@ -2340,7 +2344,7 @@ export default function LeadResults({
 
 
 
-                        className="text-xs font-medium text-slate-400 hover:text-red-600"
+                        className="text-xs font-medium text-slate-400 hover:text-red-600 sm:p-1 sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
 
 
 
@@ -2504,7 +2508,7 @@ export default function LeadResults({
 
 
 
-                    className={`max-w-44 truncate border border-slate-200 px-3 py-2 font-medium ${stickyBodyClass(0, selected, meta)} ${isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-900"
+                    className={`max-w-44 truncate border border-slate-200 px-3 py-2 font-medium bg-white ${stickyBodyClass(0, selected, meta)} ${isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-900"
 
 
 
@@ -2528,7 +2532,7 @@ export default function LeadResults({
 
 
 
-                    className={`max-w-52 truncate border border-slate-200 px-3 py-2 ${stickyBodyClass(1, selected, meta)} ${isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-700"
+                    className={`max-w-52 truncate border border-slate-200 px-3 py-2 bg-white ${stickyBodyClass(1, selected, meta)} ${isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-700"
 
 
 
@@ -2856,7 +2860,7 @@ export default function LeadResults({
 
 
 
-                          className="text-slate-400 hover:text-slate-600 transition-colors"
+                          className="text-slate-400 hover:text-slate-600 transition-colors sm:p-1 sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
 
 
 
@@ -2872,7 +2876,7 @@ export default function LeadResults({
 
 
 
-                          <IconCopy className="h-4 w-4" />
+                          <IconCopy className="h-4 w-4 sm:h-5 sm:w-5" />
 
 
 
@@ -3020,7 +3024,7 @@ export default function LeadResults({
 
 
 
-                          className="text-slate-400 hover:text-slate-600 transition-colors"
+                          className="text-slate-400 hover:text-slate-600 transition-colors sm:p-1 sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
 
 
 
@@ -3036,7 +3040,7 @@ export default function LeadResults({
 
 
 
-                          <IconCopy className="h-4 w-4" />
+                          <IconCopy className="h-4 w-4 sm:h-5 sm:w-5" />
 
 
 
@@ -3244,7 +3248,7 @@ export default function LeadResults({
 
 
 
-                              className="text-slate-400 hover:text-slate-600 transition-colors"
+                              className="text-slate-400 hover:text-slate-600 transition-colors sm:p-1 sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
 
 
 
@@ -3356,7 +3360,7 @@ export default function LeadResults({
 
 
 
-          className="h-5 overflow-x-auto overflow-y-hidden border-t border-slate-200 bg-slate-50"
+          className="h-5 sm:h-5 overflow-x-auto overflow-y-hidden border-t border-slate-200 bg-slate-50 hidden sm:block"
 
 
 
