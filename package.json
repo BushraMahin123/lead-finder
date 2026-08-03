@@ -21,7 +21,8 @@
     "db:migrate:super-admins": "node scripts/run-migration.mjs supabase/super_admins.sql",
     "db:migrate:waitlist": "node scripts/run-migration.mjs supabase/waitlist.sql",
     "db:migrate:waitlist-invites": "node scripts/run-migration.mjs supabase/waitlist_invites.sql",
-    "db:migrate:dialer": "node scripts/run-migration.mjs supabase/dialer.sql"
+    "db:migrate:dialer": "node scripts/run-migration.mjs supabase/dialer.sql",
+    "db:migrate:user-phone-numbers": "node scripts/run-migration.mjs supabase/user_phone_numbers.sql"
   },
   "dependencies": {
     "@google/genai": "^2.10.0",

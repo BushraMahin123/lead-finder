@@ -1,5 +1,7 @@
 import { getPlanById } from "@/lib/billing/plans";
 import type {
+  AdminCallLogSummary,
+  AdminCallSummary,
   AdminCampaignSummary,
   AdminLedgerEntry,
   AdminStats,
@@ -11,8 +13,11 @@ import {
 } from "@/lib/admin-billing";
 import { creditTokens, debitTokens, getUserBillingSnapshot } from "@/lib/billing/tokens";
 import { getSupabaseAdmin } from "@/lib/supabase";
+import { listUserPhoneNumbers } from "@/lib/user-phone-numbers";
 
 export type {
+  AdminCallLogSummary,
+  AdminCallSummary,
   AdminCampaignSummary,
   AdminLedgerEntry,
   AdminStats,
@@ -25,6 +30,127 @@ function getAdminOrThrow() {
     throw new Error("Supabase is not configured");
   }
   return admin;
+}
+
+function emptyCallSummary(): AdminCallSummary {
+  return {
+    callCount: 0,
+    connectedCallCount: 0,
+    failedCallCount: 0,
+    totalCallSeconds: 0,
+    averageCallSeconds: 0,
+    lastCallAt: null,
+  };
+}
+
+function summarizeCallRows(
+  rows: Array<{
+    status?: string | null;
+    duration_seconds?: number | null;
+    created_at?: string | null;
+  }>,
+): AdminCallSummary {
+  let callCount = 0;
+  let connectedCallCount = 0;
+  let failedCallCount = 0;
+  let totalCallSeconds = 0;
+  let lastCallAt: string | null = null;
+
+  for (const row of rows) {
+    callCount += 1;
+    const duration = Number(row.duration_seconds ?? 0);
+    if (Number.isFinite(duration) && duration > 0) {
+      totalCallSeconds += duration;
+    }
+    if (duration > 0) connectedCallCount += 1;
+    if (row.status === "failed") failedCallCount += 1;
+    if (row.created_at && (!lastCallAt || row.created_at > lastCallAt)) {
+      lastCallAt = row.created_at;
+    }
+  }
+
+  return {
+    callCount,
+    connectedCallCount,
+    failedCallCount,
+    totalCallSeconds,
+    averageCallSeconds:
+      connectedCallCount > 0
+        ? Math.round(totalCallSeconds / connectedCallCount)
+        : 0,
+    lastCallAt,
+  };
+}
+
+async function getCallSummariesByUser(
+  userIds: string[],
+): Promise<Map<string, AdminCallSummary>> {
+  const map = new Map<string, AdminCallSummary>();
+  if (userIds.length === 0) return map;
+
+  const admin = getAdminOrThrow();
+  const { data, error } = await admin
+    .from("call_logs")
+    .select("user_id, status, duration_seconds, created_at")
+    .in("user_id", userIds);
+
+  if (error) throw new Error(error.message);
+
+  const grouped = new Map<
+    string,
+    Array<{
+      status?: string | null;
+      duration_seconds?: number | null;
+      created_at?: string | null;
+    }>
+  >();
+
+  for (const row of data ?? []) {
+    const userId = row.user_id as string;
+    const list = grouped.get(userId) ?? [];
+    list.push(row);
+    grouped.set(userId, list);
+  }
+
+  for (const userId of userIds) {
+    map.set(userId, summarizeCallRows(grouped.get(userId) ?? []));
+  }
+
+  return map;
+}
+
+async function getUserCallActivity(userId: string): Promise<{
+  summary: AdminCallSummary;
+  recentCalls: AdminCallLogSummary[];
+}> {
+  const admin = getAdminOrThrow();
+  const { data, error } = await admin
+    .from("call_logs")
+    .select(
+      "id, to_number, from_number, status, disposition, duration_seconds, person_name, created_at, ended_at",
+    )
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) throw new Error(error.message);
+
+  const rows = data ?? [];
+  return {
+    summary: summarizeCallRows(rows),
+    recentCalls: rows.slice(0, 25).map((row) => ({
+      id: row.id as string,
+      toNumber: row.to_number as string,
+      fromNumber: (row.from_number as string | null) ?? null,
+      status: row.status as string,
+      disposition: (row.disposition as string | null) ?? null,
+      durationSeconds:
+        row.duration_seconds == null ? null : Number(row.duration_seconds),
+      personName: (row.person_name as string | null) ?? null,
+      createdAt: row.created_at as string,
+      endedAt: (row.ended_at as string | null) ?? null,
+    })),
+  };
 }
 
 type ProfileRow = {
@@ -161,7 +287,8 @@ export async function listAdminUsers(input: {
   const rows = (profiles ?? []) as ProfileRow[];
   const userIds = rows.map((row) => row.user_id);
 
-  const [billingAccounts, balances, campaignCounts] = await Promise.all([
+  const [billingAccounts, balances, campaignCounts, phoneRows, callSummaries] =
+    await Promise.all([
     admin
       .from("user_billing_accounts")
       .select("user_id, plan_id")
@@ -171,7 +298,22 @@ export async function listAdminUsers(input: {
       .select("user_id, balance")
       .in("user_id", userIds),
     getCampaignCountsByUser(userIds),
+    userIds.length === 0
+      ? Promise.resolve({ data: [] as Array<{
+          user_id: string;
+          phone_number: string;
+          is_default: boolean;
+          status: string;
+        }>, error: null })
+      : admin
+          .from("user_phone_numbers")
+          .select("user_id, phone_number, is_default, status")
+          .in("user_id", userIds)
+          .neq("status", "released"),
+    getCallSummariesByUser(userIds),
   ]);
+
+  if (phoneRows.error) throw new Error(phoneRows.error.message);
 
   const planByUser = new Map(
     (billingAccounts.data ?? []).map((row) => [row.user_id, row.plan_id as string]),
@@ -180,9 +322,29 @@ export async function listAdminUsers(input: {
     (balances.data ?? []).map((row) => [row.user_id, Number(row.balance ?? 0)]),
   );
 
+  const phonesByUser = new Map<
+    string,
+    { defaultNumber: string | null; count: number }
+  >();
+  for (const row of phoneRows.data ?? []) {
+    const current = phonesByUser.get(row.user_id) ?? {
+      defaultNumber: null,
+      count: 0,
+    };
+    current.count += 1;
+    if (row.is_default && row.status === "active") {
+      current.defaultNumber = row.phone_number;
+    } else if (!current.defaultNumber && row.status === "active") {
+      current.defaultNumber = row.phone_number;
+    }
+    phonesByUser.set(row.user_id, current);
+  }
+
   const users = rows.map((row) => {
     const planId = planByUser.get(row.user_id) ?? "free";
     const counts = campaignCounts.get(row.user_id) ?? { campaigns: 0, contacts: 0 };
+    const phones = phonesByUser.get(row.user_id);
+    const calls = callSummaries.get(row.user_id) ?? emptyCallSummary();
 
     return {
       userId: row.user_id,
@@ -198,6 +360,11 @@ export async function listAdminUsers(input: {
       balance: balanceByUser.get(row.user_id) ?? 0,
       campaignCount: counts.campaigns,
       contactCount: counts.contacts,
+      phoneNumber: phones?.defaultNumber ?? null,
+      phoneNumberCount: phones?.count ?? 0,
+      callCount: calls.callCount,
+      connectedCallCount: calls.connectedCallCount,
+      totalCallSeconds: calls.totalCallSeconds,
     };
   });
 
@@ -207,8 +374,14 @@ export async function listAdminUsers(input: {
 export async function getAdminUserDetail(userId: string) {
   const admin = getAdminOrThrow();
 
-  const [{ data: profile, error: profileError }, billing, { data: campaigns, error: campaignsError }, { data: ledger, error: ledgerError }] =
-    await Promise.all([
+  const [
+    { data: profile, error: profileError },
+    billing,
+    { data: campaigns, error: campaignsError },
+    { data: ledger, error: ledgerError },
+    phoneNumbers,
+    callActivity,
+  ] = await Promise.all([
       admin.from("user_profiles").select("*").eq("user_id", userId).maybeSingle(),
       getUserBillingSnapshot(userId),
       admin
@@ -223,6 +396,8 @@ export async function getAdminUserDetail(userId: string) {
         .eq("user_id", userId)
         .order("created_at", { ascending: false })
         .limit(50),
+      listUserPhoneNumbers(userId),
+      getUserCallActivity(userId),
     ]);
 
   if (profileError) throw new Error(profileError.message);
@@ -249,6 +424,9 @@ export async function getAdminUserDetail(userId: string) {
     billing,
     stripe,
     plans: listAssignablePlans(),
+    phoneNumbers,
+    callSummary: callActivity.summary,
+    recentCalls: callActivity.recentCalls,
     campaigns: (campaigns ?? []).map((row) => ({
       id: row.id as string,
       name: row.name as string,

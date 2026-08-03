@@ -320,6 +320,8 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
           token?: string;
           callerNumber?: string;
           error?: string;
+          code?: string;
+          settingsPath?: string;
         }>("/api/dialer/token", { method: "POST" });
 
         if (!tokenResponse.ok || !tokenData.token) {
@@ -590,9 +592,17 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
               </div>
 
               {error ? (
-                <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-                  {error}
-                </p>
+                <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+                  <p>{error}</p>
+                  {/phone number|Phone numbers/i.test(error) ? (
+                    <a
+                      href="/settings/phone-numbers"
+                      className="mt-2 inline-block font-medium text-emerald-700 underline hover:text-emerald-800"
+                    >
+                      Get a phone number
+                    </a>
+                  ) : null}
+                </div>
               ) : null}
 
               <div className="mb-4 flex gap-2">

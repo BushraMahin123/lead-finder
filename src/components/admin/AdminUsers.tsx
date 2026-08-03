@@ -13,6 +13,13 @@ type AdminUsersProps = {
   initialQuery: string;
 };
 
+function formatCallMinutes(totalSeconds: number): string {
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+  if (minutes <= 0) return `${seconds}s`;
+  return `${minutes}m ${seconds.toString().padStart(2, "0")}s`;
+}
+
 export default function AdminUsers({
   initialUsers,
   initialTotal,
@@ -98,6 +105,8 @@ export default function AdminUsers({
                 <th className="px-4 py-3 font-medium">Plan</th>
                 <th className="px-4 py-3 font-medium">Balance</th>
                 <th className="px-4 py-3 font-medium">Tables</th>
+                <th className="px-4 py-3 font-medium">Phone</th>
+                <th className="px-4 py-3 font-medium">Calls</th>
                 <th className="px-4 py-3 font-medium">Joined</th>
                 <th className="px-4 py-3 font-medium" />
               </tr>
@@ -105,7 +114,7 @@ export default function AdminUsers({
             <tbody className="divide-y divide-slate-100">
               {initialUsers.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                  <td colSpan={9} className="px-4 py-8 text-center text-slate-500">
                     No users found.
                   </td>
                 </tr>
@@ -130,6 +139,30 @@ export default function AdminUsers({
                     </td>
                     <td className="px-4 py-3 text-slate-700">
                       {user.campaignCount} · {user.contactCount} contacts
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {user.phoneNumber ? (
+                        <span className="font-mono text-xs">{user.phoneNumber}</span>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {user.callCount > 0 ? (
+                        <div>
+                          <div className="font-medium text-slate-900">
+                            {formatCallMinutes(user.totalCallSeconds)}
+                          </div>
+                          <div className="text-xs text-slate-500">
+                            {user.callCount} call{user.callCount === 1 ? "" : "s"}
+                            {user.connectedCallCount > 0
+                              ? ` · ${user.connectedCallCount} connected`
+                              : ""}
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
                     </td>
                     <td className="px-4 py-3 text-slate-600">
                       {new Date(user.createdAt).toLocaleDateString()}

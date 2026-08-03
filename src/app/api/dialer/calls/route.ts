@@ -6,14 +6,15 @@ import {
 } from "@/lib/dialer";
 import type { CallDisposition, CallLogStatus } from "@/types/dialer";
 import { toE164 } from "@/lib/phone";
-import { getTelnyxCallerNumber, isTelnyxDialerConfigured } from "@/lib/telnyx";
+import { isTelnyxSoftphoneConfigured } from "@/lib/telnyx";
+import { getDefaultUserPhoneNumber } from "@/lib/user-phone-numbers";
 
 export async function POST(request: NextRequest) {
   try {
     const userId = await getAuthenticatedUserId();
     if (!userId) return unauthorizedResponse();
 
-    if (!isTelnyxDialerConfigured()) {
+    if (!isTelnyxSoftphoneConfigured()) {
       return NextResponse.json(
         { error: "Dialer is not configured" },
         { status: 503 },
@@ -35,10 +36,23 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const owned = await getDefaultUserPhoneNumber(userId);
+    if (!owned?.phoneNumber) {
+      return NextResponse.json(
+        {
+          error:
+            "Buy a phone number before calling. Open Settings → Phone numbers to get one.",
+          code: "PHONE_NUMBER_REQUIRED",
+          settingsPath: "/settings/phone-numbers",
+        },
+        { status: 400 },
+      );
+    }
+
     const call = await createCallLog({
       userId,
       toNumber,
-      fromNumber: getTelnyxCallerNumber(),
+      fromNumber: owned.phoneNumber,
       campaignId: body.campaignId ?? null,
       personId: body.personId ?? null,
       personName: body.personName ?? null,

@@ -43,6 +43,35 @@ type UserDetail = {
     createdAt: string;
     updatedAt: string;
   }>;
+  phoneNumbers: Array<{
+    id: string;
+    phoneNumber: string;
+    countryCode: string;
+    status: string;
+    isDefault: boolean;
+    telnyxNumberId: string | null;
+    telnyxOrderId: string | null;
+    createdAt: string;
+  }>;
+  callSummary: {
+    callCount: number;
+    connectedCallCount: number;
+    failedCallCount: number;
+    totalCallSeconds: number;
+    averageCallSeconds: number;
+    lastCallAt: string | null;
+  };
+  recentCalls: Array<{
+    id: string;
+    toNumber: string;
+    fromNumber: string | null;
+    status: string;
+    disposition: string | null;
+    durationSeconds: number | null;
+    personName: string | null;
+    createdAt: string;
+    endedAt: string | null;
+  }>;
   ledger: Array<{
     id: string;
     amount: number;
@@ -65,6 +94,13 @@ export default function AdminUserDetail({
   const router = useRouter();
   const user = initialUser;
   const portalUrl = initialPortalUrl;
+
+  function formatCallMinutes(totalSeconds: number): string {
+    const minutes = Math.floor(totalSeconds / 60);
+    const seconds = totalSeconds % 60;
+    if (minutes <= 0) return `${seconds}s`;
+    return `${minutes}m ${seconds.toString().padStart(2, "0")}s`;
+  }
 
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -229,7 +265,7 @@ export default function AdminUserDetail({
     });
   }
 
-  const { profile, billing, stripe, plans, campaigns, ledger } = user;
+  const { profile, billing, stripe, plans, campaigns, phoneNumbers, callSummary, recentCalls, ledger } = user;
   const selectedPlan = plans.find((plan) => plan.id === selectedPlanId);
   const hasStripeSubscription = Boolean(billing.stripeSubscriptionId);
 
@@ -504,6 +540,134 @@ export default function AdminUserDetail({
           <InvoiceTable invoices={stripe.invoices} />
         </section>
       )}
+
+      <section className="card-flat overflow-hidden">
+        <div className="border-b border-slate-100 px-6 py-4">
+          <h2 className="text-lg font-semibold text-slate-900">Phone numbers</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Telnyx numbers purchased in-app for this user.
+          </p>
+        </div>
+        {phoneNumbers.length === 0 ? (
+          <p className="px-6 py-8 text-sm text-slate-500">No phone numbers yet.</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-slate-50 text-slate-600">
+                <tr>
+                  <th className="px-4 py-3 font-medium">Number</th>
+                  <th className="px-4 py-3 font-medium">Country</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium">Default</th>
+                  <th className="px-4 py-3 font-medium">Purchased</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {phoneNumbers.map((number) => (
+                  <tr key={number.id}>
+                    <td className="px-4 py-3 font-mono text-slate-900">
+                      {number.phoneNumber}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">{number.countryCode}</td>
+                    <td className="px-4 py-3 text-slate-700">{number.status}</td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {number.isDefault ? "Yes" : "—"}
+                    </td>
+                    <td className="px-4 py-3 text-slate-600">
+                      {new Date(number.createdAt).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </section>
+
+      <section className="card-flat overflow-hidden">
+        <div className="border-b border-slate-100 px-6 py-4">
+          <h2 className="text-lg font-semibold text-slate-900">Call summary</h2>
+          <p className="mt-1 text-sm text-slate-500">
+            Softphone usage from call logs.
+          </p>
+        </div>
+        <div className="grid gap-4 px-6 py-5 sm:grid-cols-2 lg:grid-cols-4">
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              Total calls
+            </p>
+            <p className="mt-1 text-xl font-semibold text-slate-900">
+              {callSummary.callCount}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              Connected
+            </p>
+            <p className="mt-1 text-xl font-semibold text-slate-900">
+              {callSummary.connectedCallCount}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              Talk time
+            </p>
+            <p className="mt-1 text-xl font-semibold text-slate-900">
+              {formatCallMinutes(callSummary.totalCallSeconds)}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
+              Avg connected
+            </p>
+            <p className="mt-1 text-xl font-semibold text-slate-900">
+              {formatCallMinutes(callSummary.averageCallSeconds)}
+            </p>
+          </div>
+        </div>
+        <div className="border-t border-slate-100 px-6 py-3 text-xs text-slate-500">
+          Failed: {callSummary.failedCallCount}
+          {callSummary.lastCallAt
+            ? ` · Last call ${new Date(callSummary.lastCallAt).toLocaleString()}`
+            : ""}
+        </div>
+        {recentCalls.length > 0 ? (
+          <div className="overflow-x-auto border-t border-slate-100">
+            <table className="min-w-full text-left text-sm">
+              <thead className="bg-slate-50 text-slate-600">
+                <tr>
+                  <th className="px-4 py-3 font-medium">When</th>
+                  <th className="px-4 py-3 font-medium">To</th>
+                  <th className="px-4 py-3 font-medium">Contact</th>
+                  <th className="px-4 py-3 font-medium">Status</th>
+                  <th className="px-4 py-3 font-medium">Duration</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {recentCalls.map((call) => (
+                  <tr key={call.id}>
+                    <td className="px-4 py-3 text-slate-600">
+                      {new Date(call.createdAt).toLocaleString()}
+                    </td>
+                    <td className="px-4 py-3 font-mono text-xs text-slate-900">
+                      {call.toNumber}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {call.personName || "—"}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {call.disposition || call.status}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {formatCallMinutes(call.durationSeconds ?? 0)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        ) : null}
+      </section>
 
       <section className="card-flat overflow-hidden">
         <div className="border-b border-slate-100 px-6 py-4">

@@ -153,6 +153,12 @@ export default function UserMenuDropdown({
             <MenuLink href="/pricing" onNavigate={() => setOpen(false)}>
               Pricing & tokens
             </MenuLink>
+            <MenuLink
+              href="/settings/phone-numbers"
+              onNavigate={() => setOpen(false)}
+            >
+              Phone numbers
+            </MenuLink>
             <MenuButton
               onClick={() => void openBillingPortal()}
               disabled={portalLoading}
