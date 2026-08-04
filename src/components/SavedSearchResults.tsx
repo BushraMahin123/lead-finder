@@ -183,7 +183,7 @@ export default function SavedSearchResults() {
               type="button"
               disabled={loading || page <= 1}
               onClick={() => setPage((current) => current - 1)}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 sm:min-h-[44px]"
             >
               Previous
             </button>
@@ -194,7 +194,7 @@ export default function SavedSearchResults() {
               type="button"
               disabled={loading || page >= totalPages}
               onClick={() => setPage((current) => current + 1)}
-              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50"
+              className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:opacity-50 sm:min-h-[44px]"
             >
               Next
             </button>
