@@ -122,7 +122,7 @@ export default function AdminDashboard({
                       {entry.description ?? "—"}
                     </td>
                   </tr>
-                ))}
+                ))
               )}
             </tbody>
           </table>
