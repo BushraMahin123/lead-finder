@@ -107,7 +107,7 @@ export default function ExportContactsButton({
       </button>
 
       {open && (
-        <div className="absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl">
+        <div className="absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-xl lg:right-0 lg:w-52 left-0 right-0 w-full lg:w-auto lg:left-auto max-w-[280px] lg:max-w-none">
           <button
             type="button"
             onClick={() => handleExport("csv")}

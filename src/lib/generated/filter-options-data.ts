@@ -3720,6 +3720,10 @@ export const SENIORITY_OPTIONS: FilterOption[] = [
     "value": "manager"
   },
   {
+    "label": "Managing Member",
+    "value": "managing_member"
+  },
+  {
     "label": "Mid-Level",
     "value": "mid-level"
   },

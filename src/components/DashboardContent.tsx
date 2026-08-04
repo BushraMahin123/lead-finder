@@ -130,14 +130,14 @@ export default function DashboardContent({ userEmail }: DashboardContentProps) {
 
           <Link
             href="/?view=search"
-            className="btn btn-primary shrink-0 self-start px-5 py-2.5 shadow-md shadow-indigo-200/50 lg:self-auto"
+            className="btn btn-primary shrink-0 self-start px-4 py-2.5 shadow-md shadow-indigo-200/50 lg:self-auto lg:px-5 sm:w-auto w-full"
           >
             <IconPlus className="h-4 w-4" />
             New search
           </Link>
         </div>
 
-        <div className="relative mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="relative mt-6 grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <MetricCard
             label="Token balance"
             value={balance ? tokenBalance.toLocaleString() : "—"}
@@ -190,7 +190,7 @@ export default function DashboardContent({ userEmail }: DashboardContentProps) {
         </div>
       )}
 
-      <div className={`mt-8 grid gap-8 ${!isEmpty ? "lg:grid-cols-[minmax(0,1fr)_17rem]" : ""}`}>
+      <div className={`mt-8 grid gap-8 ${!isEmpty ? "lg:grid-cols-[minmax(0,1fr)_17rem] md:grid-cols-1" : ""}`}>
         <section>
           <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
             <div>
@@ -229,7 +229,7 @@ export default function DashboardContent({ userEmail }: DashboardContentProps) {
               <p className="text-sm text-slate-600">No tables match your search.</p>
             </div>
           ) : (
-            <div className="grid gap-4 sm:grid-cols-2">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
               {filtered.map((campaign) => (
                 <TableCard key={campaign.id} campaign={campaign} />
               ))}
@@ -238,8 +238,8 @@ export default function DashboardContent({ userEmail }: DashboardContentProps) {
         </section>
 
         {!isEmpty && !loading && (
-          <aside className="space-y-4">
-            <div className="card-flat p-5">
+          <aside className="space-y-4 lg:space-y-4">
+            <div className="card-flat p-4 sm:p-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-slate-400">
                 Quick actions
               </p>
@@ -299,9 +299,9 @@ function TableSearchField({
   placeholder: string;
 }) {
   return (
-    <label className="w-full sm:w-72">
+    <label className="w-full sm:w-72 lg:w-80">
       <span className="sr-only">{placeholder}</span>
-      <div className="flex items-center gap-2.5 rounded-xl border border-slate-300 bg-white px-3 py-0 shadow-sm transition focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100">
+      <div className="flex items-center gap-2.5 rounded-xl border border-slate-300 bg-white px-3 py-2 shadow-sm transition focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100">
         <IconSearch className="h-4 w-4 text-slate-400" />
         <input
           type="search"
@@ -351,7 +351,7 @@ function MetricCard({
         )}
       </div>
       <p
-        className={`mt-2 text-2xl font-semibold tracking-tight ${
+        className={`mt-2 text-xl font-semibold tracking-tight sm:text-2xl ${
           critical ? "text-amber-900" : "text-slate-900"
         }`}
       >
@@ -365,14 +365,14 @@ function MetricCard({
     return (
       <Link
         href={href}
-        className={`rounded-xl border px-4 py-4 transition hover:shadow-sm ${tone}`}
+        className={`rounded-xl border px-3 py-3 sm:px-4 sm:py-4 transition hover:shadow-sm ${tone}`}
       >
         {content}
       </Link>
     );
   }
 
-  return <div className={`rounded-xl border px-4 py-4 ${tone}`}>{content}</div>;
+  return <div className={`rounded-xl border px-3 py-3 sm:px-4 sm:py-4 ${tone}`}>{content}</div>;
 }
 
 function TableCard({ campaign }: { campaign: Campaign }) {
@@ -382,7 +382,7 @@ function TableCard({ campaign }: { campaign: Campaign }) {
   return (
     <Link
       href={`/campaigns/${campaign.id}`}
-      className="group card-flat flex h-full flex-col gap-4 p-5 transition hover:border-indigo-200 hover:shadow-md"
+      className="group card-flat flex h-full flex-col gap-4 p-4 sm:p-5 transition hover:border-indigo-200 hover:shadow-md"
     >
       <div className="flex items-start justify-between gap-3">
         <div className="flex min-w-0 flex-1 items-start gap-3 overflow-hidden">
@@ -409,7 +409,7 @@ function TableCard({ campaign }: { campaign: Campaign }) {
 
       <div className="flex min-h-0 flex-1 flex-col gap-3">
         <div className="flex items-baseline gap-2">
-          <span className="text-3xl font-semibold tracking-tight text-slate-900">
+          <span className="text-2xl font-semibold tracking-tight text-slate-900 sm:text-3xl">
             {campaign.contactCount.toLocaleString()}
           </span>
           <span className="text-sm text-slate-500">contacts</span>
@@ -449,8 +449,8 @@ function TableCard({ campaign }: { campaign: Campaign }) {
 function EmptyTablesState() {
   return (
     <div className="card overflow-hidden">
-      <div className="grid lg:grid-cols-[1fr_1.1fr]">
-        <div className="flex flex-col justify-center border-b border-slate-100 p-8 lg:border-b-0 lg:border-r">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.1fr]">
+        <div className="flex flex-col justify-center border-b border-slate-100 p-6 sm:p-8 lg:border-b-0 lg:border-r">
           <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-50 text-indigo-600 ring-1 ring-indigo-100">
             <IconTable className="h-6 w-6" />
           </div>

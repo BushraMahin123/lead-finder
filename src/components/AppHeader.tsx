@@ -12,11 +12,11 @@ function NavFallback() {
 export default function AppHeader() {
   return (
     <header className="sticky top-0 z-40 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex h-14 xl:h-16 max-w-7xl items-center justify-between gap-2 xl:gap-4 px-3 xl:px-6 lg:px-8">
         <Suspense fallback={<NavFallback />}>
           <AppNav />
         </Suspense>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2 xl:gap-3">
           <CreditBalance />
           <UserMenu />
         </div>

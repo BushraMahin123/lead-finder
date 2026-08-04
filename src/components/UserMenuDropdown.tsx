@@ -95,18 +95,18 @@ export default function UserMenuDropdown({
         onClick={() => setOpen((current) => !current)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className="flex items-center gap-2 rounded-full border border-transparent py-1 pl-1 pr-2.5 transition hover:border-slate-200 hover:bg-slate-50"
+        className="flex items-center gap-2 rounded-full border border-transparent py-1 pl-1 pr-2 xl:pr-2.5 transition hover:border-slate-200 hover:bg-slate-50"
       >
-        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-200/80">
+        <span className="flex h-7 w-7 xl:h-8 xl:w-8 items-center justify-center rounded-full bg-indigo-100 text-xs font-semibold text-indigo-700 ring-1 ring-indigo-200/80">
           {initials}
         </span>
-        <span className="hidden max-w-[7rem] truncate text-sm font-medium text-slate-700 sm:inline lg:max-w-[9rem]">
+        <span className="hidden max-w-[5rem] xl:max-w-[7rem] lg:max-w-[9rem] truncate text-sm font-medium text-slate-700 xl:inline">
           {name}
         </span>
         <svg
           viewBox="0 0 20 20"
           fill="none"
-          className={`hidden h-4 w-4 text-slate-400 transition sm:block ${open ? "rotate-180" : ""}`}
+          className={`hidden h-4 w-4 text-slate-400 transition xl:block ${open ? "rotate-180" : ""}`}
           aria-hidden
         >
           <path
@@ -122,7 +122,7 @@ export default function UserMenuDropdown({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg shadow-slate-200/60"
+          className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg shadow-slate-200/60 left-0 right-0 w-full xl:w-auto xl:right-0"
         >
           <div className="border-b border-slate-100 px-4 py-3">
             <p className="truncate text-sm font-semibold text-slate-900">{name}</p>

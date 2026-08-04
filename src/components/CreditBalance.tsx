@@ -21,12 +21,12 @@ export default function CreditBalance() {
       href="/pricing"
       onClick={() => void refresh()}
       title={`${balance.planName} plan`}
-      className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
+      className="inline-flex items-center gap-1.5 xl:gap-2 rounded-full border border-slate-200 bg-white px-2 xl:px-3 py-1.5 text-xs xl:text-sm font-medium text-slate-700 shadow-sm transition hover:border-slate-300 hover:bg-slate-50"
     >
-      <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-blue-50 text-[10px] font-bold text-blue-700">
+      <span className="inline-flex h-4 w-4 xl:h-5 xl:w-5 items-center justify-center rounded-full bg-blue-50 text-[9px] xl:text-[10px] font-bold text-blue-700">
         T
       </span>
-      {balance.balance.toLocaleString()} tokens
+      <span>{balance.balance.toLocaleString()}<span className="hidden xl:inline"> tokens</span></span>
     </Link>
   );
 }
