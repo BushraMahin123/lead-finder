@@ -1,6 +1,6 @@
-import type { LocationRegion, LocationState } from "@/lib/location-regions-types";
+import type { LocationCity, LocationRegion } from "@/lib/location-regions-types";
 
-function cities(...names: string[]): LocationState["cities"] {
+function cities(...names: string[]): LocationCity[] {
   return names.map((name) => ({ value: name, label: name }));
 }
 
