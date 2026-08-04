@@ -359,7 +359,6 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
         const { TelnyxRTC } = await import("@telnyx/webrtc");
         const client = new TelnyxRTC({
           login_token: tokenData.token,
-          remoteElement: remoteAudioRef.current ?? undefined,
         }) as unknown as TelnyxClientLike;
 
         clientRef.current = client;
