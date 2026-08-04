@@ -19084,7 +19084,13 @@ export const GENERATED_LOCATION_REGIONS: LocationRegion[] = [
       },
       {
         "value": "Ohio",
-        "label": "Ohio"
+        "label": "Ohio",
+        "cities": [
+          {
+            "value": "Columbus",
+            "label": "Columbus"
+          }
+        ]
       },
       {
         "value": "Oklahoma",

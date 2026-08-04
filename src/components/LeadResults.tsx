@@ -497,11 +497,11 @@ const STICKY_HEADER_CLASSES = [
 
 
 
-  "w-36 min-w-36 sm:sticky sm:left-0 sm:z-30 sm:w-44 sm:min-w-44 bg-slate-50",
+  "w-36 min-w-36 xl:sticky xl:left-0 xl:z-30 xl:w-44 xl:min-w-44 bg-slate-50",
 
 
 
-  `w-40 min-w-40 sm:sticky sm:left-44 sm:z-30 sm:w-52 sm:min-w-52 bg-slate-50 ${STICKY_SHADOW}`,
+  `w-40 min-w-40 xl:sticky xl:left-44 xl:z-30 xl:w-52 xl:min-w-52 bg-slate-50 ${STICKY_SHADOW}`,
 
 
 
@@ -541,11 +541,11 @@ function stickyBodyClass(
 
 
 
-    `w-36 min-w-36 sm:sticky sm:left-0 sm:z-10 sm:w-44 sm:min-w-44 ${bg}`,
+    `w-36 min-w-36 xl:sticky xl:left-0 xl:z-10 xl:w-44 xl:min-w-44 ${bg}`,
 
 
 
-    `w-40 min-w-40 sm:sticky sm:left-44 sm:z-10 sm:w-52 sm:min-w-52 ${bg} ${STICKY_SHADOW}`,
+    `w-40 min-w-40 xl:sticky xl:left-44 xl:z-10 xl:w-52 xl:min-w-52 ${bg} ${STICKY_SHADOW}`,
 
 
 
@@ -1734,7 +1734,7 @@ export default function LeadResults({
 
 
 
-      <div className="border-b border-slate-100 px-4 py-4 sm:px-5">
+      <div className="border-b border-slate-100 px-4 py-4">
 
 
 
@@ -1760,36 +1760,38 @@ export default function LeadResults({
 
           </div>
 
-          <div className="flex items-center gap-3">
-            <input
-              type="text"
-              placeholder="Search contacts..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
-            />
-            <button
-              type="button"
-              onClick={() => setIsExpanded(!isExpanded)}
-              className="rounded-lg border border-slate-300 bg-white p-2 text-slate-700 transition hover:bg-slate-50 hover:border-slate-400 sm:min-h-[44px] sm:min-w-[44px]"
-              title={isExpanded ? "Compress table" : "Expand table"}
-            >
-              {isExpanded ? (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M15 3h6v6"/>
-                  <path d="M9 21H3v-6"/>
-                  <path d="M21 3l-7 7"/>
-                  <path d="M3 21l7-7"/>
-                </svg>
-              ) : (
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 15v6h-6"/>
-                  <path d="M3 9v-6h6"/>
-                  <path d="M21 3l-7 7"/>
-                  <path d="M3 21l7-7"/>
-                </svg>
-              )}
-            </button>
+          <div className="flex flex-col xl:flex-row xl:items-center gap-3">
+            <div className="flex items-center gap-3">
+              <input
+                type="text"
+                placeholder="Search contacts..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="rounded-lg border border-slate-300 px-3 py-2 text-sm text-slate-700 placeholder-slate-400 focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+              />
+              <button
+                type="button"
+                onClick={() => setIsExpanded(!isExpanded)}
+                className="rounded-lg border border-slate-300 bg-white p-2 text-slate-700 transition hover:bg-slate-50 hover:border-slate-400 min-h-[44px] min-w-[44px]"
+                title={isExpanded ? "Compress table" : "Expand table"}
+              >
+                {isExpanded ? (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M15 3h6v6"/>
+                    <path d="M9 21H3v-6"/>
+                    <path d="M21 3l-7 7"/>
+                    <path d="M3 21l7-7"/>
+                  </svg>
+                ) : (
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M21 15v6h-6"/>
+                    <path d="M3 9v-6h6"/>
+                    <path d="M21 3l-7 7"/>
+                    <path d="M3 21l7-7"/>
+                  </svg>
+                )}
+              </button>
+            </div>
 
           {enableEnrichment && someSelected && (
 
@@ -1831,7 +1833,7 @@ export default function LeadResults({
 
 
 
-                  className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-800 transition hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-[44px]"
+                  className="rounded-lg border border-violet-200 bg-violet-50 px-3 py-2 text-sm font-semibold text-violet-800 transition hover:bg-violet-100 disabled:cursor-not-allowed disabled:opacity-60 min-h-[44px]"
 
 
 
@@ -1883,7 +1885,7 @@ export default function LeadResults({
 
 
 
-                    className="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-[44px]"
+                    className="rounded-lg bg-indigo-600 px-2 py-2 text-xs font-semibold text-white transition hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-60 min-h-[44px] xl:px-4 xl:text-sm"
 
 
 
@@ -1923,7 +1925,7 @@ export default function LeadResults({
 
 
 
-                    className="rounded-lg border border-indigo-200 bg-white px-4 py-2 text-sm font-semibold text-indigo-700 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60 sm:min-h-[44px]"
+                    className="rounded-lg border border-indigo-200 bg-white px-2 py-2 text-xs font-semibold text-indigo-700 transition hover:bg-indigo-50 disabled:cursor-not-allowed disabled:opacity-60 min-h-[44px] xl:px-4 xl:text-sm"
 
 
 
@@ -2109,7 +2111,7 @@ export default function LeadResults({
 
 
 
-        className="table-scroll-vertical-only overflow-y-auto overflow-x-auto sm:overflow-x-hidden overscroll-contain"
+        className="table-scroll-vertical-only overflow-y-auto overflow-x-auto xl:overflow-x-hidden overscroll-contain"
 
 
 
@@ -2136,11 +2138,11 @@ export default function LeadResults({
 
 
 
-            <col className="w-36 sm:w-44" />
+            <col className="w-36 xl:w-44" />
 
 
 
-            <col className="w-40 sm:w-52" />
+            <col className="w-40 xl:w-52" />
 
 
 
@@ -2296,7 +2298,7 @@ export default function LeadResults({
 
 
 
-                        className="ml-auto text-xs font-medium text-slate-400 hover:text-slate-600 sm:p-1 sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
+                        className="ml-auto text-xs font-medium text-slate-400 hover:text-slate-600 xl:p-1 xl:min-h-[36px] xl:min-w-[36px] flex items-center justify-center"
 
 
 
@@ -2336,7 +2338,7 @@ export default function LeadResults({
 
 
 
-                        className="text-xs font-medium text-slate-400 hover:text-red-600 sm:p-1 sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
+                        className="text-xs font-medium text-slate-400 hover:text-red-600 xl:p-1 xl:min-h-[36px] xl:min-w-[36px] flex items-center justify-center"
 
 
 
@@ -2500,7 +2502,7 @@ export default function LeadResults({
 
 
 
-                    className={`max-w-44 truncate border border-slate-200 px-3 py-2 font-medium bg-white ${stickyBodyClass(0, selected, meta)} ${isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-900"
+                    className={`max-w-44 truncate border border-slate-200 px-3 py-2 font-medium ${stickyBodyClass(0, selected, meta)} ${isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-900"
 
 
 
@@ -2524,7 +2526,7 @@ export default function LeadResults({
 
 
 
-                    className={`max-w-52 truncate border border-slate-200 px-3 py-2 bg-white ${stickyBodyClass(1, selected, meta)} ${isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-700"
+                    className={`max-w-52 truncate border border-slate-200 px-3 py-2 ${stickyBodyClass(1, selected, meta)} ${isDone ? "text-slate-400 line-through decoration-slate-300" : "text-slate-700"
 
 
 
@@ -2852,7 +2854,7 @@ export default function LeadResults({
 
 
 
-                          className="text-slate-400 hover:text-slate-600 transition-colors sm:p-1 sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
+                          className="text-slate-400 hover:text-slate-600 transition-colors xl:p-1 xl:min-h-[36px] xl:min-w-[36px] flex items-center justify-center"
 
 
 
@@ -2868,7 +2870,7 @@ export default function LeadResults({
 
 
 
-                          <IconCopy className="h-4 w-4 sm:h-5 sm:w-5" />
+                          <IconCopy className="h-4 w-4 xl:h-5 xl:w-5" />
 
 
 
@@ -3025,7 +3027,7 @@ export default function LeadResults({
 
 
 
-                          className="text-slate-400 hover:text-slate-600 transition-colors sm:p-1 sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
+                          className="text-slate-400 hover:text-slate-600 transition-colors xl:p-1 xl:min-h-[36px] xl:min-w-[36px] flex items-center justify-center"
 
 
 
@@ -3041,7 +3043,7 @@ export default function LeadResults({
 
 
 
-                          <IconCopy className="h-4 w-4 sm:h-5 sm:w-5" />
+                          <IconCopy className="h-4 w-4 xl:h-5 xl:w-5" />
 
 
 
@@ -3249,7 +3251,7 @@ export default function LeadResults({
 
 
 
-                              className="text-slate-400 hover:text-slate-600 transition-colors sm:p-1 sm:min-h-[36px] sm:min-w-[36px] flex items-center justify-center"
+                              className="text-slate-400 hover:text-slate-600 transition-colors xl:p-1 xl:min-h-[36px] xl:min-w-[36px] flex items-center justify-center"
 
 
 
@@ -3361,7 +3363,7 @@ export default function LeadResults({
 
 
 
-          className="h-5 sm:h-5 overflow-x-auto overflow-y-hidden border-t border-slate-200 bg-slate-50 hidden sm:block"
+          className="h-5 xl:h-5 overflow-x-auto overflow-y-hidden border-t border-slate-200 bg-slate-50 hidden xl:block"
 
 
 
