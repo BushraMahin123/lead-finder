@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import AppNav from "@/components/AppNav";
 import CreditBalance from "@/components/CreditBalance";
+import ManualDialButton from "@/components/ManualDialButton";
 import UserMenu from "@/components/UserMenu";
 
 function NavFallback() {
@@ -17,6 +18,7 @@ export default function AppHeader() {
           <AppNav />
         </Suspense>
         <div className="flex items-center gap-3">
+          <ManualDialButton />
           <CreditBalance />
           <UserMenu />
         </div>

@@ -22,6 +22,9 @@ interface BillingAccountRow {
   free_tokens_granted: boolean;
   current_period_start: string | null;
   current_period_end: string | null;
+  calling_pack_id: string | null;
+  calling_stripe_subscription_id: string | null;
+  calling_subscription_status: string | null;
 }
 
 export interface UserBillingSnapshot {
@@ -32,6 +35,9 @@ export interface UserBillingSnapshot {
   currentPeriodEnd: string | null;
   stripeCustomerId: string | null;
   stripeSubscriptionId: string | null;
+  callingPackId: string | null;
+  callingStripeSubscriptionId: string | null;
+  callingSubscriptionStatus: string | null;
 }
 
 function getAdminOrThrow() {
@@ -137,6 +143,9 @@ export async function getUserBillingSnapshot(
     currentPeriodEnd: row.current_period_end,
     stripeCustomerId: row.stripe_customer_id,
     stripeSubscriptionId: row.stripe_subscription_id,
+    callingPackId: row.calling_pack_id ?? null,
+    callingStripeSubscriptionId: row.calling_stripe_subscription_id ?? null,
+    callingSubscriptionStatus: row.calling_subscription_status ?? null,
   };
 }
 
@@ -197,6 +206,9 @@ export async function updateBillingAccount(
     subscriptionStatus: string | null;
     currentPeriodStart: string | null;
     currentPeriodEnd: string | null;
+    callingPackId: string | null;
+    callingStripeSubscriptionId: string | null;
+    callingSubscriptionStatus: string | null;
   }>,
 ): Promise<void> {
   const admin = getAdminOrThrow();
@@ -219,6 +231,15 @@ export async function updateBillingAccount(
   }
   if (patch.currentPeriodEnd !== undefined) {
     update.current_period_end = patch.currentPeriodEnd;
+  }
+  if (patch.callingPackId !== undefined) {
+    update.calling_pack_id = patch.callingPackId;
+  }
+  if (patch.callingStripeSubscriptionId !== undefined) {
+    update.calling_stripe_subscription_id = patch.callingStripeSubscriptionId;
+  }
+  if (patch.callingSubscriptionStatus !== undefined) {
+    update.calling_subscription_status = patch.callingSubscriptionStatus;
   }
 
   const { error } = await admin

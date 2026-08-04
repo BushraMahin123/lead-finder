@@ -1,10 +1,11 @@
-import { getPlanById } from "@/lib/billing/plans";
+import { CALLING_PACKS, getPlanById } from "@/lib/billing/plans";
 import type {
   AdminCallLogSummary,
   AdminCallSummary,
   AdminCampaignSummary,
   AdminLedgerEntry,
   AdminStats,
+  AdminTelnyxBillingSummary,
   AdminUserSummary,
 } from "@/lib/admin-types";
 import {
@@ -14,6 +15,11 @@ import {
 import { creditTokens, debitTokens, getUserBillingSnapshot } from "@/lib/billing/tokens";
 import { getSupabaseAdmin } from "@/lib/supabase";
 import { listUserPhoneNumbers } from "@/lib/user-phone-numbers";
+import {
+  getTelnyxAccountBalance,
+  getTelnyxSampleNumberPricing,
+  listTelnyxOwnedPhoneNumbers,
+} from "@/lib/telnyx";
 
 export type {
   AdminCallLogSummary,
@@ -21,6 +27,7 @@ export type {
   AdminCampaignSummary,
   AdminLedgerEntry,
   AdminStats,
+  AdminTelnyxBillingSummary,
   AdminUserSummary,
 } from "@/lib/admin-types";
 
@@ -127,7 +134,7 @@ async function getUserCallActivity(userId: string): Promise<{
   const { data, error } = await admin
     .from("call_logs")
     .select(
-      "id, to_number, from_number, status, disposition, duration_seconds, person_name, created_at, ended_at",
+      "id, to_number, from_number, status, disposition, duration_seconds, person_name, created_at, ended_at, recording_path, transcription_status, transcript",
     )
     .eq("user_id", userId)
     .order("created_at", { ascending: false })
@@ -149,6 +156,9 @@ async function getUserCallActivity(userId: string): Promise<{
       personName: (row.person_name as string | null) ?? null,
       createdAt: row.created_at as string,
       endedAt: (row.ended_at as string | null) ?? null,
+      hasRecording: Boolean(row.recording_path),
+      transcriptionStatus: (row.transcription_status as string | null) ?? null,
+      transcript: (row.transcript as string | null) ?? null,
     })),
   };
 }
@@ -561,4 +571,143 @@ export async function grantTokensAsAdmin(input: {
     idempotencyKey,
   });
   return { balance };
+}
+
+async function getPlatformPhoneInventory(): Promise<
+  AdminTelnyxBillingSummary["inventory"]
+> {
+  const admin = getAdminOrThrow();
+  const { data, error } = await admin
+    .from("user_phone_numbers")
+    .select("status, monthly_cost, upfront_cost")
+    .neq("status", "released");
+
+  if (error) throw new Error(error.message);
+
+  const rows = (data as Array<{
+    status: string;
+    monthly_cost: number | string | null;
+    upfront_cost: number | string | null;
+  }> | null) ?? [];
+
+  let activeNumbers = 0;
+  let pendingNumbers = 0;
+  let totalMonthlyCost = 0;
+  let totalUpfrontCost = 0;
+  let numbersMissingCost = 0;
+
+  for (const row of rows) {
+    if (row.status === "active") activeNumbers += 1;
+    if (row.status === "pending") pendingNumbers += 1;
+
+    const monthly =
+      row.monthly_cost == null ? null : Number(row.monthly_cost);
+    const upfront =
+      row.upfront_cost == null ? null : Number(row.upfront_cost);
+
+    if (monthly == null || !Number.isFinite(monthly)) {
+      numbersMissingCost += 1;
+    } else {
+      totalMonthlyCost += monthly;
+    }
+    if (upfront != null && Number.isFinite(upfront)) {
+      totalUpfrontCost += upfront;
+    }
+  }
+
+  return {
+    activeNumbers,
+    pendingNumbers,
+    totalMonthlyCost,
+    totalUpfrontCost,
+    numbersMissingCost,
+  };
+}
+
+export async function getAdminTelnyxBillingSummary(): Promise<AdminTelnyxBillingSummary> {
+  const pack = CALLING_PACKS[0];
+  const customerPricing = {
+    callingMonthlyUsd: pack?.price ?? 35,
+    numberFeeOneTimeUsd: pack?.numberFeeOneTime ?? 4,
+    firstPaymentUsd: pack?.firstPaymentTotal ?? 38.99,
+  };
+
+  const inventory = await getPlatformPhoneInventory().catch(() => ({
+    activeNumbers: 0,
+    pendingNumbers: 0,
+    totalMonthlyCost: 0,
+    totalUpfrontCost: 0,
+    numbersMissingCost: 0,
+  }));
+
+  if (!process.env.TELNYX_API_KEY?.trim()) {
+    return {
+      configured: false,
+      balance: null,
+      ownedOnTelnyx: null,
+      sampleNumberPricing: null,
+      inventory,
+      customerPricing,
+      errors: ["TELNYX_API_KEY is not configured"],
+    };
+  }
+
+  const errors: string[] = [];
+  let balance: AdminTelnyxBillingSummary["balance"] = null;
+  let ownedOnTelnyx: AdminTelnyxBillingSummary["ownedOnTelnyx"] = null;
+  let sampleNumberPricing: AdminTelnyxBillingSummary["sampleNumberPricing"] =
+    null;
+
+  const [balanceResult, ownedResult, pricingResult] = await Promise.allSettled([
+    getTelnyxAccountBalance(),
+    listTelnyxOwnedPhoneNumbers(50),
+    getTelnyxSampleNumberPricing(8),
+  ]);
+
+  if (balanceResult.status === "fulfilled") {
+    balance = balanceResult.value;
+  } else {
+    errors.push(
+      balanceResult.reason instanceof Error
+        ? `Balance: ${balanceResult.reason.message}`
+        : "Balance: failed to load",
+    );
+  }
+
+  if (ownedResult.status === "fulfilled") {
+    ownedOnTelnyx = {
+      totalCount: ownedResult.value.totalCount,
+      preview: ownedResult.value.numbers.slice(0, 12).map((row) => ({
+        id: row.id,
+        phoneNumber: row.phoneNumber,
+        status: row.status,
+      })),
+    };
+  } else {
+    errors.push(
+      ownedResult.reason instanceof Error
+        ? `Owned numbers: ${ownedResult.reason.message}`
+        : "Owned numbers: failed to load",
+    );
+  }
+
+  if (pricingResult.status === "fulfilled") {
+    sampleNumberPricing = pricingResult.value;
+  } else {
+    errors.push(
+      pricingResult.reason instanceof Error
+        ? `Number pricing sample: ${pricingResult.reason.message}`
+        : "Number pricing sample: failed to load",
+    );
+  }
+
+  return {
+    configured: true,
+    balance,
+    ownedOnTelnyx,
+    sampleNumberPricing,
+    inventory,
+    customerPricing,
+    errors,
+  };
 }

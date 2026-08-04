@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { notifyBillingBalanceRefresh } from "@/hooks/useBillingBalance";
 import { fetchJson } from "@/lib/fetch-json";
 
 export default function BillingSuccessClient() {
+  const router = useRouter();
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const [status, setStatus] = useState<"pending" | "done" | "error">(
@@ -17,6 +18,7 @@ export default function BillingSuccessClient() {
       ? "Confirming your payment and updating your plan…"
       : "Your tokens will appear in your balance shortly.",
   );
+  const [checkoutType, setCheckoutType] = useState<string | null>(null);
 
   useEffect(() => {
     if (!sessionId) return;
@@ -25,14 +27,15 @@ export default function BillingSuccessClient() {
 
     async function confirm() {
       try {
-        const { response, data } = await fetchJson(
-          "/api/billing/confirm-checkout",
-          {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ sessionId }),
-          },
-        );
+        const { response, data } = await fetchJson<{
+          error?: string;
+          message?: string;
+          checkoutType?: string;
+        }>("/api/billing/confirm-checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ sessionId }),
+        });
 
         if (cancelled) return;
 
@@ -40,6 +43,9 @@ export default function BillingSuccessClient() {
           throw new Error(String(data.error ?? "Could not confirm payment"));
         }
 
+        const type =
+          typeof data.checkoutType === "string" ? data.checkoutType : null;
+        setCheckoutType(type);
         setStatus("done");
         setMessage(
           typeof data.message === "string"
@@ -47,6 +53,14 @@ export default function BillingSuccessClient() {
             : "Payment confirmed. Your plan and tokens are updated.",
         );
         notifyBillingBalanceRefresh();
+
+        if (type === "calling") {
+          window.setTimeout(() => {
+            if (!cancelled) {
+              router.push("/settings/phone-numbers");
+            }
+          }, 1200);
+        }
       } catch (error) {
         if (cancelled) return;
         setStatus("error");
@@ -63,7 +77,7 @@ export default function BillingSuccessClient() {
     return () => {
       cancelled = true;
     };
-  }, [sessionId]);
+  }, [router, sessionId]);
 
   return (
     <div className="mx-auto flex max-w-lg flex-col items-center px-4 py-20 text-center">
@@ -86,13 +100,27 @@ export default function BillingSuccessClient() {
             : "Payment successful"}
       </h1>
       <p className="mt-2 text-sm text-slate-600">{message}</p>
+      {checkoutType === "calling" && status === "done" ? (
+        <p className="mt-2 text-sm text-emerald-700">
+          Next: claim your included phone number…
+        </p>
+      ) : null}
       <div className="mt-8 flex flex-wrap justify-center gap-3">
-        <Link
-          href="/dashboard"
-          className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
-        >
-          Go to tables
-        </Link>
+        {checkoutType === "calling" ? (
+          <Link
+            href="/settings/phone-numbers"
+            className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+          >
+            Get your number
+          </Link>
+        ) : (
+          <Link
+            href="/dashboard"
+            className="rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-slate-800"
+          >
+            Go to tables
+          </Link>
+        )}
         <Link
           href="/pricing"
           className="rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition hover:bg-slate-50"

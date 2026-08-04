@@ -77,12 +77,12 @@ async function fulfillRecentCheckoutSessions(userId: string, customerId: string)
     if (session.metadata?.userId && session.metadata.userId !== userId) continue;
 
     const checkoutType = session.metadata?.checkoutType;
-    if (checkoutType === "topup") {
+    if (checkoutType === "topup" || checkoutType === "calling") {
       try {
         await fulfillCheckoutSession(session, { expectedUserId: userId });
       } catch (error) {
         console.error(
-          "[billing/sync] failed to fulfill top-up checkout session",
+          `[billing/sync] failed to fulfill ${checkoutType} checkout session`,
           session.id,
           error,
         );

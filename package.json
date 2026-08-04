@@ -22,6 +22,9 @@
     "db:migrate:waitlist": "node scripts/run-migration.mjs supabase/waitlist.sql",
     "db:migrate:waitlist-invites": "node scripts/run-migration.mjs supabase/waitlist_invites.sql",
     "db:migrate:dialer": "node scripts/run-migration.mjs supabase/dialer.sql",
+    "db:migrate:call-recordings": "node scripts/run-migration.mjs supabase/call_recordings.sql",
+    "db:migrate:call-minutes": "node scripts/run-migration.mjs supabase/call_minutes.sql",
+    "db:migrate:calling-subscription": "node scripts/run-migration.mjs supabase/calling_subscription.sql",
     "db:migrate:user-phone-numbers": "node scripts/run-migration.mjs supabase/user_phone_numbers.sql"
   },
   "dependencies": {

@@ -1,9 +1,11 @@
 import Stripe from "stripe";
 import {
+  getCallingPackById,
   getPlanById,
   getStripePriceId,
   assertStripePriceId,
   getTopUpById,
+  type CallingPackId,
   type PlanId,
   type TopUpId,
 } from "@/lib/billing/plans";
@@ -141,6 +143,67 @@ export async function createTopUpCheckoutSession(input: {
       packId: pack.id,
       checkoutType: "topup",
       tokenAmount: String(pack.tokens),
+    },
+  });
+}
+
+export async function createCallingPackCheckoutSession(input: {
+  userId: string;
+  email?: string | null;
+  packId: CallingPackId;
+}) {
+  const pack = getCallingPackById(input.packId);
+  if (!pack) {
+    throw new Error("Invalid calling pack");
+  }
+
+  const priceId = getStripePriceId(pack.stripePriceEnvKey);
+  if (!priceId) {
+    throw new Error(
+      `Stripe price is not configured for ${pack.name}. Set ${pack.stripePriceEnvKey} in your environment.`,
+    );
+  }
+  assertStripePriceId(priceId, pack.name, pack.stripePriceEnvKey);
+
+  const numberFeePriceId = getStripePriceId(pack.stripeNumberFeePriceEnvKey);
+  if (!numberFeePriceId) {
+    throw new Error(
+      `Stripe number fee price is not configured. Set ${pack.stripeNumberFeePriceEnvKey} in your environment.`,
+    );
+  }
+  assertStripePriceId(
+    numberFeePriceId,
+    `${pack.name} number fee`,
+    pack.stripeNumberFeePriceEnvKey,
+  );
+
+  const customerId = await getOrCreateStripeCustomer(input.userId, input.email);
+  const stripe = getStripe();
+  const appUrl = getAppUrl();
+
+  // Subscription ($35/mo) + one-time phone number fee ($4) on the first invoice.
+  return stripe.checkout.sessions.create({
+    mode: "subscription",
+    customer: customerId,
+    line_items: [
+      { price: priceId, quantity: 1 },
+      { price: numberFeePriceId, quantity: 1 },
+    ],
+    success_url: `${appUrl}/billing/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${appUrl}/pricing#calling`,
+    metadata: {
+      userId: input.userId,
+      packId: pack.id,
+      checkoutType: "calling",
+      minuteAmount: String(pack.minutes),
+      numberFeePaid: "true",
+    },
+    subscription_data: {
+      metadata: {
+        userId: input.userId,
+        packId: pack.id,
+        checkoutType: "calling",
+      },
     },
   });
 }
