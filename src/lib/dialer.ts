@@ -4,11 +4,13 @@ import type {
   CallDisposition,
   CallLog,
   CallLogStatus,
+  TranscriptionStatus,
 } from "@/types/dialer";
 
-export type { CallDisposition, CallLog, CallLogStatus } from "@/types/dialer";
+export type { CallDisposition, CallLog, CallLogStatus, TranscriptionStatus } from "@/types/dialer";
 
 const CALL_LOGS_TABLE = "call_logs";
+export const CALL_RECORDINGS_BUCKET = "call-recordings";
 
 interface CallLogRow {
   id: string;
@@ -24,6 +26,12 @@ interface CallLogRow {
   duration_seconds: number | null;
   telnyx_call_id: string | null;
   error_message: string | null;
+  recording_path: string | null;
+  recording_mime_type: string | null;
+  recording_bytes: number | null;
+  transcript: string | null;
+  transcription_status: string | null;
+  transcription_error: string | null;
   created_at: string;
   updated_at: string;
   ended_at: string | null;
@@ -52,6 +60,13 @@ function mapCallLog(row: CallLogRow): CallLog {
     durationSeconds: row.duration_seconds,
     telnyxCallId: row.telnyx_call_id,
     errorMessage: row.error_message,
+    recordingPath: row.recording_path ?? null,
+    recordingMimeType: row.recording_mime_type ?? null,
+    recordingBytes: row.recording_bytes ?? null,
+    transcript: row.transcript ?? null,
+    transcriptionStatus:
+      (row.transcription_status as TranscriptionStatus | null) ?? null,
+    transcriptionError: row.transcription_error ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     endedAt: row.ended_at,
@@ -86,12 +101,29 @@ export async function createCallLog(input: {
       from_number: input.fromNumber ?? null,
       direction: "outbound",
       status: "initiated",
+      transcription_status: "none",
     })
     .select("*")
     .single();
 
   if (error) throw new Error(error.message);
   return mapCallLog(data as CallLogRow);
+}
+
+export async function getCallLogForUser(
+  id: string,
+  userId: string,
+): Promise<CallLog | null> {
+  const admin = getAdminOrThrow();
+  const { data, error } = await admin
+    .from(CALL_LOGS_TABLE)
+    .select("*")
+    .eq("id", id)
+    .eq("user_id", userId)
+    .maybeSingle();
+
+  if (error) throw new Error(error.message);
+  return data ? mapCallLog(data as CallLogRow) : null;
 }
 
 export async function updateCallLog(input: {
@@ -102,6 +134,12 @@ export async function updateCallLog(input: {
   durationSeconds?: number | null;
   telnyxCallId?: string | null;
   errorMessage?: string | null;
+  recordingPath?: string | null;
+  recordingMimeType?: string | null;
+  recordingBytes?: number | null;
+  transcript?: string | null;
+  transcriptionStatus?: TranscriptionStatus | null;
+  transcriptionError?: string | null;
   ended?: boolean;
 }): Promise<CallLog> {
   const admin = getAdminOrThrow();
@@ -120,6 +158,22 @@ export async function updateCallLog(input: {
   }
   if (input.errorMessage !== undefined) {
     updates.error_message = input.errorMessage;
+  }
+  if (input.recordingPath !== undefined) {
+    updates.recording_path = input.recordingPath;
+  }
+  if (input.recordingMimeType !== undefined) {
+    updates.recording_mime_type = input.recordingMimeType;
+  }
+  if (input.recordingBytes !== undefined) {
+    updates.recording_bytes = input.recordingBytes;
+  }
+  if (input.transcript !== undefined) updates.transcript = input.transcript;
+  if (input.transcriptionStatus !== undefined) {
+    updates.transcription_status = input.transcriptionStatus;
+  }
+  if (input.transcriptionError !== undefined) {
+    updates.transcription_error = input.transcriptionError;
   }
   if (input.ended) {
     updates.ended_at = new Date().toISOString();
@@ -158,4 +212,17 @@ export async function updateCallLog(input: {
   }
 
   return log;
+}
+
+export async function createCallRecordingSignedUrl(
+  path: string,
+  expiresInSeconds = 3600,
+): Promise<string | null> {
+  const admin = getAdminOrThrow();
+  const { data, error } = await admin.storage
+    .from(CALL_RECORDINGS_BUCKET)
+    .createSignedUrl(path, expiresInSeconds);
+
+  if (error) throw new Error(error.message);
+  return data?.signedUrl ?? null;
 }

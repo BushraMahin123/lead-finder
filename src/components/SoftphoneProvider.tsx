@@ -10,6 +10,13 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import {
+  IconMic,
+  IconMicOff,
+  IconPhone,
+  IconPhoneOff,
+} from "@/components/icons";
+import { createCallRecorder } from "@/lib/call-recorder";
 import { ApiError, fetchJson } from "@/lib/fetch-json";
 import { toE164 } from "@/lib/phone";
 import type { CallDisposition } from "@/types/dialer";
@@ -22,6 +29,14 @@ type SoftphoneStatus =
   | "ended"
   | "error";
 
+type CallMediaStatus =
+  | "idle"
+  | "recording"
+  | "uploading"
+  | "transcribing"
+  | "ready"
+  | "failed";
+
 export type SoftphoneStartCallInput = {
   toNumber: string;
   personName?: string | null;
@@ -31,6 +46,7 @@ export type SoftphoneStartCallInput = {
 
 type SoftphoneContextValue = {
   startCall: (input: SoftphoneStartCallInput) => Promise<void>;
+  openManualDial: () => void;
   hangup: () => void;
   toggleMute: () => void;
   setDisposition: (disposition: CallDisposition) => Promise<void>;
@@ -55,6 +71,21 @@ const DISPOSITIONS: { value: CallDisposition; label: string }[] = [
   { value: "busy", label: "Busy" },
 ];
 
+const DIAL_KEYS = [
+  "1",
+  "2",
+  "3",
+  "4",
+  "5",
+  "6",
+  "7",
+  "8",
+  "9",
+  "*",
+  "0",
+  "#",
+] as const;
+
 function formatElapsed(totalSeconds: number): string {
   const minutes = Math.floor(totalSeconds / 60)
     .toString()
@@ -74,6 +105,7 @@ type TelnyxCallLike = {
   muteAudio?: () => void;
   unmuteAudio?: () => void;
   remoteStream?: MediaStream;
+  localStream?: MediaStream;
 };
 
 type TelnyxClientLike = {
@@ -116,7 +148,14 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
   const [personName, setPersonName] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [isDialPadOpen, setIsDialPadOpen] = useState(false);
+  const [manualNumber, setManualNumber] = useState("");
+  const [manualError, setManualError] = useState<string | null>(null);
   const [savingDisposition, setSavingDisposition] = useState(false);
+  const [mediaStatus, setMediaStatus] = useState<CallMediaStatus>("idle");
+  const [recordingUrl, setRecordingUrl] = useState<string | null>(null);
+  const [transcript, setTranscript] = useState<string | null>(null);
+  const [mediaError, setMediaError] = useState<string | null>(null);
 
   const remoteAudioRef = useRef<HTMLAudioElement | null>(null);
   const clientRef = useRef<TelnyxClientLike | null>(null);
@@ -126,7 +165,12 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
   const connectedAtRef = useRef<number | null>(null);
   const hangupSentRef = useRef(false);
   const everActiveRef = useRef(false);
+  const callPlacedRef = useRef(false);
+  const dialGenerationRef = useRef(0);
   const timerRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const recorderRef = useRef<ReturnType<typeof createCallRecorder> | null>(null);
+  const mediaFinalizedRef = useRef(false);
+  const recordingStartedRef = useRef(false);
 
   const clearTimer = useCallback(() => {
     if (timerRef.current) {
@@ -157,6 +201,100 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
     },
     [],
   );
+
+  const startRecordingIfNeeded = useCallback(async (call: TelnyxCallLike) => {
+    if (recordingStartedRef.current || hangupSentRef.current) return;
+    recordingStartedRef.current = true;
+    try {
+      const recorder = createCallRecorder();
+      recorderRef.current = recorder;
+      await recorder.start(call.localStream ?? null, call.remoteStream ?? null);
+      setMediaStatus("recording");
+      setMediaError(null);
+    } catch (err) {
+      recordingStartedRef.current = false;
+      recorderRef.current = null;
+      setMediaStatus("failed");
+      setMediaError(
+        err instanceof Error ? err.message : "Could not start call recording",
+      );
+    }
+  }, []);
+
+  const finalizeCallMedia = useCallback(async () => {
+    if (mediaFinalizedRef.current) return;
+    mediaFinalizedRef.current = true;
+
+    const callId = callLogIdRef.current;
+    const recorder = recorderRef.current;
+    recorderRef.current = null;
+
+    if (!recorder) {
+      if (everActiveRef.current) {
+        setMediaStatus((prev) => (prev === "ready" ? prev : "idle"));
+      }
+      return;
+    }
+
+    setMediaStatus("uploading");
+    const blob = await recorder.stop();
+
+    if (!blob || !callId) {
+      setMediaStatus("failed");
+      setMediaError(
+        !blob ? "No audio was captured for this call." : "Missing call id.",
+      );
+      return;
+    }
+
+    try {
+      setMediaStatus("transcribing");
+      const form = new FormData();
+      form.append("file", blob, `call-${callId}.webm`);
+
+      const { response, data } = await fetchJson<{
+        call?: {
+          recordingUrl?: string | null;
+          transcript?: string | null;
+          transcriptionStatus?: string | null;
+          transcriptionError?: string | null;
+        };
+        error?: string;
+      }>(`/api/dialer/calls/${callId}/recording`, {
+        method: "POST",
+        body: form,
+      });
+
+      if (!response.ok || !data.call) {
+        throw new ApiError(
+          data.error ?? "Failed to save recording",
+          response.status,
+        );
+      }
+
+      setRecordingUrl(data.call.recordingUrl ?? null);
+      setTranscript(data.call.transcript ?? null);
+
+      if (data.call.transcriptionStatus === "failed") {
+        setMediaStatus("failed");
+        setMediaError(
+          data.call.transcriptionError ??
+            "Recording saved, but transcription failed.",
+        );
+      } else {
+        setMediaStatus("ready");
+        setMediaError(null);
+      }
+    } catch (err) {
+      setMediaStatus("failed");
+      setMediaError(
+        err instanceof Error ? err.message : "Failed to upload recording",
+      );
+    }
+  }, []);
+
+  const finalizeCallMediaRef = useRef(finalizeCallMedia);
+  finalizeCallMediaRef.current = finalizeCallMedia;
 
   const cleanupClient = useCallback(() => {
     clearTimer();
@@ -198,21 +336,23 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
   }
 
   const hangup = useCallback(() => {
+    // Invalidate any in-flight startCall / telnyx.ready so it cannot redial.
+    dialGenerationRef.current += 1;
+    hangupSentRef.current = true;
+    callPlacedRef.current = true;
+
     const duration =
       connectedAtRef.current != null
         ? Math.max(0, Math.round((Date.now() - connectedAtRef.current) / 1000))
         : elapsedSeconds;
 
     const call = callRef.current;
-    if (call && !hangupSentRef.current && isLiveCallState(call.state)) {
-      hangupSentRef.current = true;
+    if (call && isLiveCallState(call.state)) {
       try {
         call.hangup();
       } catch {
         // ignore stale bye / already-ended call
       }
-    } else {
-      hangupSentRef.current = true;
     }
 
     void patchCallLog({
@@ -225,6 +365,18 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
     clearTimer();
     setStatus("ended");
     setMuted(false);
+
+    // Stop recording before tearing down WebRTC streams.
+    void (async () => {
+      await finalizeCallMediaRef.current();
+      try {
+        clientRef.current?.disconnect();
+      } catch {
+        // ignore
+      }
+      clientRef.current = null;
+      callRef.current = null;
+    })();
   }, [clearTimer, elapsedSeconds, isLiveCallState, patchCallLog]);
 
   const toggleMute = useCallback(() => {
@@ -241,8 +393,14 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
   }, [muted]);
 
   const dismiss = useCallback(() => {
-    cleanupClient();
-    callLogIdRef.current = null;
+    dialGenerationRef.current += 1;
+    hangupSentRef.current = true;
+    callPlacedRef.current = true;
+    void (async () => {
+      await finalizeCallMediaRef.current();
+      cleanupClient();
+      callLogIdRef.current = null;
+    })();
     connectedAtRef.current = null;
     setIsOpen(false);
     setStatus("idle");
@@ -251,7 +409,21 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
     setPersonName(null);
     setElapsedSeconds(0);
     setMuted(false);
+    setMediaStatus("idle");
+    setRecordingUrl(null);
+    setTranscript(null);
+    setMediaError(null);
   }, [cleanupClient]);
+
+  const openManualDial = useCallback(() => {
+    setManualError(null);
+    setIsDialPadOpen(true);
+  }, []);
+
+  const closeManualDial = useCallback(() => {
+    setIsDialPadOpen(false);
+    setManualError(null);
+  }, []);
 
   const setDisposition = useCallback(
     async (disposition: CallDisposition) => {
@@ -299,7 +471,12 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
       connectedAtRef.current = null;
       hangupSentRef.current = false;
       everActiveRef.current = false;
+      callPlacedRef.current = false;
       callLogIdRef.current = null;
+      mediaFinalizedRef.current = false;
+      recordingStartedRef.current = false;
+      recorderRef.current = null;
+      const dialGeneration = ++dialGenerationRef.current;
       setIsOpen(true);
       setStatus("connecting");
       setError(null);
@@ -307,6 +484,12 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
       setElapsedSeconds(0);
       setToNumber(normalized);
       setPersonName(input.personName ?? null);
+      setMediaStatus("idle");
+      setRecordingUrl(null);
+      setTranscript(null);
+      setMediaError(null);
+
+      const isCurrentDial = () => dialGenerationRef.current === dialGeneration;
 
       try {
         // Unlock audio playback from the Call click gesture.
@@ -324,7 +507,28 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
           settingsPath?: string;
         }>("/api/dialer/token", { method: "POST" });
 
+        if (!isCurrentDial()) return;
+
         if (!tokenResponse.ok || !tokenData.token) {
+          if (
+            tokenData.code === "CALLING_SUBSCRIPTION_REQUIRED" ||
+            tokenData.code === "CALL_MINUTES_REQUIRED" ||
+            /Unlimited calling|calling minutes/i.test(tokenData.error ?? "")
+          ) {
+            setIsOpen(false);
+            setStatus("idle");
+            window.location.assign("/pricing#calling");
+            return;
+          }
+          if (
+            tokenData.code === "PHONE_NUMBER_REQUIRED" ||
+            /phone number/i.test(tokenData.error ?? "")
+          ) {
+            setIsOpen(false);
+            setStatus("idle");
+            window.location.assign("/settings/phone-numbers");
+            return;
+          }
           throw new ApiError(
             tokenData.error ?? "Failed to get dialer token",
             tokenResponse.status,
@@ -336,6 +540,7 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
         const { response: callResponse, data: callData } = await fetchJson<{
           call?: { id: string };
           error?: string;
+          code?: string;
         }>("/api/dialer/calls", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
@@ -347,7 +552,28 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
           }),
         });
 
+        if (!isCurrentDial()) return;
+
         if (!callResponse.ok || !callData.call?.id) {
+          if (
+            callData.code === "CALLING_SUBSCRIPTION_REQUIRED" ||
+            callData.code === "CALL_MINUTES_REQUIRED" ||
+            /Unlimited calling|calling minutes/i.test(callData.error ?? "")
+          ) {
+            setIsOpen(false);
+            setStatus("idle");
+            window.location.assign("/pricing#calling");
+            return;
+          }
+          if (
+            callData.code === "PHONE_NUMBER_REQUIRED" ||
+            /phone number/i.test(callData.error ?? "")
+          ) {
+            setIsOpen(false);
+            setStatus("idle");
+            window.location.assign("/settings/phone-numbers");
+            return;
+          }
           throw new ApiError(
             callData.error ?? "Failed to start call log",
             callResponse.status,
@@ -357,6 +583,8 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
         callLogIdRef.current = callData.call.id;
 
         const { TelnyxRTC } = await import("@telnyx/webrtc");
+        if (!isCurrentDial()) return;
+
         const client = new TelnyxRTC({
           login_token: tokenData.token,
         }) as unknown as TelnyxClientLike;
@@ -364,6 +592,13 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
         clientRef.current = client;
 
         client.on("telnyx.ready", () => {
+          // telnyx.ready can fire again after reconnect / hangup — only dial once.
+          if (!isCurrentDial() || hangupSentRef.current || callPlacedRef.current) {
+            return;
+          }
+          if (clientRef.current !== client) return;
+
+          callPlacedRef.current = true;
           const call = client.newCall({
             destinationNumber: normalized,
             callerNumber: callerNumberRef.current ?? undefined,
@@ -380,6 +615,8 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
         });
 
         client.on("telnyx.notification", (notification) => {
+          if (!isCurrentDial() || clientRef.current !== client) return;
+
           const notificationType = notification.type;
           const call = notification.call;
 
@@ -388,6 +625,7 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
             notificationType === "peerConnectionFailedError" ||
             notificationType === "peerConnectionFailureError"
           ) {
+            hangupSentRef.current = true;
             const message =
               notificationType === "userMediaError"
                 ? "Microphone permission is required to place calls."
@@ -399,6 +637,15 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
               errorMessage: message,
               ended: true,
             });
+            try {
+              client.disconnect();
+            } catch {
+              // ignore
+            }
+            if (clientRef.current === client) {
+              clientRef.current = null;
+              callRef.current = null;
+            }
             return;
           }
 
@@ -409,14 +656,15 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
           attachRemoteAudio(remoteAudioRef.current, call.remoteStream);
 
           if (state === "requesting" || state === "trying" || state === "connecting") {
-            setStatus("connecting");
+            if (!hangupSentRef.current) setStatus("connecting");
           }
 
           if (state === "ringing") {
-            setStatus("ringing");
+            if (!hangupSentRef.current) setStatus("ringing");
           }
 
           if (state === "active" || state === "answered") {
+            if (hangupSentRef.current) return;
             everActiveRef.current = true;
             if (connectedAtRef.current == null) {
               connectedAtRef.current = Date.now();
@@ -437,10 +685,12 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
               status: "active",
               telnyxCallId: call.id ?? null,
             });
+            void startRecordingIfNeeded(call);
           }
 
           if (state === "hangup") {
             hangupSentRef.current = true;
+            callPlacedRef.current = true;
             const duration =
               connectedAtRef.current != null
                 ? Math.max(
@@ -464,6 +714,19 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
               ended: true,
               errorMessage: everActiveRef.current ? null : reason,
             });
+
+            void (async () => {
+              await finalizeCallMediaRef.current();
+              try {
+                client.disconnect();
+              } catch {
+                // ignore
+              }
+              if (clientRef.current === client) {
+                clientRef.current = null;
+                callRef.current = null;
+              }
+            })();
           }
 
           // destroy/purge are cleanup states — don't overwrite hangup reason
@@ -472,6 +735,7 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
             !hangupSentRef.current
           ) {
             hangupSentRef.current = true;
+            callPlacedRef.current = true;
             clearTimer();
             setStatus("ended");
             if (!everActiveRef.current) {
@@ -483,10 +747,25 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
               ended: true,
               errorMessage: formatHangupReason(call),
             });
+            void (async () => {
+              await finalizeCallMediaRef.current();
+              try {
+                client.disconnect();
+              } catch {
+                // ignore
+              }
+              if (clientRef.current === client) {
+                clientRef.current = null;
+                callRef.current = null;
+              }
+            })();
           }
         });
 
         client.on("telnyx.error", (notification) => {
+          if (!isCurrentDial() || clientRef.current !== client) return;
+          hangupSentRef.current = true;
+          callPlacedRef.current = true;
           const message =
             notification.error?.message ?? "Call failed to connect";
           setStatus("error");
@@ -496,10 +775,29 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
             errorMessage: message,
             ended: true,
           });
+          try {
+            client.disconnect();
+          } catch {
+            // ignore
+          }
+          if (clientRef.current === client) {
+            clientRef.current = null;
+            callRef.current = null;
+          }
         });
+
+        if (!isCurrentDial()) {
+          try {
+            client.disconnect();
+          } catch {
+            // ignore
+          }
+          return;
+        }
 
         client.connect();
       } catch (err) {
+        if (!isCurrentDial()) return;
         const message =
           err instanceof Error ? err.message : "Failed to start call";
         setStatus("error");
@@ -512,12 +810,13 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
         cleanupClient();
       }
     },
-    [cleanupClient, clearTimer, patchCallLog],
+    [cleanupClient, clearTimer, patchCallLog, startRecordingIfNeeded],
   );
 
   const value = useMemo<SoftphoneContextValue>(
     () => ({
       startCall,
+      openManualDial,
       hangup,
       toggleMute,
       setDisposition,
@@ -532,6 +831,7 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
     }),
     [
       startCall,
+      openManualDial,
       hangup,
       toggleMute,
       setDisposition,
@@ -546,116 +846,313 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
     ],
   );
 
+  const placeManualCall = useCallback(async () => {
+    const digits = manualNumber.replace(/\D/g, "");
+    if (digits.length < 10) {
+      setManualError("Enter a valid phone number (at least 10 digits).");
+      return;
+    }
+
+    setManualError(null);
+    setIsDialPadOpen(false);
+    await startCall({ toNumber: digits });
+  }, [manualNumber, startCall]);
+
+  const statusLabel =
+    status === "connecting"
+      ? "Connecting…"
+      : status === "ringing"
+        ? "Ringing…"
+        : status === "active"
+          ? "On call"
+          : status === "ended"
+            ? "Call ended"
+            : status === "error"
+              ? "Call failed"
+              : "Ready";
+
+  const showActiveChrome =
+    isOpen &&
+    (status === "connecting" ||
+      status === "ringing" ||
+      status === "active" ||
+      status === "ended" ||
+      status === "error");
+
   return (
     <SoftphoneContext.Provider value={value}>
       {children}
       <audio ref={remoteAudioRef} autoPlay playsInline className="hidden" />
-      {isOpen ? (
-        <div className="fixed inset-x-0 bottom-0 z-50 flex justify-center p-4 pointer-events-none">
-          <div className="pointer-events-auto w-full max-w-lg rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-900/10">
-            <div className="flex items-start justify-between gap-3 border-b border-slate-100 px-4 py-3">
-              <div className="min-w-0">
-                <p className="truncate text-sm font-semibold text-slate-900">
-                  {personName || "Outbound call"}
-                </p>
-                <p className="truncate text-xs text-slate-500">{toNumber}</p>
+
+      {isDialPadOpen && !showActiveChrome ? (
+        <div className="softphone-sheet fixed inset-x-0 bottom-0 z-50 flex justify-center p-4 sm:p-6">
+          <div className="w-full max-w-sm overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_24px_64px_-16px_rgba(15,23,42,0.35)]">
+            <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 px-5 pb-6 pt-5 text-white">
+              <div
+                className="pointer-events-none absolute -right-8 -top-10 h-36 w-36 rounded-full bg-emerald-400/20 blur-2xl"
+                aria-hidden
+              />
+              <div className="relative flex items-start justify-between gap-3">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300/90">
+                    Dialer
+                  </p>
+                  <h2 className="mt-1 text-xl font-semibold tracking-tight text-white">
+                    Dial a number
+                  </h2>
+                </div>
+                <button
+                  type="button"
+                  onClick={closeManualDial}
+                  className="rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/90 transition hover:bg-white/20"
+                >
+                  Close
+                </button>
               </div>
-              <button
-                type="button"
-                onClick={dismiss}
-                className="rounded-lg px-2 py-1 text-sm text-slate-400 hover:bg-slate-50 hover:text-slate-700"
-                title="Close"
-              >
-                ×
-              </button>
+              <div className="relative mt-5 rounded-2xl border border-white/10 bg-black/25 px-4 py-4 backdrop-blur-sm">
+                <p className="min-h-[1.75rem] text-center font-mono text-2xl tracking-[0.12em] text-white">
+                  {manualNumber || (
+                    <span className="text-white/35">Enter number</span>
+                  )}
+                </p>
+              </div>
             </div>
 
-            <div className="px-4 py-4">
-              <div className="mb-4 flex items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Status
-                  </p>
-                  <p className="text-sm font-medium text-slate-800 capitalize">
-                    {status === "error" ? "Failed" : status}
-                  </p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Duration
-                  </p>
-                  <p className="font-mono text-sm font-medium text-slate-800">
-                    {formatElapsed(elapsedSeconds)}
-                  </p>
-                </div>
+            <div className="space-y-4 bg-slate-50 px-5 py-5">
+              <div className="grid grid-cols-3 gap-2.5">
+                {DIAL_KEYS.map((key) => (
+                  <button
+                    key={key}
+                    type="button"
+                    onClick={() =>
+                      setManualNumber((prev) => `${prev}${key}`.slice(0, 16))
+                    }
+                    className="softphone-key flex h-14 items-center justify-center rounded-2xl border border-slate-200/90 bg-white text-xl font-semibold text-slate-800 shadow-sm transition hover:border-emerald-300 hover:bg-emerald-50"
+                  >
+                    {key}
+                  </button>
+                ))}
               </div>
 
-              {error ? (
-                <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
-                  <p>{error}</p>
-                  {/phone number|Phone numbers/i.test(error) ? (
-                    <a
-                      href="/settings/phone-numbers"
-                      className="mt-2 inline-block font-medium text-emerald-700 underline hover:text-emerald-800"
-                    >
-                      Get a phone number
-                    </a>
-                  ) : null}
-                </div>
-              ) : null}
+              <div className="flex items-center gap-2.5">
+                <button
+                  type="button"
+                  onClick={() => setManualNumber((prev) => prev.slice(0, -1))}
+                  className="flex h-12 flex-1 items-center justify-center rounded-2xl border border-slate-200 bg-white text-sm font-semibold text-slate-600 transition hover:bg-slate-100"
+                >
+                  Delete
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void placeManualCall()}
+                  className="flex h-12 flex-[1.4] items-center justify-center gap-2 rounded-2xl bg-emerald-600 text-sm font-semibold text-white shadow-lg shadow-emerald-600/25 transition hover:bg-emerald-500 active:scale-[0.98]"
+                >
+                  <IconPhone className="h-4 w-4" />
+                  Call
+                </button>
+              </div>
 
-              <div className="mb-4 flex gap-2">
-                {(status === "connecting" ||
-                  status === "ringing" ||
-                  status === "active") && (
-                  <>
-                    <button
-                      type="button"
-                      onClick={toggleMute}
-                      disabled={status !== "active"}
-                      className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100 disabled:opacity-50"
-                    >
-                      {muted ? "Unmute" : "Mute"}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={hangup}
-                      className="flex-1 rounded-xl bg-red-600 px-3 py-2.5 text-sm font-medium text-white hover:bg-red-700"
-                    >
-                      Hang up
-                    </button>
-                  </>
-                )}
+              {manualError ? (
+                <p className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs text-rose-700">
+                  {manualError}
+                </p>
+              ) : null}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showActiveChrome ? (
+        <div className="softphone-sheet fixed inset-x-0 bottom-0 z-50 flex justify-center p-4 sm:p-6">
+          <div className="w-full max-w-sm overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-[0_24px_64px_-16px_rgba(15,23,42,0.35)]">
+            <div className="relative overflow-hidden bg-gradient-to-br from-slate-900 via-slate-800 to-emerald-950 px-5 pb-8 pt-5 text-white">
+              <div
+                className="pointer-events-none absolute -left-10 top-0 h-40 w-40 rounded-full bg-emerald-400/15 blur-3xl"
+                aria-hidden
+              />
+              <div
+                className="pointer-events-none absolute -right-6 bottom-0 h-28 w-28 rounded-full bg-teal-300/10 blur-2xl"
+                aria-hidden
+              />
+
+              <div className="relative flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-emerald-300/90">
+                    Call
+                  </p>
+                  <h2 className="mt-1 truncate text-xl font-semibold tracking-tight text-white">
+                    {personName || "Outbound call"}
+                  </h2>
+                  <p className="mt-0.5 truncate font-mono text-sm text-white/55">
+                    {toNumber}
+                  </p>
+                </div>
                 {(status === "ended" || status === "error") && (
                   <button
                     type="button"
                     onClick={dismiss}
-                    className="flex-1 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-100"
+                    className="shrink-0 rounded-full bg-white/10 px-3 py-1.5 text-xs font-semibold text-white/90 transition hover:bg-white/20"
                   >
                     Close
                   </button>
                 )}
               </div>
 
-              {(status === "ended" ||
-                status === "active" ||
-                status === "ringing") && (
-                <div>
-                  <p className="mb-2 text-xs font-medium uppercase tracking-wide text-slate-400">
-                    Disposition
-                  </p>
-                  <div className="flex flex-wrap gap-2">
-                    {DISPOSITIONS.map((item) => (
-                      <button
-                        key={item.value}
-                        type="button"
-                        disabled={savingDisposition}
-                        onClick={() => void setDisposition(item.value)}
-                        className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-medium text-slate-600 hover:border-slate-300 hover:bg-slate-50 disabled:opacity-50"
-                      >
-                        {item.label}
-                      </button>
-                    ))}
+              <div className="relative mt-6 flex flex-col items-center">
+                <div
+                  className={`flex h-16 w-16 items-center justify-center rounded-full border border-white/15 bg-white/10 backdrop-blur-sm ${
+                    status === "ringing" || status === "connecting"
+                      ? "softphone-pulse"
+                      : ""
+                  }`}
+                >
+                  <IconPhone className="h-7 w-7 text-emerald-300" />
+                </div>
+                <p className="mt-4 font-mono text-3xl font-semibold tabular-nums tracking-tight text-white">
+                  {formatElapsed(elapsedSeconds)}
+                </p>
+                <span
+                  className={`mt-2 inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-semibold ${
+                    status === "active"
+                      ? "bg-emerald-400/20 text-emerald-200"
+                      : status === "error"
+                        ? "bg-rose-400/20 text-rose-200"
+                        : status === "ended"
+                          ? "bg-white/10 text-white/70"
+                          : "bg-amber-400/15 text-amber-100"
+                  }`}
+                >
+                  {(status === "ringing" || status === "connecting") && (
+                    <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-current" />
+                  )}
+                  {statusLabel}
+                  {status === "active" && mediaStatus === "recording"
+                    ? " · Recording"
+                    : ""}
+                </span>
+              </div>
+            </div>
+
+            <div className="space-y-4 bg-slate-50 px-5 py-5">
+              {error ? (
+                <div className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-2 text-xs leading-relaxed text-rose-700">
+                  <p>{error}</p>
+                  {/phone number|Phone numbers/i.test(error) ? (
+                    <a
+                      href="/settings/phone-numbers"
+                      className="mt-2 inline-block font-medium text-emerald-700 underline hover:text-emerald-800"
+                    >
+                      Get your included number
+                    </a>
+                  ) : null}
+                  {/calling minutes|Unlimited calling|Subscribe to Unlimited/i.test(
+                    error,
+                  ) ? (
+                    <a
+                      href="/pricing#calling"
+                      className="mt-2 inline-block font-medium text-emerald-700 underline hover:text-emerald-800"
+                    >
+                      View Unlimited calling
+                    </a>
+                  ) : null}
+                </div>
+              ) : null}
+
+              {status === "connecting" ||
+              status === "ringing" ||
+              status === "active" ? (
+                <div className="flex items-center justify-center gap-5">
+                  <button
+                    type="button"
+                    onClick={toggleMute}
+                    disabled={status !== "active"}
+                    className={`flex h-14 w-14 flex-col items-center justify-center rounded-full border transition disabled:opacity-50 ${
+                      muted
+                        ? "border-amber-300 bg-amber-50 text-amber-800"
+                        : "border-slate-200 bg-white text-slate-700 hover:bg-slate-100"
+                    }`}
+                    aria-label={muted ? "Unmute" : "Mute"}
+                  >
+                    {muted ? (
+                      <IconMicOff className="h-5 w-5" />
+                    ) : (
+                      <IconMic className="h-5 w-5" />
+                    )}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={hangup}
+                    className="flex h-16 w-16 items-center justify-center rounded-full bg-rose-600 text-white shadow-lg shadow-rose-600/30 transition hover:bg-rose-500 active:scale-95"
+                    aria-label="Hang up"
+                  >
+                    <IconPhoneOff className="h-6 w-6" />
+                  </button>
+                </div>
+              ) : null}
+
+              {(status === "ended" || status === "error") && (
+                <div className="space-y-4">
+                  <div>
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                      Recording & transcript
+                    </p>
+                    <div className="rounded-xl border border-slate-200 bg-white px-3 py-3">
+                      {mediaStatus === "recording" ||
+                      mediaStatus === "uploading" ||
+                      mediaStatus === "transcribing" ? (
+                        <p className="text-xs text-slate-600">
+                          {mediaStatus === "recording"
+                            ? "Recording call…"
+                            : mediaStatus === "uploading"
+                              ? "Saving recording…"
+                              : "Transcribing call…"}
+                        </p>
+                      ) : null}
+
+                      {mediaStatus === "idle" && !recordingUrl && !transcript ? (
+                        <p className="text-xs text-slate-500">
+                          No recording for this call yet.
+                        </p>
+                      ) : null}
+
+                      {recordingUrl ? (
+                        <audio
+                          controls
+                          src={recordingUrl}
+                          className="mt-1 w-full"
+                          preload="metadata"
+                        />
+                      ) : null}
+
+                      {transcript ? (
+                        <p className="mt-3 max-h-40 overflow-y-auto whitespace-pre-wrap text-xs leading-relaxed text-slate-700">
+                          {transcript}
+                        </p>
+                      ) : null}
+
+                      {mediaError ? (
+                        <p className="mt-2 text-xs text-rose-600">{mediaError}</p>
+                      ) : null}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-slate-400">
+                      Call outcome
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      {DISPOSITIONS.map((item) => (
+                        <button
+                          key={item.value}
+                          type="button"
+                          disabled={savingDisposition}
+                          onClick={() => void setDisposition(item.value)}
+                          className="rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-left text-xs font-semibold text-slate-700 transition hover:border-emerald-300 hover:bg-emerald-50 disabled:opacity-60"
+                        >
+                          {item.label}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </div>
               )}

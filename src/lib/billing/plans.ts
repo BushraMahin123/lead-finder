@@ -1,5 +1,6 @@
 export type PlanId = "free" | "starter" | "pro" | "growth" | "agency";
 export type TopUpId = "small" | "medium" | "large";
+export type CallingPackId = "unlimited";
 
 export interface SubscriptionPlan {
   id: PlanId;
@@ -18,6 +19,36 @@ export interface TopUpPack {
   price: number;
   tokens: number;
   stripePriceEnvKey: string;
+}
+
+export interface CallingPack {
+  id: CallingPackId;
+  name: string;
+  /** Monthly subscription price in USD (calling minutes). */
+  price: number;
+  /** One-time phone number fee in USD (charged with first checkout). */
+  numberFeeOneTime: number;
+  /** First payment total shown on the pricing card. */
+  firstPaymentTotal: number;
+  /** Internal minute grant (not shown as a hard cap in marketing). */
+  minutes: number;
+  /** User-facing allotment label (e.g. Unlimited). */
+  displayMinutesLabel: string;
+  description: string;
+  features: string[];
+  stripePriceEnvKey: string;
+  stripeNumberFeePriceEnvKey: string;
+}
+
+export interface CustomCallingPackage {
+  id: "custom";
+  name: string;
+  priceLabel: string;
+  priceSuffix: string;
+  displayMinutesLabel: string;
+  description: string;
+  features: string[];
+  contactPath: string;
 }
 
 export const FREE_LIFETIME_TOKENS = 100;
@@ -129,6 +160,45 @@ export const TOP_UP_PACKS: TopUpPack[] = [
   },
 ];
 
+/** Monthly calling packages (separate from lead-search tokens). */
+export const CALLING_PACKS: CallingPack[] = [
+  {
+    id: "unlimited",
+    name: "Unlimited",
+    price: 35,
+    numberFeeOneTime: 4,
+    firstPaymentTotal: 38.99,
+    minutes: 3_500,
+    displayMinutesLabel: "Unlimited minutes",
+    description:
+      "This package is $38.99. Calling is actually $35/month — you also pay $4 one-time for your phone number.",
+    features: [
+      "$35/month Unlimited calling minutes",
+      "$4 one-time phone number fee",
+      "Call recording & transcripts included",
+      "Then $35/month after the first payment",
+    ],
+    stripePriceEnvKey: "STRIPE_PRICE_CALLING_UNLIMITED",
+    stripeNumberFeePriceEnvKey: "STRIPE_PRICE_CALLING_NUMBER_FEE",
+  },
+];
+
+export const CUSTOM_CALLING_PACKAGE: CustomCallingPackage = {
+  id: "custom",
+  name: "Custom",
+  priceLabel: "Custom",
+  priceSuffix: "pricing",
+  displayMinutesLabel: "Volume tailored to you",
+  description: "High-volume or team calling plans tailored to your needs.",
+  features: [
+    "Custom minute volume",
+    "Works with your in-app dialer number",
+    "Call recording & transcripts included",
+    "Team / agency pricing & onboarding",
+  ],
+  contactPath: "/contact?subject=calling-custom",
+};
+
 export const OVERAGE_RATE = {
   tokensPerThousand: 1_000,
   priceUsd: 12,
@@ -140,6 +210,10 @@ export function getPlanById(planId: string): SubscriptionPlan | undefined {
 
 export function getTopUpById(packId: string): TopUpPack | undefined {
   return TOP_UP_PACKS.find((pack) => pack.id === packId);
+}
+
+export function getCallingPackById(packId: string): CallingPack | undefined {
+  return CALLING_PACKS.find((pack) => pack.id === packId);
 }
 
 export function getStripePriceId(envKey: string): string | null {

@@ -1,8 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 export default function ContactForm() {
+  const searchParams = useSearchParams();
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -11,6 +13,35 @@ export default function ContactForm() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    const subject = searchParams.get("subject");
+    if (!subject) return;
+
+    if (subject === "calling-custom") {
+      setFormData((prev) => ({
+        ...prev,
+        subject: "calling-custom",
+        message:
+          prev.message ||
+          "Hi, I'm interested in a custom calling package for LEADMAGPRO. Please contact me with pricing options.",
+      }));
+      return;
+    }
+
+    const allowed = new Set([
+      "general",
+      "support",
+      "billing",
+      "feedback",
+      "partnership",
+      "calling-custom",
+      "other",
+    ]);
+    if (allowed.has(subject)) {
+      setFormData((prev) => ({ ...prev, subject }));
+    }
+  }, [searchParams]);
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -141,6 +172,7 @@ export default function ContactForm() {
                     <option value="general">General Inquiry</option>
                     <option value="support">Technical Support</option>
                     <option value="billing">Billing Question</option>
+                    <option value="calling-custom">Custom calling package</option>
                     <option value="feedback">Feedback</option>
                     <option value="partnership">Partnership</option>
                     <option value="other">Other</option>

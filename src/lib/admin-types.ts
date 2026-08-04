@@ -38,6 +38,9 @@ export type AdminCallLogSummary = {
   personName: string | null;
   createdAt: string;
   endedAt: string | null;
+  hasRecording: boolean;
+  transcriptionStatus: string | null;
+  transcript: string | null;
 };
 
 export type AdminLedgerEntry = {
@@ -107,4 +110,59 @@ export type AdminCreateUserResult = {
   temporaryPassword: string;
   emailSent: boolean;
   emailError: string | null;
+};
+
+export type AdminTelnyxBalance = {
+  balance: number;
+  creditLimit: number;
+  availableCredit: number;
+  pending: number;
+  currency: string;
+};
+
+export type AdminTelnyxNumberPricing = {
+  currency: string;
+  sampleCount: number;
+  monthlyMin: number | null;
+  monthlyMax: number | null;
+  monthlyAvg: number | null;
+  upfrontMin: number | null;
+  upfrontMax: number | null;
+  upfrontAvg: number | null;
+  samples: Array<{
+    phoneNumber: string;
+    monthlyCost: number | null;
+    upfrontCost: number | null;
+  }>;
+};
+
+export type AdminTelnyxInventory = {
+  activeNumbers: number;
+  pendingNumbers: number;
+  totalMonthlyCost: number;
+  totalUpfrontCost: number;
+  numbersMissingCost: number;
+};
+
+export type AdminTelnyxCustomerPricing = {
+  callingMonthlyUsd: number;
+  numberFeeOneTimeUsd: number;
+  firstPaymentUsd: number;
+};
+
+export type AdminTelnyxBillingSummary = {
+  configured: boolean;
+  balance: AdminTelnyxBalance | null;
+  ownedOnTelnyx: {
+    totalCount: number;
+    preview: Array<{
+      id: string;
+      phoneNumber: string;
+      status: string | null;
+    }>;
+  } | null;
+  sampleNumberPricing: AdminTelnyxNumberPricing | null;
+  inventory: AdminTelnyxInventory;
+  customerPricing: AdminTelnyxCustomerPricing;
+  errors: string[];
 };

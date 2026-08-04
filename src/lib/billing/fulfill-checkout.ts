@@ -1,10 +1,12 @@
 import type Stripe from "stripe";
 import {
+  getCallingPackById,
   getPlanById,
   getPlanTier,
   getTopUpById,
   type PlanId,
 } from "@/lib/billing/plans";
+import { creditCallMinutes, getCallMinuteBalance } from "@/lib/billing/call-minutes";
 import { getStripe } from "@/lib/billing/stripe";
 import {
   creditTokens,
@@ -13,10 +15,12 @@ import {
 } from "@/lib/billing/tokens";
 
 export type FulfillCheckoutResult = {
-  checkoutType: "subscription" | "topup" | "unknown";
+  checkoutType: "subscription" | "topup" | "calling" | "unknown";
   planId?: PlanId;
   tokensGranted: number;
+  minutesGranted?: number;
   balance?: number;
+  callMinuteBalance?: number;
   alreadyFulfilled: boolean;
 };
 
@@ -137,6 +141,64 @@ export async function fulfillCheckoutSession(
       tokensGranted: balance > before.balance ? pack.tokens : 0,
       balance,
       alreadyFulfilled: balance === before.balance,
+    };
+  }
+
+  if (checkoutType === "calling") {
+    const packId = session.metadata?.packId;
+    const pack = packId ? getCallingPackById(packId) : undefined;
+    if (!pack) {
+      throw new Error("Invalid calling pack on checkout session");
+    }
+
+    const subscriptionId =
+      typeof session.subscription === "string"
+        ? session.subscription
+        : session.subscription?.id;
+
+    if (!subscriptionId) {
+      throw new Error("Calling checkout session is missing subscription id");
+    }
+
+    const subscriptionStatus = await getSubscriptionStatus(subscriptionId);
+    if (!subscriptionStatus || !ACTIVE_SUB_STATUSES.has(subscriptionStatus)) {
+      const callMinuteBalance = await getCallMinuteBalance(userId);
+      return {
+        checkoutType: "calling",
+        tokensGranted: 0,
+        minutesGranted: 0,
+        callMinuteBalance,
+        alreadyFulfilled: true,
+      };
+    }
+
+    await updateBillingAccount(userId, {
+      stripeCustomerId:
+        typeof session.customer === "string"
+          ? session.customer
+          : session.customer?.id,
+      callingPackId: pack.id,
+      callingStripeSubscriptionId: subscriptionId,
+      callingSubscriptionStatus: subscriptionStatus,
+    });
+
+    const balanceBefore = await getCallMinuteBalance(userId);
+    const callMinuteBalance = await creditCallMinutes({
+      userId,
+      amount: pack.minutes,
+      type: "calling_subscription_grant",
+      description: `${pack.name} calling subscription`,
+      metadata: { packId: pack.id, sessionId: session.id },
+      idempotencyKey: `checkout_calling:${session.id}`,
+      stripeEventId: session.id,
+    });
+
+    return {
+      checkoutType: "calling",
+      tokensGranted: 0,
+      minutesGranted: callMinuteBalance > balanceBefore ? pack.minutes : 0,
+      callMinuteBalance,
+      alreadyFulfilled: callMinuteBalance === balanceBefore,
     };
   }
 

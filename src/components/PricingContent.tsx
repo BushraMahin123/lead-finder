@@ -2,12 +2,15 @@
 
 import { useState } from "react";
 import {
+  CALLING_PACKS,
+  CUSTOM_CALLING_PACKAGE,
   FREE_LIFETIME_TOKENS,
   OVERAGE_RATE,
   SUBSCRIPTION_PLANS,
   TOP_UP_PACKS,
   getPlanCardAction,
   hasPurchasedPlan,
+  type CallingPackId,
   type PlanId,
   type TopUpId,
 } from "@/lib/billing/plans";
@@ -28,7 +31,10 @@ export default function PricingContent() {
 
   const currentPlanId = balance?.planId ?? "free";
 
-  async function startCheckout(type: "subscription" | "topup", id: string) {
+  async function startCheckout(
+    type: "subscription" | "topup" | "calling",
+    id: string,
+  ) {
     setLoadingCheckout(`${type}:${id}`);
     setError(null);
     setNotice(null);
@@ -37,7 +43,9 @@ export default function PricingContent() {
       const body =
         type === "subscription"
           ? { type, planId: id as PlanId }
-          : { type, packId: id as TopUpId };
+          : type === "topup"
+            ? { type, packId: id as TopUpId }
+            : { type, packId: id as CallingPackId };
 
       const response = await fetch("/api/billing/checkout", {
         method: "POST",
@@ -394,6 +402,102 @@ export default function PricingContent() {
                 ))}
               </tbody>
             </table>
+          </div>
+        </div>
+
+        <h2 id="calling" className="mb-2 mt-12 scroll-mt-24 text-xl font-semibold">
+          Calling packages
+        </h2>
+        <p className="mb-4 text-sm text-slate-600">
+          Power the in-app dialer. Separate from lead-search tokens.
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {CALLING_PACKS.map((pack) => (
+            <div
+              key={pack.id}
+              className="card-flat relative flex h-full flex-col overflow-hidden p-6 ring-1 ring-emerald-100"
+            >
+              <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-emerald-100/70 blur-2xl" aria-hidden />
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+                Dialer
+              </p>
+              <p className="mt-2 text-lg font-semibold text-slate-900">{pack.name}</p>
+              <p className="mt-2 text-3xl font-bold text-slate-900">
+                ${pack.firstPaymentTotal.toFixed(2)}
+                <span className="ml-1 text-sm font-medium text-slate-500">
+                  first payment
+                </span>
+              </p>
+              <p className="mt-1 text-sm font-medium text-emerald-700">
+                {pack.displayMinutesLabel}
+              </p>
+              <p className="mt-2 rounded-xl border border-emerald-100 bg-emerald-50/80 px-3 py-2 text-sm text-slate-700">
+                <span className="font-semibold text-slate-900">
+                  ${pack.price}/month
+                </span>{" "}
+                calling
+                <span className="mx-1.5 text-slate-400">+</span>
+                <span className="font-semibold text-slate-900">
+                  ${pack.numberFeeOneTime}
+                </span>{" "}
+                one-time phone number
+              </p>
+              <p className="mt-2 text-sm text-slate-600">{pack.description}</p>
+              <ul className="mt-4 flex-1 space-y-1.5 text-sm text-slate-600">
+                {pack.features.map((feature) => (
+                  <li key={feature} className="flex gap-2">
+                    <span className="text-emerald-600">✓</span>
+                    <span>{feature}</span>
+                  </li>
+                ))}
+              </ul>
+              <button
+                type="button"
+                onClick={() => void startCheckout("calling", pack.id)}
+                disabled={loadingCheckout === `calling:${pack.id}`}
+                className="btn btn-primary mt-5 w-full disabled:opacity-50"
+              >
+                {loadingCheckout === `calling:${pack.id}`
+                  ? "Redirecting…"
+                  : "Subscribe"}
+              </button>
+            </div>
+          ))}
+
+          <div className="card-flat relative flex h-full flex-col overflow-hidden p-6 ring-1 ring-emerald-100">
+            <div className="absolute -right-8 -top-8 h-28 w-28 rounded-full bg-emerald-100/70 blur-2xl" aria-hidden />
+            <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-emerald-700">
+              Dialer
+            </p>
+            <p className="mt-2 text-lg font-semibold text-slate-900">
+              {CUSTOM_CALLING_PACKAGE.name}
+            </p>
+            <p className="mt-2 text-3xl font-bold text-slate-900">
+              {CUSTOM_CALLING_PACKAGE.priceLabel}
+              <span className="ml-1 text-sm font-medium text-slate-500">
+                {CUSTOM_CALLING_PACKAGE.priceSuffix}
+              </span>
+            </p>
+            <p className="mt-1 text-sm font-medium text-emerald-700">
+              {CUSTOM_CALLING_PACKAGE.displayMinutesLabel}
+            </p>
+            <p className="mt-2 text-sm text-slate-600">
+              {CUSTOM_CALLING_PACKAGE.description}
+            </p>
+            <ul className="mt-4 flex-1 space-y-1.5 text-sm text-slate-600">
+              {CUSTOM_CALLING_PACKAGE.features.map((feature) => (
+                <li key={feature} className="flex gap-2">
+                  <span className="text-emerald-600">✓</span>
+                  <span>{feature}</span>
+                </li>
+              ))}
+            </ul>
+            <a
+              href={CUSTOM_CALLING_PACKAGE.contactPath}
+              className="btn btn-secondary mt-5 inline-flex w-full items-center justify-center"
+            >
+              Contact us
+            </a>
           </div>
         </div>
 

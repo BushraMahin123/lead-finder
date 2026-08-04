@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
+import { creditCallMinutes } from "@/lib/billing/call-minutes";
 import { fulfillCheckoutSession } from "@/lib/billing/fulfill-checkout";
+import { getCallingPackById, getPlanById, type PlanId } from "@/lib/billing/plans";
 import { getStripe } from "@/lib/billing/stripe";
 import {
   creditTokens,
@@ -8,7 +10,6 @@ import {
   getUserBillingSnapshot,
   updateBillingAccount,
 } from "@/lib/billing/tokens";
-import { getPlanById, type PlanId } from "@/lib/billing/plans";
 
 export const runtime = "nodejs";
 
@@ -35,9 +36,15 @@ async function getInvoiceSubscriptionId(
   return null;
 }
 
+function isCallingSubscription(subscription: Stripe.Subscription): boolean {
+  if (subscription.metadata?.checkoutType === "calling") return true;
+  // Calling packs set packId; lead plans set planId.
+  return Boolean(subscription.metadata?.packId) && !subscription.metadata?.planId;
+}
+
 async function handleInvoicePaid(invoice: Stripe.Invoice) {
-  // Initial subscribe / upgrade tokens come from checkout fulfillment.
-  // Only monthly renewals should grant a fresh allotment here.
+  // Initial subscribe grants come from checkout fulfillment.
+  // Only renewals should grant a fresh allotment here.
   if (
     invoice.billing_reason === "subscription_create" ||
     invoice.billing_reason === "subscription_update"
@@ -56,33 +63,54 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
   if (!userId) return;
 
   const subscriptionId = await getInvoiceSubscriptionId(invoice);
+  if (!subscriptionId) return;
 
-  let planId: PlanId | undefined;
+  const stripe = getStripe();
+  const subscription = await stripe.subscriptions.retrieve(subscriptionId);
 
-  if (subscriptionId) {
-    const stripe = getStripe();
-    const subscription = await stripe.subscriptions.retrieve(subscriptionId);
-    planId = subscription.metadata?.planId as PlanId | undefined;
-
-    const periodStart =
-      "current_period_start" in subscription &&
-      typeof subscription.current_period_start === "number"
-        ? new Date(subscription.current_period_start * 1000).toISOString()
-        : null;
-    const periodEnd =
-      "current_period_end" in subscription &&
-      typeof subscription.current_period_end === "number"
-        ? new Date(subscription.current_period_end * 1000).toISOString()
-        : null;
+  if (isCallingSubscription(subscription)) {
+    const packId = subscription.metadata?.packId;
+    const pack = packId ? getCallingPackById(packId) : undefined;
+    if (!pack || pack.minutes <= 0) return;
 
     await updateBillingAccount(userId, {
-      planId: planId ?? "starter",
-      stripeSubscriptionId: subscriptionId,
-      subscriptionStatus: subscription.status,
-      currentPeriodStart: periodStart,
-      currentPeriodEnd: periodEnd,
+      callingPackId: pack.id,
+      callingStripeSubscriptionId: subscriptionId,
+      callingSubscriptionStatus: subscription.status,
     });
+
+    await creditCallMinutes({
+      userId,
+      amount: pack.minutes,
+      type: "calling_subscription_renewal",
+      description: `${pack.name} monthly renewal`,
+      metadata: { packId: pack.id, invoiceId: invoice.id },
+      idempotencyKey: `${invoice.id}:calling:${pack.id}`,
+      stripeEventId: invoice.id,
+    });
+    return;
   }
+
+  const planId = subscription.metadata?.planId as PlanId | undefined;
+
+  const periodStart =
+    "current_period_start" in subscription &&
+    typeof subscription.current_period_start === "number"
+      ? new Date(subscription.current_period_start * 1000).toISOString()
+      : null;
+  const periodEnd =
+    "current_period_end" in subscription &&
+    typeof subscription.current_period_end === "number"
+      ? new Date(subscription.current_period_end * 1000).toISOString()
+      : null;
+
+  await updateBillingAccount(userId, {
+    planId: planId ?? "starter",
+    stripeSubscriptionId: subscriptionId,
+    subscriptionStatus: subscription.status,
+    currentPeriodStart: periodStart,
+    currentPeriodEnd: periodEnd,
+  });
 
   if (!planId) return;
 
@@ -103,6 +131,18 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
 async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.userId;
   if (!userId) return;
+
+  if (isCallingSubscription(subscription)) {
+    const snapshot = await getUserBillingSnapshot(userId);
+    // Prefer matching the stored calling subscription when present.
+    void snapshot;
+    await updateBillingAccount(userId, {
+      callingPackId: subscription.metadata?.packId ?? "unlimited",
+      callingStripeSubscriptionId: subscription.id,
+      callingSubscriptionStatus: subscription.status,
+    });
+    return;
+  }
 
   const snapshot = await getUserBillingSnapshot(userId);
   if (
@@ -138,6 +178,15 @@ async function handleSubscriptionUpdated(subscription: Stripe.Subscription) {
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
   const userId = subscription.metadata?.userId;
   if (!userId) return;
+
+  if (isCallingSubscription(subscription)) {
+    await updateBillingAccount(userId, {
+      callingPackId: null,
+      callingStripeSubscriptionId: null,
+      callingSubscriptionStatus: "canceled",
+    });
+    return;
+  }
 
   const snapshot = await getUserBillingSnapshot(userId);
   // Ignore cancels of an old plan after an upgrade Checkout created a new subscription.
@@ -202,7 +251,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Webhook handler failed";
-    console.error("[stripe/webhook]", message);
+    console.error("[webhooks/stripe]", message);
     return NextResponse.json({ error: message }, { status: 400 });
   }
 }

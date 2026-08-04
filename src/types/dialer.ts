@@ -13,6 +13,13 @@ export type CallDisposition =
   | "callback"
   | "busy";
 
+export type TranscriptionStatus =
+  | "none"
+  | "pending"
+  | "processing"
+  | "completed"
+  | "failed";
+
 export interface CallLog {
   id: string;
   userId: string;
@@ -27,6 +34,12 @@ export interface CallLog {
   durationSeconds: number | null;
   telnyxCallId: string | null;
   errorMessage: string | null;
+  recordingPath: string | null;
+  recordingMimeType: string | null;
+  recordingBytes: number | null;
+  transcript: string | null;
+  transcriptionStatus: TranscriptionStatus | null;
+  transcriptionError: string | null;
   createdAt: string;
   updatedAt: string;
   endedAt: string | null;

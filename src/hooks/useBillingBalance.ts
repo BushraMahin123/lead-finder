@@ -11,6 +11,8 @@ export interface BillingBalance {
   currentPeriodEnd: string | null;
   cancelAtPeriodEnd: boolean;
   hasStripeSubscription: boolean;
+  hasCallingSubscription: boolean;
+  callMinuteBalance: number;
 }
 
 const BILLING_BALANCE_REFRESH_EVENT = "billing-balance-refresh";
@@ -55,6 +57,8 @@ export function useBillingBalance() {
             : null,
         cancelAtPeriodEnd: Boolean(data.cancelAtPeriodEnd),
         hasStripeSubscription: Boolean(data.hasStripeSubscription),
+        hasCallingSubscription: Boolean(data.hasCallingSubscription),
+        callMinuteBalance: Number(data.callMinuteBalance ?? 0),
       });
     } catch (err) {
       setError(err instanceof Error ? err.message : "Failed to load balance");
