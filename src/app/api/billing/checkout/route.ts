@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedClaims, getAuthenticatedUserId, unauthorizedResponse } from "@/lib/auth";
-import { getPlanById, getTopUpById, type PlanId, type TopUpId } from "@/lib/billing/plans";
 import {
+  getCallingPackById,
+  getPlanById,
+  getTopUpById,
+  type CallingPackId,
+  type PlanId,
+  type TopUpId,
+} from "@/lib/billing/plans";
+import {
+  createCallingPackCheckoutSession,
   createSubscriptionCheckoutSession,
   createTopUpCheckoutSession,
   isStripeConfigured,
@@ -22,9 +30,9 @@ export async function POST(request: NextRequest) {
     }
 
     const body = (await request.json()) as {
-      type?: "subscription" | "topup";
+      type?: "subscription" | "topup" | "calling";
       planId?: PlanId;
-      packId?: TopUpId;
+      packId?: TopUpId | CallingPackId;
     };
 
     const claims = await getAuthenticatedClaims();
@@ -58,6 +66,21 @@ export async function POST(request: NextRequest) {
       }
 
       const session = await createTopUpCheckoutSession({
+        userId,
+        email,
+        packId: pack.id,
+      });
+
+      return NextResponse.json({ url: session.url });
+    }
+
+    if (body.type === "calling") {
+      const pack = body.packId ? getCallingPackById(body.packId) : undefined;
+      if (!pack) {
+        return NextResponse.json({ error: "Invalid calling pack" }, { status: 400 });
+      }
+
+      const session = await createCallingPackCheckoutSession({
         userId,
         email,
         packId: pack.id,

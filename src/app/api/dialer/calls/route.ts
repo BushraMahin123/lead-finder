@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUserId, unauthorizedResponse } from "@/lib/auth";
 import {
+  assertActiveCallingSubscription,
+  assertHasCallMinutes,
+  billableCallMinutes,
+  CallingSubscriptionRequiredError,
+  debitCallMinutes,
+  InsufficientCallMinutesError,
+} from "@/lib/billing/call-minutes";
+import {
   createCallLog,
   updateCallLog,
 } from "@/lib/dialer";
@@ -19,6 +27,29 @@ export async function POST(request: NextRequest) {
         { error: "Dialer is not configured" },
         { status: 503 },
       );
+    }
+
+    try {
+      await assertActiveCallingSubscription(userId);
+      await assertHasCallMinutes(userId);
+    } catch (error) {
+      if (
+        error instanceof CallingSubscriptionRequiredError ||
+        error instanceof InsufficientCallMinutesError
+      ) {
+        return NextResponse.json(
+          {
+            error: error.message,
+            code:
+              error instanceof CallingSubscriptionRequiredError
+                ? "CALLING_SUBSCRIPTION_REQUIRED"
+                : "CALL_MINUTES_REQUIRED",
+            settingsPath: "/pricing#calling",
+          },
+          { status: 402 },
+        );
+      }
+      throw error;
     }
 
     const body = (await request.json()) as {
@@ -41,7 +72,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           error:
-            "Buy a phone number before calling. Open Settings → Phone numbers to get one.",
+            "Your Unlimited plan includes a number. Open Phone numbers to search and get one.",
           code: "PHONE_NUMBER_REQUIRED",
           settingsPath: "/settings/phone-numbers",
         },
@@ -96,6 +127,30 @@ export async function PATCH(request: NextRequest) {
       errorMessage: body.errorMessage,
       ended: body.ended,
     });
+
+    if (body.ended) {
+      const minutes = billableCallMinutes(body.durationSeconds ?? call.durationSeconds);
+      if (minutes > 0) {
+        try {
+          await debitCallMinutes({
+            userId,
+            amount: minutes,
+            type: "call_usage",
+            description: `Call to ${call.toNumber}`,
+            metadata: {
+              callLogId: call.id,
+              durationSeconds: body.durationSeconds ?? call.durationSeconds,
+            },
+            idempotencyKey: `call_usage:${call.id}`,
+          });
+        } catch (error) {
+          if (!(error instanceof InsufficientCallMinutesError)) {
+            console.error("[dialer/calls] minute debit failed", error);
+          }
+          // Don't fail the hangup path if balance is short mid-call.
+        }
+      }
+    }
 
     return NextResponse.json({ call });
   } catch (error) {

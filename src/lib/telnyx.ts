@@ -59,13 +59,13 @@ export async function createTelnyxLoginToken(): Promise<string> {
   if (!response.ok) {
     const body = await response.text();
     throw new Error(
-      body.trim() || `Failed to create Telnyx token (${response.status})`,
+      body.trim() || `Failed to create dialer token (${response.status})`,
     );
   }
 
   const token = (await response.text()).trim();
   if (!token) {
-    throw new Error("Telnyx returned an empty token");
+    throw new Error("Dialer returned an empty token");
   }
 
   return token;
@@ -100,7 +100,7 @@ async function telnyxJson<T>(
       errObj?.errors?.[0]?.detail ||
       errObj?.errors?.[0]?.title ||
       (typeof text === "string" && text.trim()) ||
-      `Telnyx request failed (${response.status})`;
+      `Number provider request failed (${response.status})`;
     throw new Error(detail);
   }
 
@@ -222,5 +222,129 @@ export async function orderPhoneNumber(input: {
     phoneNumberId,
     phoneNumber: ordered?.phone_number ?? input.phoneNumber,
     status: ordered?.status ?? result.data?.status ?? null,
+  };
+}
+
+export type TelnyxAccountBalance = {
+  balance: number;
+  creditLimit: number;
+  availableCredit: number;
+  pending: number;
+  currency: string;
+};
+
+export async function getTelnyxAccountBalance(): Promise<TelnyxAccountBalance> {
+  const result = await telnyxJson<{
+    data?: {
+      balance?: string;
+      credit_limit?: string;
+      available_credit?: string;
+      pending?: string;
+      currency?: string;
+    };
+  }>("/balance");
+
+  const data = result.data ?? {};
+  return {
+    balance: Number(data.balance ?? 0),
+    creditLimit: Number(data.credit_limit ?? 0),
+    availableCredit: Number(data.available_credit ?? 0),
+    pending: Number(data.pending ?? 0),
+    currency: (data.currency ?? "USD").toUpperCase(),
+  };
+}
+
+export type TelnyxOwnedNumber = {
+  id: string;
+  phoneNumber: string;
+  status: string | null;
+  connectionId: string | null;
+};
+
+export async function listTelnyxOwnedPhoneNumbers(limit = 100): Promise<{
+  numbers: TelnyxOwnedNumber[];
+  totalCount: number;
+}> {
+  const params = new URLSearchParams();
+  params.set("page[size]", String(Math.min(Math.max(limit, 1), 250)));
+
+  const result = await telnyxJson<{
+    data?: Array<{
+      id?: string;
+      phone_number?: string;
+      status?: string;
+      connection_id?: string | null;
+    }>;
+    meta?: { total_results?: number; total_pages?: number };
+  }>(`/phone_numbers?${params.toString()}`);
+
+  const numbers = (result.data ?? [])
+    .filter((row) => Boolean(row.phone_number && row.id))
+    .map((row) => ({
+      id: row.id as string,
+      phoneNumber: row.phone_number as string,
+      status: row.status ?? null,
+      connectionId: row.connection_id ?? null,
+    }));
+
+  return {
+    numbers,
+    totalCount: result.meta?.total_results ?? numbers.length,
+  };
+}
+
+/** Sample current Telnyx US local number sticker prices for admin cost reference. */
+export async function getTelnyxSampleNumberPricing(limit = 8): Promise<{
+  currency: string;
+  sampleCount: number;
+  monthlyMin: number | null;
+  monthlyMax: number | null;
+  monthlyAvg: number | null;
+  upfrontMin: number | null;
+  upfrontMax: number | null;
+  upfrontAvg: number | null;
+  samples: Array<{
+    phoneNumber: string;
+    monthlyCost: number | null;
+    upfrontCost: number | null;
+  }>;
+}> {
+  const available = await searchAvailablePhoneNumbers({
+    countryCode: "US",
+    limit,
+  });
+
+  const samples = available.map((row) => ({
+    phoneNumber: row.phoneNumber,
+    monthlyCost: row.costInformation?.monthly_cost
+      ? Number(row.costInformation.monthly_cost)
+      : null,
+    upfrontCost: row.costInformation?.upfront_cost
+      ? Number(row.costInformation.upfront_cost)
+      : null,
+  }));
+
+  const monthly = samples
+    .map((s) => s.monthlyCost)
+    .filter((n): n is number => n != null && Number.isFinite(n));
+  const upfront = samples
+    .map((s) => s.upfrontCost)
+    .filter((n): n is number => n != null && Number.isFinite(n));
+
+  const avg = (values: number[]) =>
+    values.length
+      ? values.reduce((sum, value) => sum + value, 0) / values.length
+      : null;
+
+  return {
+    currency: available[0]?.costInformation?.currency?.toUpperCase() ?? "USD",
+    sampleCount: samples.length,
+    monthlyMin: monthly.length ? Math.min(...monthly) : null,
+    monthlyMax: monthly.length ? Math.max(...monthly) : null,
+    monthlyAvg: avg(monthly),
+    upfrontMin: upfront.length ? Math.min(...upfront) : null,
+    upfrontMax: upfront.length ? Math.max(...upfront) : null,
+    upfrontAvg: avg(upfront),
+    samples,
   };
 }

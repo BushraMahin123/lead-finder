@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAuthenticatedUserId, unauthorizedResponse } from "@/lib/auth";
+import {
+  assertActiveCallingSubscription,
+  CallingSubscriptionRequiredError,
+} from "@/lib/billing/call-minutes";
 import { toE164 } from "@/lib/phone";
 import {
   isTelnyxNumberOrderingConfigured,
@@ -21,6 +25,22 @@ export async function GET(request: NextRequest) {
     const mode = searchParams.get("mode");
 
     if (mode === "search") {
+      try {
+        await assertActiveCallingSubscription(userId);
+      } catch (error) {
+        if (error instanceof CallingSubscriptionRequiredError) {
+          return NextResponse.json(
+            {
+              error: error.message,
+              code: "CALLING_SUBSCRIPTION_REQUIRED",
+              settingsPath: "/pricing#calling",
+            },
+            { status: 402 },
+          );
+        }
+        throw error;
+      }
+
       if (!isTelnyxNumberOrderingConfigured()) {
         return NextResponse.json(
           { error: "Number ordering is not configured" },
@@ -55,6 +75,22 @@ export async function POST(request: NextRequest) {
   try {
     const userId = await getAuthenticatedUserId();
     if (!userId) return unauthorizedResponse();
+
+    try {
+      await assertActiveCallingSubscription(userId);
+    } catch (error) {
+      if (error instanceof CallingSubscriptionRequiredError) {
+        return NextResponse.json(
+          {
+            error: error.message,
+            code: "CALLING_SUBSCRIPTION_REQUIRED",
+            settingsPath: "/pricing#calling",
+          },
+          { status: 402 },
+        );
+      }
+      throw error;
+    }
 
     if (!isTelnyxNumberOrderingConfigured()) {
       return NextResponse.json(

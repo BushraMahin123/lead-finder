@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { getAuthenticatedUserId, unauthorizedResponse } from "@/lib/auth";
+import {
+  getCallMinuteBalance,
+  hasActiveCallingSubscription,
+} from "@/lib/billing/call-minutes";
 import { getPlanById } from "@/lib/billing/plans";
 import { getUserBillingSnapshot } from "@/lib/billing/tokens";
 
@@ -31,6 +35,11 @@ export async function GET() {
         snapshot.subscriptionStatus ?? "",
       );
 
+    const [hasCallingSubscription, callMinuteBalance] = await Promise.all([
+      hasActiveCallingSubscription(userId),
+      getCallMinuteBalance(userId),
+    ]);
+
     return NextResponse.json({
       balance: snapshot.balance,
       planId: hasLiveSubscription ? snapshot.planId : "free",
@@ -43,6 +52,10 @@ export async function GET() {
       cancelAtPeriodEnd: hasLiveSubscription ? cancelAtPeriodEnd : false,
       hasStripeCustomer: Boolean(snapshot.stripeCustomerId),
       hasStripeSubscription: hasLiveSubscription,
+      hasCallingSubscription,
+      callMinuteBalance,
+      callingPackId: snapshot.callingPackId,
+      callingSubscriptionStatus: snapshot.callingSubscriptionStatus,
     });
   } catch (error) {
     const message =

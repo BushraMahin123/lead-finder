@@ -16,6 +16,12 @@ create table if not exists public.call_logs (
   duration_seconds integer,
   telnyx_call_id text,
   error_message text,
+  recording_path text,
+  recording_mime_type text,
+  recording_bytes integer,
+  transcript text,
+  transcription_status text,
+  transcription_error text,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now(),
   ended_at timestamptz

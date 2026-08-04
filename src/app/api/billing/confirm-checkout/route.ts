@@ -40,7 +40,11 @@ export async function POST(request: Request) {
             ? result.alreadyFulfilled
               ? "Top-up already applied."
               : `${result.tokensGranted.toLocaleString()} tokens added.`
-            : "Checkout processed.",
+            : result.checkoutType === "calling"
+              ? result.alreadyFulfilled
+                ? "Calling subscription already active."
+                : "Unlimited calling activated. Next, claim your included phone number."
+              : "Checkout processed.",
     });
   } catch (error) {
     const message =

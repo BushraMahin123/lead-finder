@@ -2,9 +2,11 @@
 
 import { useCallback, useEffect, useState } from "react";
 import { ApiError, fetchJson } from "@/lib/fetch-json";
+import { useBillingBalance } from "@/hooks/useBillingBalance";
 import type { AvailablePhoneNumber, UserPhoneNumber } from "@/types/phone-numbers";
 
 export default function PhoneNumbersSettings() {
+  const { balance, loading: billingLoading } = useBillingBalance();
   const [owned, setOwned] = useState<UserPhoneNumber[]>([]);
   const [results, setResults] = useState<AvailablePhoneNumber[]>([]);
   const [country, setCountry] = useState("US");
@@ -15,6 +17,9 @@ export default function PhoneNumbersSettings() {
   const [buyingNumber, setBuyingNumber] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+
+  const hasCallingSubscription = Boolean(balance?.hasCallingSubscription);
+  const canClaimNumber = hasCallingSubscription;
 
   const loadOwned = useCallback(async () => {
     setLoadingOwned(true);
@@ -41,6 +46,10 @@ export default function PhoneNumbersSettings() {
 
   async function searchNumbers(e: React.FormEvent) {
     e.preventDefault();
+    if (!canClaimNumber) {
+      setError("Subscribe to Unlimited calling first — your number is included.");
+      return;
+    }
     setSearching(true);
     setError(null);
     setNotice(null);
@@ -56,9 +65,15 @@ export default function PhoneNumbersSettings() {
       const { response, data } = await fetchJson<{
         numbers?: AvailablePhoneNumber[];
         error?: string;
+        code?: string;
+        settingsPath?: string;
       }>(`/api/dialer/numbers?${params.toString()}`);
 
       if (!response.ok) {
+        if (data.code === "CALLING_SUBSCRIPTION_REQUIRED") {
+          window.location.assign(data.settingsPath || "/pricing#calling");
+          return;
+        }
         throw new ApiError(data.error ?? "Search failed", response.status);
       }
 
@@ -88,6 +103,8 @@ export default function PhoneNumbersSettings() {
       const { response, data } = await fetchJson<{
         number?: UserPhoneNumber;
         error?: string;
+        code?: string;
+        settingsPath?: string;
       }>("/api/dialer/numbers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -100,10 +117,16 @@ export default function PhoneNumbersSettings() {
       });
 
       if (!response.ok || !data.number) {
+        if (data.code === "CALLING_SUBSCRIPTION_REQUIRED") {
+          window.location.assign(data.settingsPath || "/pricing#calling");
+          return;
+        }
         throw new ApiError(data.error ?? "Purchase failed", response.status);
       }
 
-      setNotice(`Number ${data.number.phoneNumber} is ready to use as your caller ID.`);
+      setNotice(
+        `Number ${data.number.phoneNumber} is ready. You can place calls now.`,
+      );
       setResults([]);
       await loadOwned();
     } catch (err) {
@@ -122,9 +145,26 @@ export default function PhoneNumbersSettings() {
         Phone numbers
       </h1>
       <p className="mt-2 max-w-2xl text-sm text-slate-600">
-        Get a calling number inside LEADMAGPRO. You don’t need to buy numbers in
-        the Telnyx portal — we’ll provision one on your account connection.
+        Your Unlimited calling plan includes one number. Search and claim it
+        here, then place outbound calls from LEADMAGPRO.
       </p>
+
+      {!billingLoading && !canClaimNumber ? (
+        <div className="mt-6 rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 text-sm text-amber-900">
+          <p className="font-medium">Unlimited calling required</p>
+          <p className="mt-1">
+            Subscribe to Unlimited — the package is <strong>$38.99</strong> (
+            <strong>$35/month</strong> calling + <strong>$4 one-time</strong>{" "}
+            phone number). Then claim your number here.
+          </p>
+          <a
+            href="/pricing#calling"
+            className="mt-3 inline-flex rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800"
+          >
+            View Unlimited plan
+          </a>
+        </div>
+      ) : null}
 
       {error ? (
         <p className="mt-6 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -143,7 +183,10 @@ export default function PhoneNumbersSettings() {
           <p className="mt-3 text-sm text-slate-500">Loading…</p>
         ) : owned.length === 0 ? (
           <p className="mt-3 text-sm text-slate-500">
-            No number yet. Search below and purchase one.
+            No number yet.
+            {canClaimNumber
+              ? " Search below and get your included number."
+              : " Subscribe to Unlimited first."}
           </p>
         ) : (
           <ul className="mt-4 space-y-3">
@@ -172,9 +215,11 @@ export default function PhoneNumbersSettings() {
         )}
       </section>
 
-      {!hasActive ? (
+      {!hasActive && canClaimNumber ? (
         <section className="mt-6 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-          <h2 className="text-sm font-semibold text-slate-900">Buy a number</h2>
+          <h2 className="text-sm font-semibold text-slate-900">
+            Get your included number
+          </h2>
           <form onSubmit={(e) => void searchNumbers(e)} className="mt-4 grid gap-3 sm:grid-cols-3">
             <label className="block text-xs font-medium text-slate-600">
               Country
@@ -234,18 +279,18 @@ export default function PhoneNumbersSettings() {
                     onClick={() => void buyNumber(item)}
                     className="rounded-lg border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100 disabled:opacity-50"
                   >
-                    {buyingNumber === item.phoneNumber ? "Buying…" : "Get number"}
+                    {buyingNumber === item.phoneNumber ? "Getting…" : "Get number"}
                   </button>
                 </li>
               ))}
             </ul>
           ) : null}
         </section>
-      ) : (
+      ) : hasActive ? (
         <p className="mt-6 text-sm text-slate-500">
-          You already have an active number. Softphone calls will use it as caller ID.
+          You already have an active number. Outbound calls will use it as caller ID.
         </p>
-      )}
+      ) : null}
     </div>
   );
 }

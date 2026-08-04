@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import {
+  CALLING_PACKS,
+  CUSTOM_CALLING_PACKAGE,
   FREE_LIFETIME_TOKENS,
   OVERAGE_RATE,
   SUBSCRIPTION_PLANS,
@@ -14,5 +16,7 @@ export async function GET() {
     overage: OVERAGE_RATE,
     plans: SUBSCRIPTION_PLANS,
     topUps: TOP_UP_PACKS,
+    callingPacks: CALLING_PACKS,
+    customCallingPackage: CUSTOM_CALLING_PACKAGE,
   });
 }

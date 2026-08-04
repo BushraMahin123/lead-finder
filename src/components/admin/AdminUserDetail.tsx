@@ -71,6 +71,9 @@ type UserDetail = {
     personName: string | null;
     createdAt: string;
     endedAt: string | null;
+    hasRecording: boolean;
+    transcriptionStatus: string | null;
+    transcript: string | null;
   }>;
   ledger: Array<{
     id: string;
@@ -545,7 +548,7 @@ export default function AdminUserDetail({
         <div className="border-b border-slate-100 px-6 py-4">
           <h2 className="text-lg font-semibold text-slate-900">Phone numbers</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Telnyx numbers purchased in-app for this user.
+            Calling numbers purchased in-app for this user.
           </p>
         </div>
         {phoneNumbers.length === 0 ? (
@@ -588,7 +591,7 @@ export default function AdminUserDetail({
         <div className="border-b border-slate-100 px-6 py-4">
           <h2 className="text-lg font-semibold text-slate-900">Call summary</h2>
           <p className="mt-1 text-sm text-slate-500">
-            Softphone usage from call logs.
+            Calling usage from call logs.
           </p>
         </div>
         <div className="grid gap-4 px-6 py-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -641,6 +644,7 @@ export default function AdminUserDetail({
                   <th className="px-4 py-3 font-medium">Contact</th>
                   <th className="px-4 py-3 font-medium">Status</th>
                   <th className="px-4 py-3 font-medium">Duration</th>
+                  <th className="px-4 py-3 font-medium">Recording</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -660,6 +664,20 @@ export default function AdminUserDetail({
                     </td>
                     <td className="px-4 py-3 text-slate-700">
                       {formatCallMinutes(call.durationSeconds ?? 0)}
+                    </td>
+                    <td className="px-4 py-3 text-slate-700">
+                      {call.hasRecording
+                        ? call.transcriptionStatus === "completed"
+                          ? "Yes · transcribed"
+                          : call.transcriptionStatus === "failed"
+                            ? "Yes · transcript failed"
+                            : "Yes"
+                        : "—"}
+                      {call.transcript ? (
+                        <p className="mt-1 max-w-xs truncate text-xs text-slate-500" title={call.transcript}>
+                          {call.transcript}
+                        </p>
+                      ) : null}
                     </td>
                   </tr>
                 ))}

@@ -1,7 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import type { AdminLedgerEntry, AdminStats } from "@/lib/admin-types";
+import AdminTelnyxBilling from "@/components/admin/AdminTelnyxBilling";
+import type {
+  AdminLedgerEntry,
+  AdminStats,
+  AdminTelnyxBillingSummary,
+} from "@/lib/admin-types";
 
 function formatAmount(amount: number): string {
   const prefix = amount > 0 ? "+" : "";
@@ -11,11 +16,13 @@ function formatAmount(amount: number): string {
 type AdminDashboardProps = {
   stats: AdminStats;
   recentLedger: AdminLedgerEntry[];
+  telnyxBilling: AdminTelnyxBillingSummary;
 };
 
 export default function AdminDashboard({
   stats,
   recentLedger,
+  telnyxBilling,
 }: AdminDashboardProps) {
   const cards = [
     { label: "Users", value: stats.totalUsers.toLocaleString() },
@@ -42,7 +49,8 @@ export default function AdminDashboard({
           Admin overview
         </h1>
         <p className="mt-1 text-sm text-slate-600">
-          Platform-wide metrics and recent token activity.
+          Platform-wide metrics, calling provider costs, and recent token
+          activity.
         </p>
       </div>
 
@@ -55,9 +63,13 @@ export default function AdminDashboard({
         ))}
       </div>
 
+      <AdminTelnyxBilling initialSummary={telnyxBilling} />
+
       <section className="card-flat overflow-hidden">
         <div className="border-b border-slate-100 px-6 py-4">
-          <h2 className="text-lg font-semibold text-slate-900">Recent token activity</h2>
+          <h2 className="text-lg font-semibold text-slate-900">
+            Recent token activity
+          </h2>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-left text-sm">
@@ -74,7 +86,10 @@ export default function AdminDashboard({
             <tbody className="divide-y divide-slate-100">
               {recentLedger.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
+                  <td
+                    colSpan={6}
+                    className="px-4 py-8 text-center text-slate-500"
+                  >
                     No ledger entries yet.
                   </td>
                 </tr>
@@ -107,7 +122,7 @@ export default function AdminDashboard({
                       {entry.description ?? "—"}
                     </td>
                   </tr>
-                ))
+                ))}
               )}
             </tbody>
           </table>
