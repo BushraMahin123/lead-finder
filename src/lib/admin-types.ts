@@ -12,6 +12,32 @@ export type AdminUserSummary = {
   balance: number;
   campaignCount: number;
   contactCount: number;
+  phoneNumber: string | null;
+  phoneNumberCount: number;
+  callCount: number;
+  connectedCallCount: number;
+  totalCallSeconds: number;
+};
+
+export type AdminCallSummary = {
+  callCount: number;
+  connectedCallCount: number;
+  failedCallCount: number;
+  totalCallSeconds: number;
+  averageCallSeconds: number;
+  lastCallAt: string | null;
+};
+
+export type AdminCallLogSummary = {
+  id: string;
+  toNumber: string;
+  fromNumber: string | null;
+  status: string;
+  disposition: string | null;
+  durationSeconds: number | null;
+  personName: string | null;
+  createdAt: string;
+  endedAt: string | null;
 };
 
 export type AdminLedgerEntry = {

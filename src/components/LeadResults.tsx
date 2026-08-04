@@ -79,10 +79,9 @@ import {
 
 
 } from "@/components/ContactRowTracking";
-
-
-
-import { IconCopy } from "@/components/icons";
+import { IconCopy, IconPhone } from "@/components/icons";
+import { useSoftphoneOptional } from "@/components/SoftphoneProvider";
+import { toE164 } from "@/lib/phone";
 
 
 
@@ -596,16 +595,11 @@ function isInteractiveRowTarget(target: EventTarget | null): boolean {
 
 }
 
-
-
-
-
-
-
-async function copyToClipboard(text: string, fieldId: string, onCopied: (fieldId: string | null) => void): Promise<boolean> {
-
-
-
+async function copyToClipboard(
+  text: string,
+  fieldId: string,
+  onCopied: (fieldId: string | null) => void,
+): Promise<boolean> {
   try {
 
 
@@ -735,9 +729,7 @@ export default function LeadResults({
 
 
   const router = useRouter();
-
-
-
+  const softphone = useSoftphoneOptional();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
 
@@ -2982,9 +2974,33 @@ export default function LeadResults({
 
 
                         <span>{displayPhone(person)}</span>
-
-
-
+                        {(() => {
+                          const phone = person.phone_numbers?.[0];
+                          const dialNumber = toE164(
+                            phone?.sanitized_number || phone?.raw_number,
+                          );
+                          if (!dialNumber || !softphone) return null;
+                          return (
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                void softphone.startCall({
+                                  toNumber: dialNumber,
+                                  personName: displayName(person),
+                                  campaignId: campaignId ?? null,
+                                  personId: person.id,
+                                });
+                              }}
+                              className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 hover:bg-emerald-100 transition-colors"
+                              title="Call with softphone"
+                              data-no-row-select
+                            >
+                              <IconPhone className="h-3.5 w-3.5" />
+                              Call
+                            </button>
+                          );
+                        })()}
                         <button
 
 
@@ -2998,25 +3014,10 @@ export default function LeadResults({
 
 
                             e.stopPropagation();
-
-
-
                             const phone = person.phone_numbers?.[0];
-
-
-
                             const phoneToCopy = phone?.sanitized_number || phone?.raw_number;
-
-
-
                             if (phoneToCopy) {
-
-
-
-                              copyToClipboard(phoneToCopy, `${person.id}-phone`, setCopiedField);
-
-
-
+                              void copyToClipboard(phoneToCopy, `${person.id}-phone`, setCopiedField);
                             }
 
 
