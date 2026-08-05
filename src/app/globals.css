@@ -845,3 +845,117 @@ textarea::placeholder {
   transform: scale(0.96);
 }
 
+/* Responsive styles for custom dropdown */
+.custom-dropdown-item {
+  padding: 0.75rem 1rem;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+  .custom-dropdown-item {
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    min-height: 52px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .custom-dropdown-item {
+    padding: 0.875rem 1.125rem;
+    font-size: 0.9375rem;
+  }
+}
+
+/* Responsive styles for user menu dropdown */
+.user-menu-dropdown {
+  width: 16rem;
+  right: 0;
+  left: auto;
+}
+
+.user-menu-header {
+  padding: 0.75rem 1rem;
+}
+
+.user-menu-name {
+  font-size: 0.875rem;
+}
+
+.user-menu-email {
+  font-size: 0.75rem;
+}
+
+.user-menu-balance {
+  font-size: 0.75rem;
+}
+
+.user-menu-link,
+.user-menu-button,
+.user-menu-signout {
+  padding: 0.625rem 1rem;
+  font-size: 0.875rem;
+}
+
+@media (max-width: 768px) {
+  .user-menu-dropdown {
+    width: calc(100vw - 2rem);
+    max-width: 20rem;
+    right: 1rem;
+    left: auto;
+    transform: none;
+  }
+
+  .user-menu-header {
+    padding: 1rem 1.25rem;
+  }
+
+  .user-menu-name {
+    font-size: 1rem;
+  }
+
+  .user-menu-email {
+    font-size: 0.875rem;
+  }
+
+  .user-menu-balance {
+    font-size: 0.875rem;
+  }
+
+  .user-menu-link,
+  .user-menu-button,
+  .user-menu-signout {
+    padding: 1rem 1.25rem;
+    font-size: 1rem;
+    min-height: 52px;
+  }
+}
+
+@media (min-width: 769px) and (max-width: 1024px) {
+  .user-menu-dropdown {
+    width: 20rem;
+  }
+
+  .user-menu-header {
+    padding: 0.875rem 1.125rem;
+  }
+
+  .user-menu-name {
+    font-size: 0.9375rem;
+  }
+
+  .user-menu-email {
+    font-size: 0.8125rem;
+  }
+
+  .user-menu-balance {
+    font-size: 0.8125rem;
+  }
+
+  .user-menu-link,
+  .user-menu-button,
+  .user-menu-signout {
+    padding: 0.875rem 1.125rem;
+    font-size: 0.9375rem;
+  }
+}
+
