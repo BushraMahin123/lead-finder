@@ -10,12 +10,32 @@ import {
 } from "@/lib/billing/call-minutes";
 import {
   createCallLog,
+  listCallLogsForUser,
   updateCallLog,
 } from "@/lib/dialer";
 import type { CallDisposition, CallLogStatus } from "@/types/dialer";
 import { toE164 } from "@/lib/phone";
 import { isTelnyxSoftphoneConfigured } from "@/lib/telnyx";
 import { getDefaultUserPhoneNumber } from "@/lib/user-phone-numbers";
+
+export async function GET(request: NextRequest) {
+  try {
+    const userId = await getAuthenticatedUserId();
+    if (!userId) return unauthorizedResponse();
+
+    const limitParam = request.nextUrl.searchParams.get("limit");
+    const parsed = limitParam ? Number(limitParam) : undefined;
+    const limit =
+      parsed != null && Number.isFinite(parsed) ? Math.trunc(parsed) : undefined;
+
+    const calls = await listCallLogsForUser(userId, { limit });
+    return NextResponse.json({ calls });
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to load call logs";
+    return NextResponse.json({ error: message }, { status: 500 });
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {

@@ -126,6 +126,24 @@ export async function getCallLogForUser(
   return data ? mapCallLog(data as CallLogRow) : null;
 }
 
+export async function listCallLogsForUser(
+  userId: string,
+  options?: { limit?: number },
+): Promise<CallLog[]> {
+  const admin = getAdminOrThrow();
+  const limit = Math.min(Math.max(options?.limit ?? 100, 1), 200);
+
+  const { data, error } = await admin
+    .from(CALL_LOGS_TABLE)
+    .select("*")
+    .eq("user_id", userId)
+    .order("created_at", { ascending: false })
+    .limit(limit);
+
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((row) => mapCallLog(row as CallLogRow));
+}
+
 export async function updateCallLog(input: {
   id: string;
   userId: string;
