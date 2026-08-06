@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "next/navigation";
 
 export default function ContactForm() {
@@ -13,6 +13,8 @@ export default function ContactForm() {
   });
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const subject = searchParams.get("subject");
@@ -42,6 +44,33 @@ export default function ContactForm() {
       setFormData((prev) => ({ ...prev, subject }));
     }
   }, [searchParams]);
+
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    }
+
+    if (isDropdownOpen) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [isDropdownOpen]);
+
+  const subjectOptions = [
+    { value: "", label: "Select a subject" },
+    { value: "general", label: "General Inquiry" },
+    { value: "support", label: "Technical Support" },
+    { value: "billing", label: "Billing Question" },
+    { value: "calling-custom", label: "Custom calling package" },
+    { value: "feedback", label: "Feedback" },
+    { value: "partnership", label: "Partnership" },
+    { value: "other", label: "Other" },
+  ];
 
   function handleChange(
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -160,23 +189,45 @@ export default function ContactForm() {
                   <label htmlFor="subject" className="label mb-2 group-hover:text-indigo-600 transition-colors">
                     Subject <span className="text-red-500">*</span>
                   </label>
-                  <select
-                    id="subject"
-                    name="subject"
-                    value={formData.subject}
-                    onChange={handleChange}
-                    required
-                    className="input-field hover:border-indigo-400 transition-colors cursor-pointer"
-                  >
-                    <option value="">Select a subject</option>
-                    <option value="general">General Inquiry</option>
-                    <option value="support">Technical Support</option>
-                    <option value="billing">Billing Question</option>
-                    <option value="calling-custom">Custom calling package</option>
-                    <option value="feedback">Feedback</option>
-                    <option value="partnership">Partnership</option>
-                    <option value="other">Other</option>
-                  </select>
+                  <div ref={dropdownRef} className="relative">
+                    <input type="hidden" name="subject" value={formData.subject} required />
+                    <button
+                      type="button"
+                      id="subject"
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                      className="input-field hover:border-indigo-400 transition-colors cursor-pointer text-left flex items-center justify-between w-full"
+                    >
+                      <span className={formData.subject ? "" : "text-slate-400"}>
+                        {subjectOptions.find(opt => opt.value === formData.subject)?.label || "Select a subject"}
+                      </span>
+                      <svg
+                        className={`w-5 h-5 text-slate-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+                    {isDropdownOpen && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-slate-300 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {subjectOptions.map((option) => (
+                          <div
+                            key={option.value}
+                            onClick={() => {
+                              setFormData((prev) => ({ ...prev, subject: option.value }));
+                              setIsDropdownOpen(false);
+                            }}
+                            className={`custom-dropdown-item cursor-pointer hover:bg-indigo-50 transition-colors px-4 py-3 ${
+                              formData.subject === option.value ? 'bg-indigo-100 text-indigo-700' : 'text-slate-700'
+                            } text-sm sm:text-base`}
+                          >
+                            {option.label}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 <div className="group">

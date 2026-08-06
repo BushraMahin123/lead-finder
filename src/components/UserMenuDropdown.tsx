@@ -122,13 +122,13 @@ export default function UserMenuDropdown({
       {open && (
         <div
           role="menu"
-          className="absolute right-0 top-[calc(100%+0.5rem)] z-50 w-64 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg shadow-slate-200/60 left-0 right-0 w-full xl:w-auto xl:right-0"
+          className="absolute top-[calc(100%+0.5rem)] z-50 overflow-hidden rounded-xl border border-slate-200 bg-white py-1 shadow-lg shadow-slate-200/60 user-menu-dropdown"
         >
-          <div className="border-b border-slate-100 px-4 py-3">
-            <p className="truncate text-sm font-semibold text-slate-900">{name}</p>
-            <p className="truncate text-xs text-slate-500">{email}</p>
+          <div className="border-b border-slate-100 px-4 py-3 user-menu-header">
+            <p className="truncate text-sm font-semibold text-slate-900 user-menu-name">{name}</p>
+            <p className="truncate text-xs text-slate-500 user-menu-email">{email}</p>
             {balance && (
-              <p className="mt-2 text-xs text-slate-500">
+              <p className="mt-2 text-xs text-slate-500 user-menu-balance">
                 <span className="font-medium text-slate-700">
                   {balance.balance.toLocaleString()} tokens
                 </span>
@@ -172,7 +172,7 @@ export default function UserMenuDropdown({
               type="button"
               role="menuitem"
               onClick={() => void signOut()}
-              className="flex w-full px-4 py-2.5 text-left text-sm text-red-600 transition hover:bg-red-50"
+              className="flex w-full px-4 py-2.5 text-left text-sm text-red-600 transition hover:bg-red-50 user-menu-signout"
             >
               Sign out
             </button>
@@ -197,7 +197,7 @@ function MenuLink({
       href={href}
       role="menuitem"
       onClick={onNavigate}
-      className="block px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50 hover:text-slate-900"
+      className="block px-4 py-2.5 text-sm text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 user-menu-link"
     >
       {children}
     </Link>
@@ -219,7 +219,7 @@ function MenuButton({
       role="menuitem"
       onClick={onClick}
       disabled={disabled}
-      className="flex w-full px-4 py-2.5 text-left text-sm text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+      className="flex w-full px-4 py-2.5 text-left text-sm text-slate-700 transition hover:bg-slate-50 hover:text-slate-900 disabled:cursor-not-allowed disabled:opacity-50 user-menu-button"
     >
       {children}
     </button>
