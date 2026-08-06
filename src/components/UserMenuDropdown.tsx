@@ -159,6 +159,9 @@ export default function UserMenuDropdown({
             >
               Phone numbers
             </MenuLink>
+            <MenuLink href="/calls" onNavigate={() => setOpen(false)}>
+              Call logs
+            </MenuLink>
             <MenuButton
               onClick={() => void openBillingPortal()}
               disabled={portalLoading}

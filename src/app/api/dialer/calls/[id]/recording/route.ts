@@ -14,6 +14,25 @@ export const maxDuration = 120;
 
 const MAX_BYTES = 40 * 1024 * 1024; // 40MB
 
+// Must stay in sync with allowed_mime_types on the call-recordings bucket,
+// which rejects any value carrying codec parameters (e.g. audio/webm;codecs=opus).
+const ALLOWED_MIME_TYPES = new Set([
+  "audio/webm",
+  "audio/ogg",
+  "audio/mpeg",
+  "audio/mp4",
+  "audio/wav",
+  "audio/x-wav",
+]);
+
+function normalizeMime(raw: string): string {
+  const base = raw.split(";")[0].trim().toLowerCase();
+  if (ALLOWED_MIME_TYPES.has(base)) return base;
+  if (base === "audio/x-m4a" || base === "audio/m4a") return "audio/mp4";
+  if (base === "audio/mp3") return "audio/mpeg";
+  return "audio/webm";
+}
+
 function extensionForMime(mime: string): string {
   if (mime.includes("ogg")) return "ogg";
   if (mime.includes("mp4") || mime.includes("m4a")) return "m4a";
@@ -96,7 +115,7 @@ export async function POST(
       );
     }
 
-    const mimeType = file.type || "audio/webm";
+    const mimeType = normalizeMime(file.type || "audio/webm");
     const ext = extensionForMime(mimeType);
     const path = `${userId}/${id}.${ext}`;
     const buffer = Buffer.from(await file.arrayBuffer());

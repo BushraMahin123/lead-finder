@@ -163,6 +163,7 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
   const callLogIdRef = useRef<string | null>(null);
   const callerNumberRef = useRef<string | null>(null);
   const connectedAtRef = useRef<number | null>(null);
+  const finalDurationRef = useRef<number | null>(null);
   const hangupSentRef = useRef(false);
   const everActiveRef = useRef(false);
   const callPlacedRef = useRef(false);
@@ -177,6 +178,20 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
       clearInterval(timerRef.current);
       timerRef.current = null;
     }
+  }, []);
+
+  // Wall clock since connect stops tracking talk time once the call ends, so the
+  // duration is frozen at the first end event and reused by later patches
+  // (e.g. a disposition picked minutes after hangup).
+  const captureFinalDuration = useCallback((fallbackSeconds = 0) => {
+    if (finalDurationRef.current == null) {
+      finalDurationRef.current =
+        connectedAtRef.current != null
+          ? Math.max(0, Math.round((Date.now() - connectedAtRef.current) / 1000))
+          : fallbackSeconds;
+    }
+    connectedAtRef.current = null;
+    return finalDurationRef.current;
   }, []);
 
   const isLiveCallState = useCallback((state?: string) => {
@@ -341,10 +356,7 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
     hangupSentRef.current = true;
     callPlacedRef.current = true;
 
-    const duration =
-      connectedAtRef.current != null
-        ? Math.max(0, Math.round((Date.now() - connectedAtRef.current) / 1000))
-        : elapsedSeconds;
+    const duration = captureFinalDuration(elapsedSeconds);
 
     const call = callRef.current;
     if (call && isLiveCallState(call.state)) {
@@ -377,7 +389,13 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
       clientRef.current = null;
       callRef.current = null;
     })();
-  }, [clearTimer, elapsedSeconds, isLiveCallState, patchCallLog]);
+  }, [
+    captureFinalDuration,
+    clearTimer,
+    elapsedSeconds,
+    isLiveCallState,
+    patchCallLog,
+  ]);
 
   const toggleMute = useCallback(() => {
     const call = callRef.current;
@@ -402,6 +420,7 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
       callLogIdRef.current = null;
     })();
     connectedAtRef.current = null;
+    finalDurationRef.current = null;
     setIsOpen(false);
     setStatus("idle");
     setError(null);
@@ -429,13 +448,7 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
     async (disposition: CallDisposition) => {
       setSavingDisposition(true);
       try {
-        const duration =
-          connectedAtRef.current != null
-            ? Math.max(
-                0,
-                Math.round((Date.now() - connectedAtRef.current) / 1000),
-              )
-            : elapsedSeconds;
+        const duration = captureFinalDuration(elapsedSeconds);
 
         await patchCallLog({
           disposition,
@@ -453,7 +466,7 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
         setSavingDisposition(false);
       }
     },
-    [elapsedSeconds, hangup, patchCallLog, status],
+    [captureFinalDuration, elapsedSeconds, hangup, patchCallLog, status],
   );
 
   const startCall = useCallback(
@@ -469,6 +482,7 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
       cleanupClient();
       clearTimer();
       connectedAtRef.current = null;
+      finalDurationRef.current = null;
       hangupSentRef.current = false;
       everActiveRef.current = false;
       callPlacedRef.current = false;
@@ -691,13 +705,7 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
           if (state === "hangup") {
             hangupSentRef.current = true;
             callPlacedRef.current = true;
-            const duration =
-              connectedAtRef.current != null
-                ? Math.max(
-                    0,
-                    Math.round((Date.now() - connectedAtRef.current) / 1000),
-                  )
-                : 0;
+            const duration = captureFinalDuration();
             clearTimer();
             setStatus("ended");
             setMuted(false);
@@ -736,6 +744,7 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
           ) {
             hangupSentRef.current = true;
             callPlacedRef.current = true;
+            const duration = captureFinalDuration();
             clearTimer();
             setStatus("ended");
             if (!everActiveRef.current) {
@@ -743,6 +752,7 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
             }
             void patchCallLog({
               status: "failed",
+              durationSeconds: duration,
               telnyxCallId: call.id ?? null,
               ended: true,
               errorMessage: formatHangupReason(call),
@@ -768,10 +778,12 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
           callPlacedRef.current = true;
           const message =
             notification.error?.message ?? "Call failed to connect";
+          const duration = captureFinalDuration();
           setStatus("error");
           setError(message);
           void patchCallLog({
             status: "failed",
+            durationSeconds: duration,
             errorMessage: message,
             ended: true,
           });
@@ -810,7 +822,13 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
         cleanupClient();
       }
     },
-    [cleanupClient, clearTimer, patchCallLog, startRecordingIfNeeded],
+    [
+      captureFinalDuration,
+      cleanupClient,
+      clearTimer,
+      patchCallLog,
+      startRecordingIfNeeded,
+    ],
   );
 
   const value = useMemo<SoftphoneContextValue>(

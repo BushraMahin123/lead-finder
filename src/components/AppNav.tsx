@@ -21,6 +21,7 @@ export default function AppNav() {
     pathname === "/" && searchParams.get("view") === "search";
   const isTablesView =
     pathname === "/dashboard" || pathname.startsWith("/campaigns/");
+  const isCallsView = pathname === "/calls" || pathname.startsWith("/calls/");
 
   return (
     <div className="flex min-w-0 items-center gap-3 xl:gap-6">
@@ -49,6 +50,9 @@ export default function AppNav() {
         </Link>
         <Link href="/?view=search" className={navItemClass(isSearchView)}>
           Lead search
+        </Link>
+        <Link href="/calls" className={navItemClass(isCallsView)}>
+          Call logs
         </Link>
         <Link
           href="/pricing"
@@ -89,6 +93,17 @@ export default function AppNav() {
               onClick={() => setMobileMenuOpen(false)}
             >
               Lead search
+            </Link>
+            <Link
+              href="/calls"
+              className={`rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
+                isCallsView
+                  ? "bg-slate-100 text-slate-900"
+                  : "text-slate-600 hover:bg-slate-50"
+              }`}
+              onClick={() => setMobileMenuOpen(false)}
+            >
+              Call logs
             </Link>
             <Link 
               href="/pricing" 
