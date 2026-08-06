@@ -1,0 +1,6472 @@
+{
+  "industry": [
+    {
+      "label": "3d Printing",
+      "value": "3d printing"
+    },
+    {
+      "label": "3d Technology",
+      "value": "3d technology"
+    },
+    {
+      "label": "A/b Testing",
+      "value": "a/b testing"
+    },
+    {
+      "label": "Accounting",
+      "value": "accounting"
+    },
+    {
+      "label": "Ad Exchange",
+      "value": "ad exchange"
+    },
+    {
+      "label": "Ad Network",
+      "value": "ad network"
+    },
+    {
+      "label": "Ad Retargeting",
+      "value": "ad retargeting"
+    },
+    {
+      "label": "Ad Server",
+      "value": "ad server"
+    },
+    {
+      "label": "Ad Targeting",
+      "value": "ad targeting"
+    },
+    {
+      "label": "Addiction Treatment",
+      "value": "addiction treatment"
+    },
+    {
+      "label": "Administration of Justice",
+      "value": "administration of justice"
+    },
+    {
+      "label": "Adult",
+      "value": "adult"
+    },
+    {
+      "label": "Advanced Materials",
+      "value": "advanced materials"
+    },
+    {
+      "label": "Adventure Travel",
+      "value": "adventure travel"
+    },
+    {
+      "label": "Advertising",
+      "value": "advertising"
+    },
+    {
+      "label": "Advertising Platforms",
+      "value": "advertising platforms"
+    },
+    {
+      "label": "Advertising Services",
+      "value": "advertising services"
+    },
+    {
+      "label": "Advice",
+      "value": "advice"
+    },
+    {
+      "label": "Advocacy",
+      "value": "advocacy"
+    },
+    {
+      "label": "Aerospace",
+      "value": "aerospace"
+    },
+    {
+      "label": "Affiliate Marketing",
+      "value": "affiliate marketing"
+    },
+    {
+      "label": "Agriculture",
+      "value": "agriculture"
+    },
+    {
+      "label": "Agtech",
+      "value": "agtech"
+    },
+    {
+      "label": "Air Transportation",
+      "value": "air transportation"
+    },
+    {
+      "label": "Airlines and Aviation",
+      "value": "airlines and aviation"
+    },
+    {
+      "label": "Alternative Dispute Resolution",
+      "value": "alternative dispute resolution"
+    },
+    {
+      "label": "Alternative Medicine",
+      "value": "alternative medicine"
+    },
+    {
+      "label": "Alternative Protein",
+      "value": "alternative protein"
+    },
+    {
+      "label": "Alumni",
+      "value": "alumni"
+    },
+    {
+      "label": "American Football",
+      "value": "american football"
+    },
+    {
+      "label": "Amusement Park and Arcade",
+      "value": "amusement park and arcade"
+    },
+    {
+      "label": "Analytics",
+      "value": "analytics"
+    },
+    {
+      "label": "Android",
+      "value": "android"
+    },
+    {
+      "label": "Angel Investment",
+      "value": "angel investment"
+    },
+    {
+      "label": "Animal Feed",
+      "value": "animal feed"
+    },
+    {
+      "label": "Animation",
+      "value": "animation"
+    },
+    {
+      "label": "Animation and Post-production",
+      "value": "animation and post-production"
+    },
+    {
+      "label": "App Discovery",
+      "value": "app discovery"
+    },
+    {
+      "label": "App Marketing",
+      "value": "app marketing"
+    },
+    {
+      "label": "Apparel",
+      "value": "apparel"
+    },
+    {
+      "label": "Appliances, Electrical, and Electronics Manufacturing",
+      "value": "appliances, electrical, and electronics manufacturing"
+    },
+    {
+      "label": "Application Performance Management",
+      "value": "application performance management"
+    },
+    {
+      "label": "Application Specific Integrated Circuit (asic)",
+      "value": "application specific integrated circuit (asic)"
+    },
+    {
+      "label": "Apps",
+      "value": "apps"
+    },
+    {
+      "label": "Aquaculture",
+      "value": "aquaculture"
+    },
+    {
+      "label": "Architecture",
+      "value": "architecture"
+    },
+    {
+      "label": "Architecture and Planning",
+      "value": "architecture and planning"
+    },
+    {
+      "label": "Archiving Service",
+      "value": "archiving service"
+    },
+    {
+      "label": "Armed Forces",
+      "value": "armed forces"
+    },
+    {
+      "label": "Art",
+      "value": "art"
+    },
+    {
+      "label": "Artificial Intelligence (ai)",
+      "value": "artificial intelligence (ai)"
+    },
+    {
+      "label": "Artists and Writers",
+      "value": "artists and writers"
+    },
+    {
+      "label": "Asset Management",
+      "value": "asset management"
+    },
+    {
+      "label": "Assisted Living",
+      "value": "assisted living"
+    },
+    {
+      "label": "Assistive Technology",
+      "value": "assistive technology"
+    },
+    {
+      "label": "Association",
+      "value": "association"
+    },
+    {
+      "label": "Auctions",
+      "value": "auctions"
+    },
+    {
+      "label": "Audio",
+      "value": "audio"
+    },
+    {
+      "label": "Audio Recording and Production",
+      "value": "audio recording and production"
+    },
+    {
+      "label": "Audio/visual Equipment",
+      "value": "audio/visual equipment"
+    },
+    {
+      "label": "Audiobooks",
+      "value": "audiobooks"
+    },
+    {
+      "label": "Augmented Reality",
+      "value": "augmented reality"
+    },
+    {
+      "label": "Auto Insurance",
+      "value": "auto insurance"
+    },
+    {
+      "label": "Automation Machinery Manufacturing",
+      "value": "automation machinery manufacturing"
+    },
+    {
+      "label": "Automotive",
+      "value": "automotive"
+    },
+    {
+      "label": "Autonomous Vehicles",
+      "value": "autonomous vehicles"
+    },
+    {
+      "label": "Aviation and Aerospace Component Manufacturing",
+      "value": "aviation and aerospace component manufacturing"
+    },
+    {
+      "label": "B2b",
+      "value": "b2b"
+    },
+    {
+      "label": "B2c",
+      "value": "b2c"
+    },
+    {
+      "label": "Baby",
+      "value": "baby"
+    },
+    {
+      "label": "Bakery",
+      "value": "bakery"
+    },
+    {
+      "label": "Banking",
+      "value": "banking"
+    },
+    {
+      "label": "Baseball",
+      "value": "baseball"
+    },
+    {
+      "label": "Basketball",
+      "value": "basketball"
+    },
+    {
+      "label": "Battery",
+      "value": "battery"
+    },
+    {
+      "label": "Beauty",
+      "value": "beauty"
+    },
+    {
+      "label": "Beverage Manufacturing",
+      "value": "beverage manufacturing"
+    },
+    {
+      "label": "Big Data",
+      "value": "big data"
+    },
+    {
+      "label": "Billing",
+      "value": "billing"
+    },
+    {
+      "label": "Biofuel",
+      "value": "biofuel"
+    },
+    {
+      "label": "Bioinformatics",
+      "value": "bioinformatics"
+    },
+    {
+      "label": "Biomass Energy",
+      "value": "biomass energy"
+    },
+    {
+      "label": "Biometrics",
+      "value": "biometrics"
+    },
+    {
+      "label": "Biopharma",
+      "value": "biopharma"
+    },
+    {
+      "label": "Biotechnology",
+      "value": "biotechnology"
+    },
+    {
+      "label": "Biotechnology Research",
+      "value": "biotechnology research"
+    },
+    {
+      "label": "Bitcoin",
+      "value": "bitcoin"
+    },
+    {
+      "label": "Blockchain",
+      "value": "blockchain"
+    },
+    {
+      "label": "Blogging Platforms",
+      "value": "blogging platforms"
+    },
+    {
+      "label": "Boating",
+      "value": "boating"
+    },
+    {
+      "label": "Book and Periodical Publishing",
+      "value": "book and periodical publishing"
+    },
+    {
+      "label": "Bookkeeping and Payroll",
+      "value": "bookkeeping and payroll"
+    },
+    {
+      "label": "Books",
+      "value": "books"
+    },
+    {
+      "label": "Brand Marketing",
+      "value": "brand marketing"
+    },
+    {
+      "label": "Brewing",
+      "value": "brewing"
+    },
+    {
+      "label": "Broadcast Media Production and Distribution",
+      "value": "broadcast media production and distribution"
+    },
+    {
+      "label": "Broadcasting",
+      "value": "broadcasting"
+    },
+    {
+      "label": "Browser Extensions",
+      "value": "browser extensions"
+    },
+    {
+      "label": "Building Maintenance",
+      "value": "building maintenance"
+    },
+    {
+      "label": "Building Material",
+      "value": "building material"
+    },
+    {
+      "label": "Business Consulting and Services",
+      "value": "business consulting and services"
+    },
+    {
+      "label": "Business Development",
+      "value": "business development"
+    },
+    {
+      "label": "Business Information Systems",
+      "value": "business information systems"
+    },
+    {
+      "label": "Business Intelligence",
+      "value": "business intelligence"
+    },
+    {
+      "label": "Business Process Automation (bpa)",
+      "value": "business process automation (bpa)"
+    },
+    {
+      "label": "Business Travel",
+      "value": "business travel"
+    },
+    {
+      "label": "Cad",
+      "value": "cad"
+    },
+    {
+      "label": "Call Center",
+      "value": "call center"
+    },
+    {
+      "label": "Cannabis",
+      "value": "cannabis"
+    },
+    {
+      "label": "Capital Markets",
+      "value": "capital markets"
+    },
+    {
+      "label": "Car Sharing",
+      "value": "car sharing"
+    },
+    {
+      "label": "Carbon Capture",
+      "value": "carbon capture"
+    },
+    {
+      "label": "Card and Board Games",
+      "value": "card and board games"
+    },
+    {
+      "label": "Career Planning",
+      "value": "career planning"
+    },
+    {
+      "label": "Casino",
+      "value": "casino"
+    },
+    {
+      "label": "Casual Games",
+      "value": "casual games"
+    },
+    {
+      "label": "Catering",
+      "value": "catering"
+    },
+    {
+      "label": "Cause Marketing",
+      "value": "cause marketing"
+    },
+    {
+      "label": "Celebrity",
+      "value": "celebrity"
+    },
+    {
+      "label": "Charging Infrastructure",
+      "value": "charging infrastructure"
+    },
+    {
+      "label": "Charity",
+      "value": "charity"
+    },
+    {
+      "label": "Charter Schools",
+      "value": "charter schools"
+    },
+    {
+      "label": "Chatbot",
+      "value": "chatbot"
+    },
+    {
+      "label": "Chemical",
+      "value": "chemical"
+    },
+    {
+      "label": "Chemical Engineering",
+      "value": "chemical engineering"
+    },
+    {
+      "label": "Chemical Manufacturing",
+      "value": "chemical manufacturing"
+    },
+    {
+      "label": "Child Care",
+      "value": "child care"
+    },
+    {
+      "label": "Children",
+      "value": "children"
+    },
+    {
+      "label": "Civic and Social Organizations",
+      "value": "civic and social organizations"
+    },
+    {
+      "label": "Civictech",
+      "value": "civictech"
+    },
+    {
+      "label": "Civil Engineering",
+      "value": "civil engineering"
+    },
+    {
+      "label": "Classifieds",
+      "value": "classifieds"
+    },
+    {
+      "label": "Clean Energy",
+      "value": "clean energy"
+    },
+    {
+      "label": "Cleaning Products",
+      "value": "cleaning products"
+    },
+    {
+      "label": "Cleantech",
+      "value": "cleantech"
+    },
+    {
+      "label": "Clinical Trials",
+      "value": "clinical trials"
+    },
+    {
+      "label": "Cloud Computing",
+      "value": "cloud computing"
+    },
+    {
+      "label": "Cloud Data Services",
+      "value": "cloud data services"
+    },
+    {
+      "label": "Cloud Infrastructure",
+      "value": "cloud infrastructure"
+    },
+    {
+      "label": "Cloud Management",
+      "value": "cloud management"
+    },
+    {
+      "label": "Cloud Security",
+      "value": "cloud security"
+    },
+    {
+      "label": "Cloud Storage",
+      "value": "cloud storage"
+    },
+    {
+      "label": "Cms",
+      "value": "cms"
+    },
+    {
+      "label": "Coffee",
+      "value": "coffee"
+    },
+    {
+      "label": "Collaboration",
+      "value": "collaboration"
+    },
+    {
+      "label": "Collaborative Consumption",
+      "value": "collaborative consumption"
+    },
+    {
+      "label": "Collectibles",
+      "value": "collectibles"
+    },
+    {
+      "label": "Collection Agency",
+      "value": "collection agency"
+    },
+    {
+      "label": "College Recruiting",
+      "value": "college recruiting"
+    },
+    {
+      "label": "Comics",
+      "value": "comics"
+    },
+    {
+      "label": "Commercial",
+      "value": "commercial"
+    },
+    {
+      "label": "Commercial Insurance",
+      "value": "commercial insurance"
+    },
+    {
+      "label": "Commercial Lending",
+      "value": "commercial lending"
+    },
+    {
+      "label": "Commercial Real Estate",
+      "value": "commercial real estate"
+    },
+    {
+      "label": "Communication Hardware",
+      "value": "communication hardware"
+    },
+    {
+      "label": "Communications Infrastructure",
+      "value": "communications infrastructure"
+    },
+    {
+      "label": "Communities",
+      "value": "communities"
+    },
+    {
+      "label": "Compliance",
+      "value": "compliance"
+    },
+    {
+      "label": "Computer",
+      "value": "computer"
+    },
+    {
+      "label": "Computer and Network Security",
+      "value": "computer and network security"
+    },
+    {
+      "label": "Computer Games",
+      "value": "computer games"
+    },
+    {
+      "label": "Computer Hardware Manufacturing",
+      "value": "computer hardware manufacturing"
+    },
+    {
+      "label": "Computer Networking Products",
+      "value": "computer networking products"
+    },
+    {
+      "label": "Computer Vision",
+      "value": "computer vision"
+    },
+    {
+      "label": "Computers and Electronics Manufacturing",
+      "value": "computers and electronics manufacturing"
+    },
+    {
+      "label": "Concerts",
+      "value": "concerts"
+    },
+    {
+      "label": "Confectionery",
+      "value": "confectionery"
+    },
+    {
+      "label": "Console Games",
+      "value": "console games"
+    },
+    {
+      "label": "Construction",
+      "value": "construction"
+    },
+    {
+      "label": "Consulting",
+      "value": "consulting"
+    },
+    {
+      "label": "Consumer",
+      "value": "consumer"
+    },
+    {
+      "label": "Consumer Applications",
+      "value": "consumer applications"
+    },
+    {
+      "label": "Consumer Electronics",
+      "value": "consumer electronics"
+    },
+    {
+      "label": "Consumer Goods",
+      "value": "consumer goods"
+    },
+    {
+      "label": "Consumer Lending",
+      "value": "consumer lending"
+    },
+    {
+      "label": "Consumer Research",
+      "value": "consumer research"
+    },
+    {
+      "label": "Consumer Reviews",
+      "value": "consumer reviews"
+    },
+    {
+      "label": "Consumer Services",
+      "value": "consumer services"
+    },
+    {
+      "label": "Consumer Software",
+      "value": "consumer software"
+    },
+    {
+      "label": "Contact Management",
+      "value": "contact management"
+    },
+    {
+      "label": "Content",
+      "value": "content"
+    },
+    {
+      "label": "Content Creators",
+      "value": "content creators"
+    },
+    {
+      "label": "Content Delivery Network",
+      "value": "content delivery network"
+    },
+    {
+      "label": "Content Discovery",
+      "value": "content discovery"
+    },
+    {
+      "label": "Content Marketing",
+      "value": "content marketing"
+    },
+    {
+      "label": "Content Syndication",
+      "value": "content syndication"
+    },
+    {
+      "label": "Contests",
+      "value": "contests"
+    },
+    {
+      "label": "Continuing Education",
+      "value": "continuing education"
+    },
+    {
+      "label": "Cooking",
+      "value": "cooking"
+    },
+    {
+      "label": "Copywriting",
+      "value": "copywriting"
+    },
+    {
+      "label": "Corporate Training",
+      "value": "corporate training"
+    },
+    {
+      "label": "Corrections Facilities",
+      "value": "corrections facilities"
+    },
+    {
+      "label": "Cosmetic Surgery",
+      "value": "cosmetic surgery"
+    },
+    {
+      "label": "Cosmetics",
+      "value": "cosmetics"
+    },
+    {
+      "label": "Coupons",
+      "value": "coupons"
+    },
+    {
+      "label": "Courier Service",
+      "value": "courier service"
+    },
+    {
+      "label": "Coworking",
+      "value": "coworking"
+    },
+    {
+      "label": "Craft Beer",
+      "value": "craft beer"
+    },
+    {
+      "label": "Creative Agency",
+      "value": "creative agency"
+    },
+    {
+      "label": "Credit",
+      "value": "credit"
+    },
+    {
+      "label": "Credit Bureau",
+      "value": "credit bureau"
+    },
+    {
+      "label": "Credit Cards",
+      "value": "credit cards"
+    },
+    {
+      "label": "Cricket",
+      "value": "cricket"
+    },
+    {
+      "label": "Crm",
+      "value": "crm"
+    },
+    {
+      "label": "Crowdfunding",
+      "value": "crowdfunding"
+    },
+    {
+      "label": "Crowdsourcing",
+      "value": "crowdsourcing"
+    },
+    {
+      "label": "Cryptocurrency",
+      "value": "cryptocurrency"
+    },
+    {
+      "label": "Customer Service",
+      "value": "customer service"
+    },
+    {
+      "label": "Cyber Security",
+      "value": "cyber security"
+    },
+    {
+      "label": "Cycling",
+      "value": "cycling"
+    },
+    {
+      "label": "Dairy",
+      "value": "dairy"
+    },
+    {
+      "label": "Dairy Product Manufacturing",
+      "value": "dairy product manufacturing"
+    },
+    {
+      "label": "Data Center",
+      "value": "data center"
+    },
+    {
+      "label": "Data Center Automation",
+      "value": "data center automation"
+    },
+    {
+      "label": "Data Collection and Labeling",
+      "value": "data collection and labeling"
+    },
+    {
+      "label": "Data Governance",
+      "value": "data governance"
+    },
+    {
+      "label": "Data Integration",
+      "value": "data integration"
+    },
+    {
+      "label": "Data Management",
+      "value": "data management"
+    },
+    {
+      "label": "Data Mining",
+      "value": "data mining"
+    },
+    {
+      "label": "Data Storage",
+      "value": "data storage"
+    },
+    {
+      "label": "Data Visualization",
+      "value": "data visualization"
+    },
+    {
+      "label": "Database",
+      "value": "database"
+    },
+    {
+      "label": "Dating",
+      "value": "dating"
+    },
+    {
+      "label": "Debit Cards",
+      "value": "debit cards"
+    },
+    {
+      "label": "Debt Collections",
+      "value": "debt collections"
+    },
+    {
+      "label": "Decentralized Finance (defi)",
+      "value": "decentralized finance (defi)"
+    },
+    {
+      "label": "Defense and Space Manufacturing",
+      "value": "defense and space manufacturing"
+    },
+    {
+      "label": "Delivery",
+      "value": "delivery"
+    },
+    {
+      "label": "Delivery Service",
+      "value": "delivery service"
+    },
+    {
+      "label": "Dental",
+      "value": "dental"
+    },
+    {
+      "label": "Design Services",
+      "value": "design services"
+    },
+    {
+      "label": "Desktop Apps",
+      "value": "desktop apps"
+    },
+    {
+      "label": "Developer Apis",
+      "value": "developer apis"
+    },
+    {
+      "label": "Developer Platform",
+      "value": "developer platform"
+    },
+    {
+      "label": "Developer Tools",
+      "value": "developer tools"
+    },
+    {
+      "label": "Devops",
+      "value": "devops"
+    },
+    {
+      "label": "Diabetes",
+      "value": "diabetes"
+    },
+    {
+      "label": "Dietary Supplements",
+      "value": "dietary supplements"
+    },
+    {
+      "label": "Digital Entertainment",
+      "value": "digital entertainment"
+    },
+    {
+      "label": "Digital Marketing",
+      "value": "digital marketing"
+    },
+    {
+      "label": "Digital Media",
+      "value": "digital media"
+    },
+    {
+      "label": "Digital Signage",
+      "value": "digital signage"
+    },
+    {
+      "label": "Direct Marketing",
+      "value": "direct marketing"
+    },
+    {
+      "label": "Direct Sales",
+      "value": "direct sales"
+    },
+    {
+      "label": "Distillery",
+      "value": "distillery"
+    },
+    {
+      "label": "Diving",
+      "value": "diving"
+    },
+    {
+      "label": "Diy",
+      "value": "diy"
+    },
+    {
+      "label": "Document Management",
+      "value": "document management"
+    },
+    {
+      "label": "Document Preparation",
+      "value": "document preparation"
+    },
+    {
+      "label": "Domain Registrar",
+      "value": "domain registrar"
+    },
+    {
+      "label": "DRM",
+      "value": "drm"
+    },
+    {
+      "label": "Drone Management",
+      "value": "drone management"
+    },
+    {
+      "label": "Drones",
+      "value": "drones"
+    },
+    {
+      "label": "DSP",
+      "value": "dsp"
+    },
+    {
+      "label": "E-commerce",
+      "value": "e-commerce"
+    },
+    {
+      "label": "E-commerce Platforms",
+      "value": "e-commerce platforms"
+    },
+    {
+      "label": "E-learning",
+      "value": "e-learning"
+    },
+    {
+      "label": "E-learning Providers",
+      "value": "e-learning providers"
+    },
+    {
+      "label": "E-signature",
+      "value": "e-signature"
+    },
+    {
+      "label": "Ebooks",
+      "value": "ebooks"
+    },
+    {
+      "label": "Ediscovery",
+      "value": "ediscovery"
+    },
+    {
+      "label": "Edtech",
+      "value": "edtech"
+    },
+    {
+      "label": "Education",
+      "value": "education"
+    },
+    {
+      "label": "Education Administration Programs",
+      "value": "education administration programs"
+    },
+    {
+      "label": "Edutainment",
+      "value": "edutainment"
+    },
+    {
+      "label": "Elder Care",
+      "value": "elder care"
+    },
+    {
+      "label": "Elderly",
+      "value": "elderly"
+    },
+    {
+      "label": "Electric Vehicle",
+      "value": "electric vehicle"
+    },
+    {
+      "label": "Electrical Distribution",
+      "value": "electrical distribution"
+    },
+    {
+      "label": "Electronic Design Automation (eda)",
+      "value": "electronic design automation (eda)"
+    },
+    {
+      "label": "Electronic Health Record (ehr)",
+      "value": "electronic health record (ehr)"
+    },
+    {
+      "label": "Electronics",
+      "value": "electronics"
+    },
+    {
+      "label": "Email",
+      "value": "email"
+    },
+    {
+      "label": "Email Marketing",
+      "value": "email marketing"
+    },
+    {
+      "label": "Embedded Software",
+      "value": "embedded software"
+    },
+    {
+      "label": "Embedded Systems",
+      "value": "embedded systems"
+    },
+    {
+      "label": "Emergency Medicine",
+      "value": "emergency medicine"
+    },
+    {
+      "label": "Emerging Markets",
+      "value": "emerging markets"
+    },
+    {
+      "label": "Employee Benefits",
+      "value": "employee benefits"
+    },
+    {
+      "label": "Employment",
+      "value": "employment"
+    },
+    {
+      "label": "Energy",
+      "value": "energy"
+    },
+    {
+      "label": "Energy Efficiency",
+      "value": "energy efficiency"
+    },
+    {
+      "label": "Energy Management",
+      "value": "energy management"
+    },
+    {
+      "label": "Energy Storage",
+      "value": "energy storage"
+    },
+    {
+      "label": "Enterprise",
+      "value": "enterprise"
+    },
+    {
+      "label": "Enterprise Applications",
+      "value": "enterprise applications"
+    },
+    {
+      "label": "Enterprise Resource Planning (erp)",
+      "value": "enterprise resource planning (erp)"
+    },
+    {
+      "label": "Enterprise Software",
+      "value": "enterprise software"
+    },
+    {
+      "label": "Entertainment Providers",
+      "value": "entertainment providers"
+    },
+    {
+      "label": "Environmental Consulting",
+      "value": "environmental consulting"
+    },
+    {
+      "label": "Environmental Engineering",
+      "value": "environmental engineering"
+    },
+    {
+      "label": "Environmental Services",
+      "value": "environmental services"
+    },
+    {
+      "label": "Equestrian",
+      "value": "equestrian"
+    },
+    {
+      "label": "Esports",
+      "value": "esports"
+    },
+    {
+      "label": "Ethereum",
+      "value": "ethereum"
+    },
+    {
+      "label": "Event Management",
+      "value": "event management"
+    },
+    {
+      "label": "Event Promotion",
+      "value": "event promotion"
+    },
+    {
+      "label": "Events",
+      "value": "events"
+    },
+    {
+      "label": "Events Services",
+      "value": "events services"
+    },
+    {
+      "label": "Executive Offices",
+      "value": "executive offices"
+    },
+    {
+      "label": "Extermination Service",
+      "value": "extermination service"
+    },
+    {
+      "label": "Eyewear",
+      "value": "eyewear"
+    },
+    {
+      "label": "Facebook",
+      "value": "facebook"
+    },
+    {
+      "label": "Facial Recognition",
+      "value": "facial recognition"
+    },
+    {
+      "label": "Facilities Services",
+      "value": "facilities services"
+    },
+    {
+      "label": "Facilities Support Services",
+      "value": "facilities support services"
+    },
+    {
+      "label": "Facility Management",
+      "value": "facility management"
+    },
+    {
+      "label": "Family",
+      "value": "family"
+    },
+    {
+      "label": "Fantasy Sports",
+      "value": "fantasy sports"
+    },
+    {
+      "label": "Farmers Market",
+      "value": "farmers market"
+    },
+    {
+      "label": "Farming",
+      "value": "farming"
+    },
+    {
+      "label": "Fashion",
+      "value": "fashion"
+    },
+    {
+      "label": "Fast-moving Consumer Goods",
+      "value": "fast-moving consumer goods"
+    },
+    {
+      "label": "Ferry Service",
+      "value": "ferry service"
+    },
+    {
+      "label": "Fertility",
+      "value": "fertility"
+    },
+    {
+      "label": "Field Support",
+      "value": "field support"
+    },
+    {
+      "label": "Field-programmable Gate Array (fpga)",
+      "value": "field-programmable gate array (fpga)"
+    },
+    {
+      "label": "File Sharing",
+      "value": "file sharing"
+    },
+    {
+      "label": "Film",
+      "value": "film"
+    },
+    {
+      "label": "Film Distribution",
+      "value": "film distribution"
+    },
+    {
+      "label": "Film Production",
+      "value": "film production"
+    },
+    {
+      "label": "Finance",
+      "value": "finance"
+    },
+    {
+      "label": "Financial Exchanges",
+      "value": "financial exchanges"
+    },
+    {
+      "label": "Financial Services",
+      "value": "financial services"
+    },
+    {
+      "label": "Fintech",
+      "value": "fintech"
+    },
+    {
+      "label": "First Aid",
+      "value": "first aid"
+    },
+    {
+      "label": "Fisheries",
+      "value": "fisheries"
+    },
+    {
+      "label": "Fitness",
+      "value": "fitness"
+    },
+    {
+      "label": "Flash Sale",
+      "value": "flash sale"
+    },
+    {
+      "label": "Flash Storage",
+      "value": "flash storage"
+    },
+    {
+      "label": "Fleet Management",
+      "value": "fleet management"
+    },
+    {
+      "label": "Flowers",
+      "value": "flowers"
+    },
+    {
+      "label": "Food and Beverage",
+      "value": "food and beverage"
+    },
+    {
+      "label": "Food and Beverage Manufacturing",
+      "value": "food and beverage manufacturing"
+    },
+    {
+      "label": "Food and Beverage Services",
+      "value": "food and beverage services"
+    },
+    {
+      "label": "Food Delivery",
+      "value": "food delivery"
+    },
+    {
+      "label": "Food Processing",
+      "value": "food processing"
+    },
+    {
+      "label": "Food Trucks",
+      "value": "food trucks"
+    },
+    {
+      "label": "Foreign Exchange Trading",
+      "value": "foreign exchange trading"
+    },
+    {
+      "label": "Forestry",
+      "value": "forestry"
+    },
+    {
+      "label": "Fossil Fuels",
+      "value": "fossil fuels"
+    },
+    {
+      "label": "Foundries",
+      "value": "foundries"
+    },
+    {
+      "label": "Franchise",
+      "value": "franchise"
+    },
+    {
+      "label": "Fraud Detection",
+      "value": "fraud detection"
+    },
+    {
+      "label": "Freelance",
+      "value": "freelance"
+    },
+    {
+      "label": "Freemium",
+      "value": "freemium"
+    },
+    {
+      "label": "Freight and Package Transportation",
+      "value": "freight and package transportation"
+    },
+    {
+      "label": "Freight Service",
+      "value": "freight service"
+    },
+    {
+      "label": "Fruit",
+      "value": "fruit"
+    },
+    {
+      "label": "Fuel",
+      "value": "fuel"
+    },
+    {
+      "label": "Fuel Cell",
+      "value": "fuel cell"
+    },
+    {
+      "label": "Funding Platform",
+      "value": "funding platform"
+    },
+    {
+      "label": "Fundraising",
+      "value": "fundraising"
+    },
+    {
+      "label": "Funerals",
+      "value": "funerals"
+    },
+    {
+      "label": "Furniture",
+      "value": "furniture"
+    },
+    {
+      "label": "Furniture and Home Furnishings Manufacturing",
+      "value": "furniture and home furnishings manufacturing"
+    },
+    {
+      "label": "Gambling",
+      "value": "gambling"
+    },
+    {
+      "label": "Gambling Facilities and Casinos",
+      "value": "gambling facilities and casinos"
+    },
+    {
+      "label": "Gamification",
+      "value": "gamification"
+    },
+    {
+      "label": "Gaming",
+      "value": "gaming"
+    },
+    {
+      "label": "Generation Y",
+      "value": "generation y"
+    },
+    {
+      "label": "Generation Z",
+      "value": "generation z"
+    },
+    {
+      "label": "Generative Ai",
+      "value": "generative ai"
+    },
+    {
+      "label": "Genetics",
+      "value": "genetics"
+    },
+    {
+      "label": "Geospatial",
+      "value": "geospatial"
+    },
+    {
+      "label": "Geothermal Energy",
+      "value": "geothermal energy"
+    },
+    {
+      "label": "Gift",
+      "value": "gift"
+    },
+    {
+      "label": "Gift Card",
+      "value": "gift card"
+    },
+    {
+      "label": "Gift Exchange",
+      "value": "gift exchange"
+    },
+    {
+      "label": "Gift Registry",
+      "value": "gift registry"
+    },
+    {
+      "label": "Glass, Ceramics and Concrete Manufacturing",
+      "value": "glass, ceramics and concrete manufacturing"
+    },
+    {
+      "label": "Golf",
+      "value": "golf"
+    },
+    {
+      "label": "Google",
+      "value": "google"
+    },
+    {
+      "label": "Google Glass",
+      "value": "google glass"
+    },
+    {
+      "label": "Government",
+      "value": "government"
+    },
+    {
+      "label": "Government Administration",
+      "value": "government administration"
+    },
+    {
+      "label": "Government Relations Services",
+      "value": "government relations services"
+    },
+    {
+      "label": "Govtech",
+      "value": "govtech"
+    },
+    {
+      "label": "Gps",
+      "value": "gps"
+    },
+    {
+      "label": "Gpu",
+      "value": "gpu"
+    },
+    {
+      "label": "Graphic Design",
+      "value": "graphic design"
+    },
+    {
+      "label": "Green Building",
+      "value": "green building"
+    },
+    {
+      "label": "Green Consumer Goods",
+      "value": "green consumer goods"
+    },
+    {
+      "label": "Greentech",
+      "value": "greentech"
+    },
+    {
+      "label": "Grocery",
+      "value": "grocery"
+    },
+    {
+      "label": "Group Buying",
+      "value": "group buying"
+    },
+    {
+      "label": "Guides",
+      "value": "guides"
+    },
+    {
+      "label": "Handmade",
+      "value": "handmade"
+    },
+    {
+      "label": "Hardware",
+      "value": "hardware"
+    },
+    {
+      "label": "Health Care",
+      "value": "health care"
+    },
+    {
+      "label": "Health Diagnostics",
+      "value": "health diagnostics"
+    },
+    {
+      "label": "Health Insurance",
+      "value": "health insurance"
+    },
+    {
+      "label": "Heating, Ventilation, and Air Conditioning (hvac)",
+      "value": "heating, ventilation, and air conditioning (hvac)"
+    },
+    {
+      "label": "Hedge Funds",
+      "value": "hedge funds"
+    },
+    {
+      "label": "Herbs and Spices",
+      "value": "herbs and spices"
+    },
+    {
+      "label": "Higher Education",
+      "value": "higher education"
+    },
+    {
+      "label": "Hockey",
+      "value": "hockey"
+    },
+    {
+      "label": "Home and Garden",
+      "value": "home and garden"
+    },
+    {
+      "label": "Home Appliances",
+      "value": "home appliances"
+    },
+    {
+      "label": "Home Decor",
+      "value": "home decor"
+    },
+    {
+      "label": "Home Health Care",
+      "value": "home health care"
+    },
+    {
+      "label": "Home Improvement",
+      "value": "home improvement"
+    },
+    {
+      "label": "Home Renovation",
+      "value": "home renovation"
+    },
+    {
+      "label": "Home Services",
+      "value": "home services"
+    },
+    {
+      "label": "Homeland Security",
+      "value": "homeland security"
+    },
+    {
+      "label": "Homeless Shelter",
+      "value": "homeless shelter"
+    },
+    {
+      "label": "Horticulture",
+      "value": "horticulture"
+    },
+    {
+      "label": "Hospital",
+      "value": "hospital"
+    },
+    {
+      "label": "Hospitality",
+      "value": "hospitality"
+    },
+    {
+      "label": "Hospitals and Health Care",
+      "value": "hospitals and health care"
+    },
+    {
+      "label": "Hotel",
+      "value": "hotel"
+    },
+    {
+      "label": "Housekeeping Service",
+      "value": "housekeeping service"
+    },
+    {
+      "label": "Human Computer Interaction",
+      "value": "human computer interaction"
+    },
+    {
+      "label": "Human Resources",
+      "value": "human resources"
+    },
+    {
+      "label": "Human Resources Services",
+      "value": "human resources services"
+    },
+    {
+      "label": "Humanitarian",
+      "value": "humanitarian"
+    },
+    {
+      "label": "Hunting",
+      "value": "hunting"
+    },
+    {
+      "label": "Hydroelectric",
+      "value": "hydroelectric"
+    },
+    {
+      "label": "Hydroponics",
+      "value": "hydroponics"
+    },
+    {
+      "label": "Iaas",
+      "value": "iaas"
+    },
+    {
+      "label": "Identity Management",
+      "value": "identity management"
+    },
+    {
+      "label": "Image Recognition",
+      "value": "image recognition"
+    },
+    {
+      "label": "Impact Investing",
+      "value": "impact investing"
+    },
+    {
+      "label": "In-flight Entertainment",
+      "value": "in-flight entertainment"
+    },
+    {
+      "label": "Incubators",
+      "value": "incubators"
+    },
+    {
+      "label": "Independent Music",
+      "value": "independent music"
+    },
+    {
+      "label": "Individual and Family Services",
+      "value": "individual and family services"
+    },
+    {
+      "label": "Indoor Positioning",
+      "value": "indoor positioning"
+    },
+    {
+      "label": "Industrial",
+      "value": "industrial"
+    },
+    {
+      "label": "Industrial Automation",
+      "value": "industrial automation"
+    },
+    {
+      "label": "Industrial Design",
+      "value": "industrial design"
+    },
+    {
+      "label": "Industrial Engineering",
+      "value": "industrial engineering"
+    },
+    {
+      "label": "Industrial Machinery Manufacturing",
+      "value": "industrial machinery manufacturing"
+    },
+    {
+      "label": "Industrial Manufacturing",
+      "value": "industrial manufacturing"
+    },
+    {
+      "label": "Information and Communications Technology (ict)",
+      "value": "information and communications technology (ict)"
+    },
+    {
+      "label": "Information Services",
+      "value": "information services"
+    },
+    {
+      "label": "Information Technology",
+      "value": "information technology"
+    },
+    {
+      "label": "Infrastructure",
+      "value": "infrastructure"
+    },
+    {
+      "label": "Innovation Management",
+      "value": "innovation management"
+    },
+    {
+      "label": "Insurance",
+      "value": "insurance"
+    },
+    {
+      "label": "Insurtech",
+      "value": "insurtech"
+    },
+    {
+      "label": "Intellectual Property",
+      "value": "intellectual property"
+    },
+    {
+      "label": "Intelligent Systems",
+      "value": "intelligent systems"
+    },
+    {
+      "label": "Interior Design",
+      "value": "interior design"
+    },
+    {
+      "label": "International Affairs",
+      "value": "international affairs"
+    },
+    {
+      "label": "International Trade and Development",
+      "value": "international trade and development"
+    },
+    {
+      "label": "Internet",
+      "value": "internet"
+    },
+    {
+      "label": "Internet of Things",
+      "value": "internet of things"
+    },
+    {
+      "label": "Internet Radio",
+      "value": "internet radio"
+    },
+    {
+      "label": "Intrusion Detection",
+      "value": "intrusion detection"
+    },
+    {
+      "label": "Investment Banking",
+      "value": "investment banking"
+    },
+    {
+      "label": "Investment Management",
+      "value": "investment management"
+    },
+    {
+      "label": "Ios",
+      "value": "ios"
+    },
+    {
+      "label": "Isp",
+      "value": "isp"
+    },
+    {
+      "label": "IT Infrastructure",
+      "value": "it infrastructure"
+    },
+    {
+      "label": "IT Management",
+      "value": "it management"
+    },
+    {
+      "label": "IT Services and IT Consulting",
+      "value": "it services and it consulting"
+    },
+    {
+      "label": "Janitorial Service",
+      "value": "janitorial service"
+    },
+    {
+      "label": "Jewelry",
+      "value": "jewelry"
+    },
+    {
+      "label": "Journalism",
+      "value": "journalism"
+    },
+    {
+      "label": "Knowledge Management",
+      "value": "knowledge management"
+    },
+    {
+      "label": "Landscaping",
+      "value": "landscaping"
+    },
+    {
+      "label": "Language Learning",
+      "value": "language learning"
+    },
+    {
+      "label": "Laser",
+      "value": "laser"
+    },
+    {
+      "label": "Last Mile Transportation",
+      "value": "last mile transportation"
+    },
+    {
+      "label": "Laundry and Dry-cleaning",
+      "value": "laundry and dry-cleaning"
+    },
+    {
+      "label": "Law Enforcement",
+      "value": "law enforcement"
+    },
+    {
+      "label": "Law Practice",
+      "value": "law practice"
+    },
+    {
+      "label": "Lead Generation",
+      "value": "lead generation"
+    },
+    {
+      "label": "Lead Management",
+      "value": "lead management"
+    },
+    {
+      "label": "Leasing",
+      "value": "leasing"
+    },
+    {
+      "label": "Leasing Non-residential Real Estate",
+      "value": "leasing non-residential real estate"
+    },
+    {
+      "label": "Legal",
+      "value": "legal"
+    },
+    {
+      "label": "Legal Services",
+      "value": "legal services"
+    },
+    {
+      "label": "Legal Tech",
+      "value": "legal tech"
+    },
+    {
+      "label": "Legislative Offices",
+      "value": "legislative offices"
+    },
+    {
+      "label": "Leisure",
+      "value": "leisure"
+    },
+    {
+      "label": "Lending",
+      "value": "lending"
+    },
+    {
+      "label": "Lgbt",
+      "value": "lgbt"
+    },
+    {
+      "label": "Libraries",
+      "value": "libraries"
+    },
+    {
+      "label": "Life Insurance",
+      "value": "life insurance"
+    },
+    {
+      "label": "Life Science",
+      "value": "life science"
+    },
+    {
+      "label": "Lifestyle",
+      "value": "lifestyle"
+    },
+    {
+      "label": "Lighting",
+      "value": "lighting"
+    },
+    {
+      "label": "Limousine Service",
+      "value": "limousine service"
+    },
+    {
+      "label": "Lingerie",
+      "value": "lingerie"
+    },
+    {
+      "label": "Linux",
+      "value": "linux"
+    },
+    {
+      "label": "Livestock",
+      "value": "livestock"
+    },
+    {
+      "label": "Local",
+      "value": "local"
+    },
+    {
+      "label": "Local Advertising",
+      "value": "local advertising"
+    },
+    {
+      "label": "Local Business",
+      "value": "local business"
+    },
+    {
+      "label": "Local Shopping",
+      "value": "local shopping"
+    },
+    {
+      "label": "Location Based Services",
+      "value": "location based services"
+    },
+    {
+      "label": "Logistics",
+      "value": "logistics"
+    },
+    {
+      "label": "Loyalty Programs",
+      "value": "loyalty programs"
+    },
+    {
+      "label": "Machine Learning",
+      "value": "machine learning"
+    },
+    {
+      "label": "Machinery Manufacturing",
+      "value": "machinery manufacturing"
+    },
+    {
+      "label": "Macos",
+      "value": "macos"
+    },
+    {
+      "label": "Made to Order",
+      "value": "made to order"
+    },
+    {
+      "label": "Management Consulting",
+      "value": "management consulting"
+    },
+    {
+      "label": "Management Information Systems",
+      "value": "management information systems"
+    },
+    {
+      "label": "Manufacturing",
+      "value": "manufacturing"
+    },
+    {
+      "label": "Mapping Services",
+      "value": "mapping services"
+    },
+    {
+      "label": "Marine Technology",
+      "value": "marine technology"
+    },
+    {
+      "label": "Marine Transportation",
+      "value": "marine transportation"
+    },
+    {
+      "label": "Maritime Transportation",
+      "value": "maritime transportation"
+    },
+    {
+      "label": "Market Research",
+      "value": "market research"
+    },
+    {
+      "label": "Marketing",
+      "value": "marketing"
+    },
+    {
+      "label": "Marketing Automation",
+      "value": "marketing automation"
+    },
+    {
+      "label": "Marketplace",
+      "value": "marketplace"
+    },
+    {
+      "label": "Meat and Poultry",
+      "value": "meat and poultry"
+    },
+    {
+      "label": "Mechanical Design",
+      "value": "mechanical design"
+    },
+    {
+      "label": "Mechanical Engineering",
+      "value": "mechanical engineering"
+    },
+    {
+      "label": "Media and Entertainment",
+      "value": "media and entertainment"
+    },
+    {
+      "label": "Media Production",
+      "value": "media production"
+    },
+    {
+      "label": "Medical",
+      "value": "medical"
+    },
+    {
+      "label": "Medical Device",
+      "value": "medical device"
+    },
+    {
+      "label": "Medical Equipment Manufacturing",
+      "value": "medical equipment manufacturing"
+    },
+    {
+      "label": "Medical Practices",
+      "value": "medical practices"
+    },
+    {
+      "label": "Meeting Software",
+      "value": "meeting software"
+    },
+    {
+      "label": "Men's",
+      "value": "men's"
+    },
+    {
+      "label": "Mental Health",
+      "value": "mental health"
+    },
+    {
+      "label": "Mental Health Care",
+      "value": "mental health care"
+    },
+    {
+      "label": "Messaging",
+      "value": "messaging"
+    },
+    {
+      "label": "Metaverse",
+      "value": "metaverse"
+    },
+    {
+      "label": "Mhealth",
+      "value": "mhealth"
+    },
+    {
+      "label": "Micro Lending",
+      "value": "micro lending"
+    },
+    {
+      "label": "Military",
+      "value": "military"
+    },
+    {
+      "label": "Millennials",
+      "value": "millennials"
+    },
+    {
+      "label": "Mineral",
+      "value": "mineral"
+    },
+    {
+      "label": "Mining",
+      "value": "mining"
+    },
+    {
+      "label": "Mining Technology",
+      "value": "mining technology"
+    },
+    {
+      "label": "Mmo Games",
+      "value": "mmo games"
+    },
+    {
+      "label": "Mobile",
+      "value": "mobile"
+    },
+    {
+      "label": "Mobile Advertising",
+      "value": "mobile advertising"
+    },
+    {
+      "label": "Mobile Apps",
+      "value": "mobile apps"
+    },
+    {
+      "label": "Mobile Devices",
+      "value": "mobile devices"
+    },
+    {
+      "label": "Mobile Gaming Apps",
+      "value": "mobile gaming apps"
+    },
+    {
+      "label": "Mobile Payments",
+      "value": "mobile payments"
+    },
+    {
+      "label": "Mooc",
+      "value": "mooc"
+    },
+    {
+      "label": "Mortgage",
+      "value": "mortgage"
+    },
+    {
+      "label": "Motion Capture",
+      "value": "motion capture"
+    },
+    {
+      "label": "Motor Vehicle Manufacturing",
+      "value": "motor vehicle manufacturing"
+    },
+    {
+      "label": "Motorsports",
+      "value": "motorsports"
+    },
+    {
+      "label": "Movies, Videos, and Sound",
+      "value": "movies, videos, and sound"
+    },
+    {
+      "label": "Multi-level Marketing",
+      "value": "multi-level marketing"
+    },
+    {
+      "label": "Museums and Historical Sites",
+      "value": "museums and historical sites"
+    },
+    {
+      "label": "Museums, Historical Sites, and Zoos",
+      "value": "museums, historical sites, and zoos"
+    },
+    {
+      "label": "Music",
+      "value": "music"
+    },
+    {
+      "label": "Music Education",
+      "value": "music education"
+    },
+    {
+      "label": "Music Label",
+      "value": "music label"
+    },
+    {
+      "label": "Music Streaming",
+      "value": "music streaming"
+    },
+    {
+      "label": "Music Venues",
+      "value": "music venues"
+    },
+    {
+      "label": "Musical Instruments",
+      "value": "musical instruments"
+    },
+    {
+      "label": "Musicians",
+      "value": "musicians"
+    },
+    {
+      "label": "Nanotechnology",
+      "value": "nanotechnology"
+    },
+    {
+      "label": "Nanotechnology Research",
+      "value": "nanotechnology research"
+    },
+    {
+      "label": "National Security",
+      "value": "national security"
+    },
+    {
+      "label": "Native Advertising",
+      "value": "native advertising"
+    },
+    {
+      "label": "Natural Language Processing",
+      "value": "natural language processing"
+    },
+    {
+      "label": "Natural Resources",
+      "value": "natural resources"
+    },
+    {
+      "label": "Navigation",
+      "value": "navigation"
+    },
+    {
+      "label": "Network Hardware",
+      "value": "network hardware"
+    },
+    {
+      "label": "Network Security",
+      "value": "network security"
+    },
+    {
+      "label": "Neuroscience",
+      "value": "neuroscience"
+    },
+    {
+      "label": "News",
+      "value": "news"
+    },
+    {
+      "label": "Newspaper Publishing",
+      "value": "newspaper publishing"
+    },
+    {
+      "label": "Nfc",
+      "value": "nfc"
+    },
+    {
+      "label": "Nightclubs",
+      "value": "nightclubs"
+    },
+    {
+      "label": "Nightlife",
+      "value": "nightlife"
+    },
+    {
+      "label": "Nintendo",
+      "value": "nintendo"
+    },
+    {
+      "label": "Non Profit",
+      "value": "non profit"
+    },
+    {
+      "label": "Non-fungible Token (nft)",
+      "value": "non-fungible token (nft)"
+    },
+    {
+      "label": "Non-profit Organizations",
+      "value": "non-profit organizations"
+    },
+    {
+      "label": "Nuclear",
+      "value": "nuclear"
+    },
+    {
+      "label": "Nursing and Residential Care",
+      "value": "nursing and residential care"
+    },
+    {
+      "label": "Nutraceutical",
+      "value": "nutraceutical"
+    },
+    {
+      "label": "Nutrition",
+      "value": "nutrition"
+    },
+    {
+      "label": "Office Administration",
+      "value": "office administration"
+    },
+    {
+      "label": "Office Supplies",
+      "value": "office supplies"
+    },
+    {
+      "label": "Oil and Gas",
+      "value": "oil and gas"
+    },
+    {
+      "label": "Oncology",
+      "value": "oncology"
+    },
+    {
+      "label": "Online Auctions",
+      "value": "online auctions"
+    },
+    {
+      "label": "Online Audio and Video Media",
+      "value": "online audio and video media"
+    },
+    {
+      "label": "Online Forums",
+      "value": "online forums"
+    },
+    {
+      "label": "Online Games",
+      "value": "online games"
+    },
+    {
+      "label": "Online Portals",
+      "value": "online portals"
+    },
+    {
+      "label": "Open Source",
+      "value": "open source"
+    },
+    {
+      "label": "Operating Systems",
+      "value": "operating systems"
+    },
+    {
+      "label": "Optical Communication",
+      "value": "optical communication"
+    },
+    {
+      "label": "Organic",
+      "value": "organic"
+    },
+    {
+      "label": "Organic Food",
+      "value": "organic food"
+    },
+    {
+      "label": "Outdoor Advertising",
+      "value": "outdoor advertising"
+    },
+    {
+      "label": "Outdoors",
+      "value": "outdoors"
+    },
+    {
+      "label": "Outpatient Care",
+      "value": "outpatient care"
+    },
+    {
+      "label": "Outsourcing",
+      "value": "outsourcing"
+    },
+    {
+      "label": "Outsourcing and Offshoring Consulting",
+      "value": "outsourcing and offshoring consulting"
+    },
+    {
+      "label": "Paas",
+      "value": "paas"
+    },
+    {
+      "label": "Packaging and Containers Manufacturing",
+      "value": "packaging and containers manufacturing"
+    },
+    {
+      "label": "Packaging Services",
+      "value": "packaging services"
+    },
+    {
+      "label": "Paper and Forest Product Manufacturing",
+      "value": "paper and forest product manufacturing"
+    },
+    {
+      "label": "Paper Manufacturing",
+      "value": "paper manufacturing"
+    },
+    {
+      "label": "Parenting",
+      "value": "parenting"
+    },
+    {
+      "label": "Parking",
+      "value": "parking"
+    },
+    {
+      "label": "Parks",
+      "value": "parks"
+    },
+    {
+      "label": "Payments",
+      "value": "payments"
+    },
+    {
+      "label": "Pc Games",
+      "value": "pc games"
+    },
+    {
+      "label": "Peer to Peer",
+      "value": "peer to peer"
+    },
+    {
+      "label": "Penetration Testing",
+      "value": "penetration testing"
+    },
+    {
+      "label": "Performing Arts",
+      "value": "performing arts"
+    },
+    {
+      "label": "Personal Branding",
+      "value": "personal branding"
+    },
+    {
+      "label": "Personal Care and Hygiene",
+      "value": "personal care and hygiene"
+    },
+    {
+      "label": "Personal Care Product Manufacturing",
+      "value": "personal care product manufacturing"
+    },
+    {
+      "label": "Personal Development",
+      "value": "personal development"
+    },
+    {
+      "label": "Personal Finance",
+      "value": "personal finance"
+    },
+    {
+      "label": "Personal Health",
+      "value": "personal health"
+    },
+    {
+      "label": "Personalization",
+      "value": "personalization"
+    },
+    {
+      "label": "Pet",
+      "value": "pet"
+    },
+    {
+      "label": "Pharmaceutical",
+      "value": "pharmaceutical"
+    },
+    {
+      "label": "Pharmaceutical Manufacturing",
+      "value": "pharmaceutical manufacturing"
+    },
+    {
+      "label": "Philanthropic Fundraising Services",
+      "value": "philanthropic fundraising services"
+    },
+    {
+      "label": "Photo Editing",
+      "value": "photo editing"
+    },
+    {
+      "label": "Photo Sharing",
+      "value": "photo sharing"
+    },
+    {
+      "label": "Photography",
+      "value": "photography"
+    },
+    {
+      "label": "Physical Security",
+      "value": "physical security"
+    },
+    {
+      "label": "Plant-based Foods",
+      "value": "plant-based foods"
+    },
+    {
+      "label": "Plastics and Rubber Manufacturing",
+      "value": "plastics and rubber manufacturing"
+    },
+    {
+      "label": "Plastics Manufacturing",
+      "value": "plastics manufacturing"
+    },
+    {
+      "label": "Playstation",
+      "value": "playstation"
+    },
+    {
+      "label": "Podcast",
+      "value": "podcast"
+    },
+    {
+      "label": "Point of Sale",
+      "value": "point of sale"
+    },
+    {
+      "label": "Political Organizations",
+      "value": "political organizations"
+    },
+    {
+      "label": "Politics",
+      "value": "politics"
+    },
+    {
+      "label": "Pollution Control",
+      "value": "pollution control"
+    },
+    {
+      "label": "Ports and Harbors",
+      "value": "ports and harbors"
+    },
+    {
+      "label": "Power Grid",
+      "value": "power grid"
+    },
+    {
+      "label": "Precious Metals",
+      "value": "precious metals"
+    },
+    {
+      "label": "Precision Medicine",
+      "value": "precision medicine"
+    },
+    {
+      "label": "Prediction Markets",
+      "value": "prediction markets"
+    },
+    {
+      "label": "Predictive Analytics",
+      "value": "predictive analytics"
+    },
+    {
+      "label": "Prepaid Cards",
+      "value": "prepaid cards"
+    },
+    {
+      "label": "Presentation Software",
+      "value": "presentation software"
+    },
+    {
+      "label": "Presentations",
+      "value": "presentations"
+    },
+    {
+      "label": "Price Comparison",
+      "value": "price comparison"
+    },
+    {
+      "label": "Primary and Secondary Education",
+      "value": "primary and secondary education"
+    },
+    {
+      "label": "Primary and Urgent Care",
+      "value": "primary and urgent care"
+    },
+    {
+      "label": "Primary Education",
+      "value": "primary education"
+    },
+    {
+      "label": "Printing",
+      "value": "printing"
+    },
+    {
+      "label": "Printing Services",
+      "value": "printing services"
+    },
+    {
+      "label": "Privacy",
+      "value": "privacy"
+    },
+    {
+      "label": "Private Cloud",
+      "value": "private cloud"
+    },
+    {
+      "label": "Private Social Networking",
+      "value": "private social networking"
+    },
+    {
+      "label": "Procurement",
+      "value": "procurement"
+    },
+    {
+      "label": "Product Design",
+      "value": "product design"
+    },
+    {
+      "label": "Product Management",
+      "value": "product management"
+    },
+    {
+      "label": "Product Research",
+      "value": "product research"
+    },
+    {
+      "label": "Product Search",
+      "value": "product search"
+    },
+    {
+      "label": "Productivity Tools",
+      "value": "productivity tools"
+    },
+    {
+      "label": "Professional Networking",
+      "value": "professional networking"
+    },
+    {
+      "label": "Professional Services",
+      "value": "professional services"
+    },
+    {
+      "label": "Professional Training and Coaching",
+      "value": "professional training and coaching"
+    },
+    {
+      "label": "Project Management",
+      "value": "project management"
+    },
+    {
+      "label": "Property Development",
+      "value": "property development"
+    },
+    {
+      "label": "Property Insurance",
+      "value": "property insurance"
+    },
+    {
+      "label": "Property Management",
+      "value": "property management"
+    },
+    {
+      "label": "Proptech",
+      "value": "proptech"
+    },
+    {
+      "label": "Psychology",
+      "value": "psychology"
+    },
+    {
+      "label": "Public Policy Offices",
+      "value": "public policy offices"
+    },
+    {
+      "label": "Public Relations",
+      "value": "public relations"
+    },
+    {
+      "label": "Public Relations and Communications Services",
+      "value": "public relations and communications services"
+    },
+    {
+      "label": "Public Safety",
+      "value": "public safety"
+    },
+    {
+      "label": "Public Transportation",
+      "value": "public transportation"
+    },
+    {
+      "label": "Publishing",
+      "value": "publishing"
+    },
+    {
+      "label": "Q&a",
+      "value": "q&a"
+    },
+    {
+      "label": "Qr Codes",
+      "value": "qr codes"
+    },
+    {
+      "label": "Quality Assurance",
+      "value": "quality assurance"
+    },
+    {
+      "label": "Quantified Self",
+      "value": "quantified self"
+    },
+    {
+      "label": "Quantum Computing",
+      "value": "quantum computing"
+    },
+    {
+      "label": "Racing",
+      "value": "racing"
+    },
+    {
+      "label": "Railroad",
+      "value": "railroad"
+    },
+    {
+      "label": "Railroad Equipment Manufacturing",
+      "value": "railroad equipment manufacturing"
+    },
+    {
+      "label": "Ranching",
+      "value": "ranching"
+    },
+    {
+      "label": "Reading Apps",
+      "value": "reading apps"
+    },
+    {
+      "label": "Real Estate",
+      "value": "real estate"
+    },
+    {
+      "label": "Real Estate Brokerage",
+      "value": "real estate brokerage"
+    },
+    {
+      "label": "Real Estate Investment",
+      "value": "real estate investment"
+    },
+    {
+      "label": "Real Time",
+      "value": "real time"
+    },
+    {
+      "label": "Recipes",
+      "value": "recipes"
+    },
+    {
+      "label": "Recreation",
+      "value": "recreation"
+    },
+    {
+      "label": "Recreational Facilities",
+      "value": "recreational facilities"
+    },
+    {
+      "label": "Recreational Vehicles",
+      "value": "recreational vehicles"
+    },
+    {
+      "label": "Recruiting",
+      "value": "recruiting"
+    },
+    {
+      "label": "Recycling",
+      "value": "recycling"
+    },
+    {
+      "label": "Rehabilitation",
+      "value": "rehabilitation"
+    },
+    {
+      "label": "Religion",
+      "value": "religion"
+    },
+    {
+      "label": "Religious Institutions",
+      "value": "religious institutions"
+    },
+    {
+      "label": "Remote Sensing",
+      "value": "remote sensing"
+    },
+    {
+      "label": "Renewable Energy",
+      "value": "renewable energy"
+    },
+    {
+      "label": "Renewable Energy Semiconductor Manufacturing",
+      "value": "renewable energy semiconductor manufacturing"
+    },
+    {
+      "label": "Rental",
+      "value": "rental"
+    },
+    {
+      "label": "Rental Property",
+      "value": "rental property"
+    },
+    {
+      "label": "Reputation",
+      "value": "reputation"
+    },
+    {
+      "label": "Research Services",
+      "value": "research services"
+    },
+    {
+      "label": "Reservations",
+      "value": "reservations"
+    },
+    {
+      "label": "Residential",
+      "value": "residential"
+    },
+    {
+      "label": "Resorts",
+      "value": "resorts"
+    },
+    {
+      "label": "Restaurants",
+      "value": "restaurants"
+    },
+    {
+      "label": "Retail",
+      "value": "retail"
+    },
+    {
+      "label": "Retail Apparel and Fashion",
+      "value": "retail apparel and fashion"
+    },
+    {
+      "label": "Retail Art Supplies",
+      "value": "retail art supplies"
+    },
+    {
+      "label": "Retail Groceries",
+      "value": "retail groceries"
+    },
+    {
+      "label": "Retail Luxury Goods and Jewelry",
+      "value": "retail luxury goods and jewelry"
+    },
+    {
+      "label": "Retail Office Equipment",
+      "value": "retail office equipment"
+    },
+    {
+      "label": "Retail Technology",
+      "value": "retail technology"
+    },
+    {
+      "label": "Retirement",
+      "value": "retirement"
+    },
+    {
+      "label": "Rfid",
+      "value": "rfid"
+    },
+    {
+      "label": "Ride Sharing",
+      "value": "ride sharing"
+    },
+    {
+      "label": "Risk Management",
+      "value": "risk management"
+    },
+    {
+      "label": "Robotic Process Automation (rpa)",
+      "value": "robotic process automation (rpa)"
+    },
+    {
+      "label": "Robotics",
+      "value": "robotics"
+    },
+    {
+      "label": "Rugby",
+      "value": "rugby"
+    },
+    {
+      "label": "Saas",
+      "value": "saas"
+    },
+    {
+      "label": "Sailing",
+      "value": "sailing"
+    },
+    {
+      "label": "Sales",
+      "value": "sales"
+    },
+    {
+      "label": "Sales Automation",
+      "value": "sales automation"
+    },
+    {
+      "label": "Sales Enablement",
+      "value": "sales enablement"
+    },
+    {
+      "label": "Same Day Delivery",
+      "value": "same day delivery"
+    },
+    {
+      "label": "Satellite Communication",
+      "value": "satellite communication"
+    },
+    {
+      "label": "Scheduling",
+      "value": "scheduling"
+    },
+    {
+      "label": "Seafood",
+      "value": "seafood"
+    },
+    {
+      "label": "Search Engine",
+      "value": "search engine"
+    },
+    {
+      "label": "Secondary Education",
+      "value": "secondary education"
+    },
+    {
+      "label": "Secondhand Goods",
+      "value": "secondhand goods"
+    },
+    {
+      "label": "Security",
+      "value": "security"
+    },
+    {
+      "label": "Security and Investigations",
+      "value": "security and investigations"
+    },
+    {
+      "label": "Self-storage",
+      "value": "self-storage"
+    },
+    {
+      "label": "Sem",
+      "value": "sem"
+    },
+    {
+      "label": "Semantic Search",
+      "value": "semantic search"
+    },
+    {
+      "label": "Semantic Web",
+      "value": "semantic web"
+    },
+    {
+      "label": "Semiconductor",
+      "value": "semiconductor"
+    },
+    {
+      "label": "Semiconductor Manufacturing",
+      "value": "semiconductor manufacturing"
+    },
+    {
+      "label": "Sensor",
+      "value": "sensor"
+    },
+    {
+      "label": "Seo",
+      "value": "seo"
+    },
+    {
+      "label": "Serious Games",
+      "value": "serious games"
+    },
+    {
+      "label": "Service Industry",
+      "value": "service industry"
+    },
+    {
+      "label": "Sex Industry",
+      "value": "sex industry"
+    },
+    {
+      "label": "Sex Tech",
+      "value": "sex tech"
+    },
+    {
+      "label": "Sharing Economy",
+      "value": "sharing economy"
+    },
+    {
+      "label": "Shipbuilding",
+      "value": "shipbuilding"
+    },
+    {
+      "label": "Shipping",
+      "value": "shipping"
+    },
+    {
+      "label": "Shipping Broker",
+      "value": "shipping broker"
+    },
+    {
+      "label": "Shoes",
+      "value": "shoes"
+    },
+    {
+      "label": "Shopping",
+      "value": "shopping"
+    },
+    {
+      "label": "Shopping Mall",
+      "value": "shopping mall"
+    },
+    {
+      "label": "Simulation",
+      "value": "simulation"
+    },
+    {
+      "label": "Skiing",
+      "value": "skiing"
+    },
+    {
+      "label": "Skill Assessment",
+      "value": "skill assessment"
+    },
+    {
+      "label": "Small and Medium Businesses",
+      "value": "small and medium businesses"
+    },
+    {
+      "label": "Smart Building",
+      "value": "smart building"
+    },
+    {
+      "label": "Smart Cities",
+      "value": "smart cities"
+    },
+    {
+      "label": "Smart Contracts",
+      "value": "smart contracts"
+    },
+    {
+      "label": "Smart Home",
+      "value": "smart home"
+    },
+    {
+      "label": "Sms",
+      "value": "sms"
+    },
+    {
+      "label": "Snack Food",
+      "value": "snack food"
+    },
+    {
+      "label": "SNS",
+      "value": "sns"
+    },
+    {
+      "label": "Soccer",
+      "value": "soccer"
+    },
+    {
+      "label": "Social",
+      "value": "social"
+    },
+    {
+      "label": "Social Assistance",
+      "value": "social assistance"
+    },
+    {
+      "label": "Social Bookmarking",
+      "value": "social bookmarking"
+    },
+    {
+      "label": "Social Crm",
+      "value": "social crm"
+    },
+    {
+      "label": "Social Entrepreneurship",
+      "value": "social entrepreneurship"
+    },
+    {
+      "label": "Social Impact",
+      "value": "social impact"
+    },
+    {
+      "label": "Social Media",
+      "value": "social media"
+    },
+    {
+      "label": "Social Media Advertising",
+      "value": "social media advertising"
+    },
+    {
+      "label": "Social Media Management",
+      "value": "social media management"
+    },
+    {
+      "label": "Social Media Marketing",
+      "value": "social media marketing"
+    },
+    {
+      "label": "Social Network",
+      "value": "social network"
+    },
+    {
+      "label": "Social News",
+      "value": "social news"
+    },
+    {
+      "label": "Social Recruiting",
+      "value": "social recruiting"
+    },
+    {
+      "label": "Social Shopping",
+      "value": "social shopping"
+    },
+    {
+      "label": "Software",
+      "value": "software"
+    },
+    {
+      "label": "Software Development",
+      "value": "software development"
+    },
+    {
+      "label": "Software Engineering",
+      "value": "software engineering"
+    },
+    {
+      "label": "Solar",
+      "value": "solar"
+    },
+    {
+      "label": "Space Travel",
+      "value": "space travel"
+    },
+    {
+      "label": "Spam Filtering",
+      "value": "spam filtering"
+    },
+    {
+      "label": "Special Education",
+      "value": "special education"
+    },
+    {
+      "label": "Spectator Sports",
+      "value": "spectator sports"
+    },
+    {
+      "label": "Speech Recognition",
+      "value": "speech recognition"
+    },
+    {
+      "label": "Sponsorship",
+      "value": "sponsorship"
+    },
+    {
+      "label": "Sporting Goods",
+      "value": "sporting goods"
+    },
+    {
+      "label": "Sporting Goods Manufacturing",
+      "value": "sporting goods manufacturing"
+    },
+    {
+      "label": "Sports",
+      "value": "sports"
+    },
+    {
+      "label": "Sports Leagues and Teams",
+      "value": "sports leagues and teams"
+    },
+    {
+      "label": "Staffing Agency",
+      "value": "staffing agency"
+    },
+    {
+      "label": "Staffing and Recruiting",
+      "value": "staffing and recruiting"
+    },
+    {
+      "label": "Stem Education",
+      "value": "stem education"
+    },
+    {
+      "label": "Stock Exchanges",
+      "value": "stock exchanges"
+    },
+    {
+      "label": "Strategic Management Services",
+      "value": "strategic management services"
+    },
+    {
+      "label": "Subscription Service",
+      "value": "subscription service"
+    },
+    {
+      "label": "Supply Chain Management",
+      "value": "supply chain management"
+    },
+    {
+      "label": "Surfing",
+      "value": "surfing"
+    },
+    {
+      "label": "Sustainability",
+      "value": "sustainability"
+    },
+    {
+      "label": "Swimming",
+      "value": "swimming"
+    },
+    {
+      "label": "Table Tennis",
+      "value": "table tennis"
+    },
+    {
+      "label": "Task Management",
+      "value": "task management"
+    },
+    {
+      "label": "Tax Consulting",
+      "value": "tax consulting"
+    },
+    {
+      "label": "Tax Preparation",
+      "value": "tax preparation"
+    },
+    {
+      "label": "Taxi Service",
+      "value": "taxi service"
+    },
+    {
+      "label": "Tea",
+      "value": "tea"
+    },
+    {
+      "label": "Technical Support",
+      "value": "technical support"
+    },
+    {
+      "label": "Technology, Information and Internet",
+      "value": "technology, information and internet"
+    },
+    {
+      "label": "Teenagers",
+      "value": "teenagers"
+    },
+    {
+      "label": "Telecommunications",
+      "value": "telecommunications"
+    },
+    {
+      "label": "Telehealth",
+      "value": "telehealth"
+    },
+    {
+      "label": "Tennis",
+      "value": "tennis"
+    },
+    {
+      "label": "Test and Measurement",
+      "value": "test and measurement"
+    },
+    {
+      "label": "Text Analytics",
+      "value": "text analytics"
+    },
+    {
+      "label": "Textbook",
+      "value": "textbook"
+    },
+    {
+      "label": "Textile Manufacturing",
+      "value": "textile manufacturing"
+    },
+    {
+      "label": "Textiles",
+      "value": "textiles"
+    },
+    {
+      "label": "Theatre",
+      "value": "theatre"
+    },
+    {
+      "label": "Therapeutics",
+      "value": "therapeutics"
+    },
+    {
+      "label": "Think Tanks",
+      "value": "think tanks"
+    },
+    {
+      "label": "Ticketing",
+      "value": "ticketing"
+    },
+    {
+      "label": "Timber",
+      "value": "timber"
+    },
+    {
+      "label": "Timeshare",
+      "value": "timeshare"
+    },
+    {
+      "label": "Tobacco",
+      "value": "tobacco"
+    },
+    {
+      "label": "Tobacco Manufacturing",
+      "value": "tobacco manufacturing"
+    },
+    {
+      "label": "Tour Operator",
+      "value": "tour operator"
+    },
+    {
+      "label": "Tourism",
+      "value": "tourism"
+    },
+    {
+      "label": "Toys",
+      "value": "toys"
+    },
+    {
+      "label": "Trade Shows",
+      "value": "trade shows"
+    },
+    {
+      "label": "Trading Platform",
+      "value": "trading platform"
+    },
+    {
+      "label": "Training",
+      "value": "training"
+    },
+    {
+      "label": "Transaction Processing",
+      "value": "transaction processing"
+    },
+    {
+      "label": "Translation and Localization",
+      "value": "translation and localization"
+    },
+    {
+      "label": "Translation Service",
+      "value": "translation service"
+    },
+    {
+      "label": "Transportation",
+      "value": "transportation"
+    },
+    {
+      "label": "Transportation, Logistics, Supply Chain and Storage",
+      "value": "transportation, logistics, supply chain and storage"
+    },
+    {
+      "label": "Travel",
+      "value": "travel"
+    },
+    {
+      "label": "Travel Accommodations",
+      "value": "travel accommodations"
+    },
+    {
+      "label": "Travel Agency",
+      "value": "travel agency"
+    },
+    {
+      "label": "Travel Arrangements",
+      "value": "travel arrangements"
+    },
+    {
+      "label": "Truck Transportation",
+      "value": "truck transportation"
+    },
+    {
+      "label": "Tutoring",
+      "value": "tutoring"
+    },
+    {
+      "label": "Tv",
+      "value": "tv"
+    },
+    {
+      "label": "Tv Production",
+      "value": "tv production"
+    },
+    {
+      "label": "Twitter",
+      "value": "twitter"
+    },
+    {
+      "label": "Ultimate Frisbee",
+      "value": "ultimate frisbee"
+    },
+    {
+      "label": "Underserved Children",
+      "value": "underserved children"
+    },
+    {
+      "label": "Unified Communications",
+      "value": "unified communications"
+    },
+    {
+      "label": "Universities",
+      "value": "universities"
+    },
+    {
+      "label": "Usability Testing",
+      "value": "usability testing"
+    },
+    {
+      "label": "Utilities",
+      "value": "utilities"
+    },
+    {
+      "label": "Ux Design",
+      "value": "ux design"
+    },
+    {
+      "label": "Vacation Rental",
+      "value": "vacation rental"
+    },
+    {
+      "label": "Vending and Concessions",
+      "value": "vending and concessions"
+    },
+    {
+      "label": "Venture Capital",
+      "value": "venture capital"
+    },
+    {
+      "label": "Venture Capital and Private Equity Principals",
+      "value": "venture capital and private equity principals"
+    },
+    {
+      "label": "Vertical Search",
+      "value": "vertical search"
+    },
+    {
+      "label": "Veterinary",
+      "value": "veterinary"
+    },
+    {
+      "label": "Veterinary Services",
+      "value": "veterinary services"
+    },
+    {
+      "label": "Video",
+      "value": "video"
+    },
+    {
+      "label": "Video Advertising",
+      "value": "video advertising"
+    },
+    {
+      "label": "Video Chat",
+      "value": "video chat"
+    },
+    {
+      "label": "Video Conferencing",
+      "value": "video conferencing"
+    },
+    {
+      "label": "Video Editing",
+      "value": "video editing"
+    },
+    {
+      "label": "Video Games",
+      "value": "video games"
+    },
+    {
+      "label": "Video on Demand",
+      "value": "video on demand"
+    },
+    {
+      "label": "Video Streaming",
+      "value": "video streaming"
+    },
+    {
+      "label": "Virtual Assistant",
+      "value": "virtual assistant"
+    },
+    {
+      "label": "Virtual Currency",
+      "value": "virtual currency"
+    },
+    {
+      "label": "Virtual Desktop",
+      "value": "virtual desktop"
+    },
+    {
+      "label": "Virtual Goods",
+      "value": "virtual goods"
+    },
+    {
+      "label": "Virtual Reality",
+      "value": "virtual reality"
+    },
+    {
+      "label": "Virtual Workforce",
+      "value": "virtual workforce"
+    },
+    {
+      "label": "Virtual World",
+      "value": "virtual world"
+    },
+    {
+      "label": "Virtualization",
+      "value": "virtualization"
+    },
+    {
+      "label": "Visual Search",
+      "value": "visual search"
+    },
+    {
+      "label": "Vocational Education",
+      "value": "vocational education"
+    },
+    {
+      "label": "Voip",
+      "value": "voip"
+    },
+    {
+      "label": "Volley Ball",
+      "value": "volley ball"
+    },
+    {
+      "label": "Warehouse Automation",
+      "value": "warehouse automation"
+    },
+    {
+      "label": "Warehousing",
+      "value": "warehousing"
+    },
+    {
+      "label": "Warehousing and Storage",
+      "value": "warehousing and storage"
+    },
+    {
+      "label": "Waste Management",
+      "value": "waste management"
+    },
+    {
+      "label": "Water",
+      "value": "water"
+    },
+    {
+      "label": "Water Purification",
+      "value": "water purification"
+    },
+    {
+      "label": "Water Transportation",
+      "value": "water transportation"
+    },
+    {
+      "label": "Wealth Management",
+      "value": "wealth management"
+    },
+    {
+      "label": "Wearables",
+      "value": "wearables"
+    },
+    {
+      "label": "Web Apps",
+      "value": "web apps"
+    },
+    {
+      "label": "Web Browsers",
+      "value": "web browsers"
+    },
+    {
+      "label": "Web Design",
+      "value": "web design"
+    },
+    {
+      "label": "Web Development",
+      "value": "web development"
+    },
+    {
+      "label": "Web Hosting",
+      "value": "web hosting"
+    },
+    {
+      "label": "Web3",
+      "value": "web3"
+    },
+    {
+      "label": "Webos",
+      "value": "webos"
+    },
+    {
+      "label": "Wedding",
+      "value": "wedding"
+    },
+    {
+      "label": "Wellness",
+      "value": "wellness"
+    },
+    {
+      "label": "Wellness and Fitness Services",
+      "value": "wellness and fitness services"
+    },
+    {
+      "label": "Wholesale",
+      "value": "wholesale"
+    },
+    {
+      "label": "Wholesale Building Materials",
+      "value": "wholesale building materials"
+    },
+    {
+      "label": "Wholesale Import and Export",
+      "value": "wholesale import and export"
+    },
+    {
+      "label": "Wildlife Conservation",
+      "value": "wildlife conservation"
+    },
+    {
+      "label": "Wind Energy",
+      "value": "wind energy"
+    },
+    {
+      "label": "Windows",
+      "value": "windows"
+    },
+    {
+      "label": "Windows Phone",
+      "value": "windows phone"
+    },
+    {
+      "label": "Wine and Spirits",
+      "value": "wine and spirits"
+    },
+    {
+      "label": "Winery",
+      "value": "winery"
+    },
+    {
+      "label": "Wired Telecommunications",
+      "value": "wired telecommunications"
+    },
+    {
+      "label": "Wireless",
+      "value": "wireless"
+    },
+    {
+      "label": "Wireless Services",
+      "value": "wireless services"
+    },
+    {
+      "label": "Women's",
+      "value": "women's"
+    },
+    {
+      "label": "Wood Processing",
+      "value": "wood processing"
+    },
+    {
+      "label": "Writing and Editing",
+      "value": "writing and editing"
+    },
+    {
+      "label": "XBOX",
+      "value": "xbox"
+    },
+    {
+      "label": "Young Adults",
+      "value": "young adults"
+    }
+  ],
+  "seniority": [
+    {
+      "label": "C Suite",
+      "value": "c_suite"
+    },
+    {
+      "label": "Director",
+      "value": "director"
+    },
+    {
+      "label": "Entry",
+      "value": "entry"
+    },
+    {
+      "label": "Founder",
+      "value": "founder"
+    },
+    {
+      "label": "Head",
+      "value": "head"
+    },
+    {
+      "label": "Intern",
+      "value": "intern"
+    },
+    {
+      "label": "Manager",
+      "value": "manager"
+    },
+    {
+      "label": "Mid-Level",
+      "value": "mid-level"
+    },
+    {
+      "label": "Owner",
+      "value": "owner"
+    },
+    {
+      "label": "Partner",
+      "value": "partner"
+    },
+    {
+      "label": "Senior",
+      "value": "senior"
+    },
+    {
+      "label": "VP",
+      "value": "vp"
+    }
+  ],
+  "companyType": [
+    {
+      "label": "Educational",
+      "value": "EDUCATIONAL"
+    },
+    {
+      "label": "Government agency",
+      "value": "GOVERNMENT_AGENCY"
+    },
+    {
+      "label": "Non profit",
+      "value": "NON_PROFIT"
+    },
+    {
+      "label": "Partnership",
+      "value": "PARTNERSHIP"
+    },
+    {
+      "label": "Privately held",
+      "value": "PRIVATELY_HELD"
+    },
+    {
+      "label": "Public company",
+      "value": "PUBLIC_COMPANY"
+    },
+    {
+      "label": "Self employed",
+      "value": "SELF_EMPLOYED"
+    },
+    {
+      "label": "Self owned",
+      "value": "SELF_OWNED"
+    }
+  ],
+  "linkedInBadge": [
+    {
+      "label": "Creator",
+      "value": "CREATOR"
+    },
+    {
+      "label": "Hiring",
+      "value": "HIRING"
+    },
+    {
+      "label": "Influencer",
+      "value": "INFLUENCER"
+    },
+    {
+      "label": "Open to work",
+      "value": "OPEN_TO_WORK"
+    },
+    {
+      "label": "Paid social members",
+      "value": "PAID_SOCIAL_MEMBERS"
+    },
+    {
+      "label": "Verified",
+      "value": "VERIFIED"
+    }
+  ],
+  "funding": [
+    {
+      "label": "Angel",
+      "value": "ANGEL"
+    },
+    {
+      "label": "Convertible Note",
+      "value": "CONVERTIBLE_NOTE"
+    },
+    {
+      "label": "Corporate Round",
+      "value": "CORPORATE_ROUND"
+    },
+    {
+      "label": "Debt Financing",
+      "value": "DEBT_FINANCING"
+    },
+    {
+      "label": "Equity Crowdfunding",
+      "value": "EQUITY_CROWDFUNDING"
+    },
+    {
+      "label": "Funding Round",
+      "value": "FUNDING_ROUND"
+    },
+    {
+      "label": "Grant",
+      "value": "GRANT"
+    },
+    {
+      "label": "Initial Coin Offering",
+      "value": "INITIAL_COIN_OFFERING"
+    },
+    {
+      "label": "Non Equity Assistance",
+      "value": "NON_EQUITY_ASSISTANCE"
+    },
+    {
+      "label": "Post IPO Debt",
+      "value": "POST_IPO_DEBT"
+    },
+    {
+      "label": "Post IPO Equity",
+      "value": "POST_IPO_EQUITY"
+    },
+    {
+      "label": "Post IPO Secondary",
+      "value": "POST_IPO_SECONDARY"
+    },
+    {
+      "label": "Pre Seed",
+      "value": "PRE_SEED"
+    },
+    {
+      "label": "Private Equity",
+      "value": "PRIVATE_EQUITY"
+    },
+    {
+      "label": "Product Crowdfunding",
+      "value": "PRODUCT_CROWDFUNDING"
+    },
+    {
+      "label": "Secondary Market",
+      "value": "SECONDARY_MARKET"
+    },
+    {
+      "label": "Seed",
+      "value": "SEED"
+    },
+    {
+      "label": "Series A",
+      "value": "SERIES_A"
+    },
+    {
+      "label": "Series B",
+      "value": "SERIES_B"
+    },
+    {
+      "label": "Series C",
+      "value": "SERIES_C"
+    },
+    {
+      "label": "Series D",
+      "value": "SERIES_D"
+    },
+    {
+      "label": "Series E",
+      "value": "SERIES_E"
+    },
+    {
+      "label": "Series F",
+      "value": "SERIES_F"
+    },
+    {
+      "label": "Series G",
+      "value": "SERIES_G"
+    },
+    {
+      "label": "Series H",
+      "value": "SERIES_H"
+    },
+    {
+      "label": "Series I",
+      "value": "SERIES_I"
+    },
+    {
+      "label": "Series J",
+      "value": "SERIES_J"
+    },
+    {
+      "label": "Series Unknown",
+      "value": "SERIES_UNKNOWN"
+    },
+    {
+      "label": "Undisclosed",
+      "value": "UNDISCLOSED"
+    },
+    {
+      "label": "Venture Round",
+      "value": "VENTURE_ROUND"
+    }
+  ],
+  "technology": [
+    {
+      "label": "Adobe Creative Suite",
+      "value": "Adobe Creative Suite"
+    },
+    {
+      "label": "Agile",
+      "value": "Agile"
+    },
+    {
+      "label": "AWS",
+      "value": "AWS"
+    },
+    {
+      "label": "BigQuery",
+      "value": "BigQuery"
+    },
+    {
+      "label": "Blender",
+      "value": "Blender"
+    },
+    {
+      "label": "Blockchain",
+      "value": "Blockchain"
+    },
+    {
+      "label": "Canva",
+      "value": "Canva"
+    },
+    {
+      "label": "CI/CD",
+      "value": "CI/CD"
+    },
+    {
+      "label": "DevOps",
+      "value": "DevOps"
+    },
+    {
+      "label": "DigitalOcean",
+      "value": "DigitalOcean"
+    },
+    {
+      "label": "Ethereum",
+      "value": "Ethereum"
+    },
+    {
+      "label": "Figma",
+      "value": "Figma"
+    },
+    {
+      "label": "GDPR",
+      "value": "GDPR"
+    },
+    {
+      "label": "Google Cloud Platform",
+      "value": "Google Cloud Platform"
+    },
+    {
+      "label": "Heroku",
+      "value": "Heroku"
+    },
+    {
+      "label": "HIPAA",
+      "value": "HIPAA"
+    },
+    {
+      "label": "Hugging Face",
+      "value": "Hugging Face"
+    },
+    {
+      "label": "ISO27001",
+      "value": "ISO27001"
+    },
+    {
+      "label": "Java",
+      "value": "Java"
+    },
+    {
+      "label": "JavaScript",
+      "value": "JavaScript"
+    },
+    {
+      "label": "LangChain",
+      "value": "LangChain"
+    },
+    {
+      "label": "Magento",
+      "value": "Magento"
+    },
+    {
+      "label": "Microsoft Azure",
+      "value": "Microsoft Azure"
+    },
+    {
+      "label": "MongoDB",
+      "value": "MongoDB"
+    },
+    {
+      "label": "MySQL",
+      "value": "MySQL"
+    },
+    {
+      "label": "NFT",
+      "value": "NFT"
+    },
+    {
+      "label": "Node.js",
+      "value": "Node.js"
+    },
+    {
+      "label": "OpenAI API",
+      "value": "OpenAI API"
+    },
+    {
+      "label": "PostgreSQL",
+      "value": "PostgreSQL"
+    },
+    {
+      "label": "Python",
+      "value": "Python"
+    },
+    {
+      "label": "React.js",
+      "value": "React.js"
+    },
+    {
+      "label": "Salesforce",
+      "value": "Salesforce"
+    },
+    {
+      "label": "Scrum",
+      "value": "Scrum"
+    },
+    {
+      "label": "Shopify",
+      "value": "Shopify"
+    },
+    {
+      "label": "Sketch",
+      "value": "Sketch"
+    },
+    {
+      "label": "Smart Contracts",
+      "value": "Smart Contracts"
+    },
+    {
+      "label": "Snowflake",
+      "value": "Snowflake"
+    },
+    {
+      "label": "SOC 2",
+      "value": "SOC 2"
+    },
+    {
+      "label": "Solidity",
+      "value": "Solidity"
+    },
+    {
+      "label": "TensorFlow",
+      "value": "TensorFlow"
+    },
+    {
+      "label": "Test Driven Development",
+      "value": "Test Driven Development"
+    },
+    {
+      "label": "Vulnerability Management",
+      "value": "Vulnerability Management"
+    },
+    {
+      "label": "WooCommerce",
+      "value": "WooCommerce"
+    },
+    {
+      "label": "Zendesk",
+      "value": "Zendesk"
+    }
+  ],
+  "jobTitle": [
+    {
+      "label": "Account Director",
+      "value": "Account Director"
+    },
+    {
+      "label": "Account Executive",
+      "value": "Account Executive"
+    },
+    {
+      "label": "Account Manager",
+      "value": "Account Manager"
+    },
+    {
+      "label": "Accountant",
+      "value": "Accountant"
+    },
+    {
+      "label": "AI Engineer",
+      "value": "AI Engineer"
+    },
+    {
+      "label": "Analyst",
+      "value": "Analyst"
+    },
+    {
+      "label": "Assistant Manager",
+      "value": "Assistant Manager"
+    },
+    {
+      "label": "Associate Director",
+      "value": "Associate Director"
+    },
+    {
+      "label": "Associate Product Manager",
+      "value": "Associate Product Manager"
+    },
+    {
+      "label": "Backend Engineer",
+      "value": "Backend Engineer"
+    },
+    {
+      "label": "Board Member",
+      "value": "Board Member"
+    },
+    {
+      "label": "Brand Manager",
+      "value": "Brand Manager"
+    },
+    {
+      "label": "Business Development Manager",
+      "value": "Business Development Manager"
+    },
+    {
+      "label": "Business Development Representative",
+      "value": "Business Development Representative"
+    },
+    {
+      "label": "Business Intelligence Analyst",
+      "value": "Business Intelligence Analyst"
+    },
+    {
+      "label": "Chairman",
+      "value": "Chairman"
+    },
+    {
+      "label": "Channel Manager",
+      "value": "Channel Manager"
+    },
+    {
+      "label": "Chief Executive Officer",
+      "value": "Chief Executive Officer"
+    },
+    {
+      "label": "Chief Financial Officer",
+      "value": "Chief Financial Officer"
+    },
+    {
+      "label": "Chief Growth Officer",
+      "value": "Chief Growth Officer"
+    },
+    {
+      "label": "Chief Human Resources Officer",
+      "value": "Chief Human Resources Officer"
+    },
+    {
+      "label": "Chief Information Officer",
+      "value": "Chief Information Officer"
+    },
+    {
+      "label": "Chief Marketing Officer",
+      "value": "Chief Marketing Officer"
+    },
+    {
+      "label": "Chief Operating Officer",
+      "value": "Chief Operating Officer"
+    },
+    {
+      "label": "Chief Product Officer",
+      "value": "Chief Product Officer"
+    },
+    {
+      "label": "Chief Revenue Officer",
+      "value": "Chief Revenue Officer"
+    },
+    {
+      "label": "Chief Sales Officer",
+      "value": "Chief Sales Officer"
+    },
+    {
+      "label": "Chief Technology Officer",
+      "value": "Chief Technology Officer"
+    },
+    {
+      "label": "Cloud Architect",
+      "value": "Cloud Architect"
+    },
+    {
+      "label": "Co-Founder",
+      "value": "Co-Founder"
+    },
+    {
+      "label": "Community Manager",
+      "value": "Community Manager"
+    },
+    {
+      "label": "Compliance Officer",
+      "value": "Compliance Officer"
+    },
+    {
+      "label": "Consultant",
+      "value": "Consultant"
+    },
+    {
+      "label": "Content Marketing Manager",
+      "value": "Content Marketing Manager"
+    },
+    {
+      "label": "Controller",
+      "value": "Controller"
+    },
+    {
+      "label": "Creative Director",
+      "value": "Creative Director"
+    },
+    {
+      "label": "Customer Success Manager",
+      "value": "Customer Success Manager"
+    },
+    {
+      "label": "Customer Support Manager",
+      "value": "Customer Support Manager"
+    },
+    {
+      "label": "Data Analyst",
+      "value": "Data Analyst"
+    },
+    {
+      "label": "Data Engineer",
+      "value": "Data Engineer"
+    },
+    {
+      "label": "Data Scientist",
+      "value": "Data Scientist"
+    },
+    {
+      "label": "Design Manager",
+      "value": "Design Manager"
+    },
+    {
+      "label": "DevOps Engineer",
+      "value": "DevOps Engineer"
+    },
+    {
+      "label": "Digital Marketing Manager",
+      "value": "Digital Marketing Manager"
+    },
+    {
+      "label": "Director",
+      "value": "Director"
+    },
+    {
+      "label": "Director of Engineering",
+      "value": "Director of Engineering"
+    },
+    {
+      "label": "Director of Product",
+      "value": "Director of Product"
+    },
+    {
+      "label": "Engineering Manager",
+      "value": "Engineering Manager"
+    },
+    {
+      "label": "Enterprise Architect",
+      "value": "Enterprise Architect"
+    },
+    {
+      "label": "Executive Vice President",
+      "value": "Executive Vice President"
+    },
+    {
+      "label": "Finance Director",
+      "value": "Finance Director"
+    },
+    {
+      "label": "Finance Manager",
+      "value": "Finance Manager"
+    },
+    {
+      "label": "Financial Analyst",
+      "value": "Financial Analyst"
+    },
+    {
+      "label": "Founder",
+      "value": "Founder"
+    },
+    {
+      "label": "Frontend Engineer",
+      "value": "Frontend Engineer"
+    },
+    {
+      "label": "Full Stack Engineer",
+      "value": "Full Stack Engineer"
+    },
+    {
+      "label": "General Counsel",
+      "value": "General Counsel"
+    },
+    {
+      "label": "General Manager",
+      "value": "General Manager"
+    },
+    {
+      "label": "Graphic Designer",
+      "value": "Graphic Designer"
+    },
+    {
+      "label": "Group Product Manager",
+      "value": "Group Product Manager"
+    },
+    {
+      "label": "Growth Marketing Manager",
+      "value": "Growth Marketing Manager"
+    },
+    {
+      "label": "Head of Customer Success",
+      "value": "Head of Customer Success"
+    },
+    {
+      "label": "Head of Engineering",
+      "value": "Head of Engineering"
+    },
+    {
+      "label": "Head of Finance",
+      "value": "Head of Finance"
+    },
+    {
+      "label": "Head of Growth",
+      "value": "Head of Growth"
+    },
+    {
+      "label": "Head of HR",
+      "value": "Head of HR"
+    },
+    {
+      "label": "Head of IT",
+      "value": "Head of IT"
+    },
+    {
+      "label": "Head of Marketing",
+      "value": "Head of Marketing"
+    },
+    {
+      "label": "Head of Operations",
+      "value": "Head of Operations"
+    },
+    {
+      "label": "Head of Product",
+      "value": "Head of Product"
+    },
+    {
+      "label": "Head of Sales",
+      "value": "Head of Sales"
+    },
+    {
+      "label": "HR Director",
+      "value": "HR Director"
+    },
+    {
+      "label": "HR Manager",
+      "value": "HR Manager"
+    },
+    {
+      "label": "Implementation Manager",
+      "value": "Implementation Manager"
+    },
+    {
+      "label": "Inside Sales Representative",
+      "value": "Inside Sales Representative"
+    },
+    {
+      "label": "IT Manager",
+      "value": "IT Manager"
+    },
+    {
+      "label": "IT Support Specialist",
+      "value": "IT Support Specialist"
+    },
+    {
+      "label": "Key Account Manager",
+      "value": "Key Account Manager"
+    },
+    {
+      "label": "Legal Counsel",
+      "value": "Legal Counsel"
+    },
+    {
+      "label": "Machine Learning Engineer",
+      "value": "Machine Learning Engineer"
+    },
+    {
+      "label": "Manager",
+      "value": "Manager"
+    },
+    {
+      "label": "Marketing Director",
+      "value": "Marketing Director"
+    },
+    {
+      "label": "Marketing Manager",
+      "value": "Marketing Manager"
+    },
+    {
+      "label": "Mobile Engineer",
+      "value": "Mobile Engineer"
+    },
+    {
+      "label": "Network Engineer",
+      "value": "Network Engineer"
+    },
+    {
+      "label": "Office Manager",
+      "value": "Office Manager"
+    },
+    {
+      "label": "Operations Director",
+      "value": "Operations Director"
+    },
+    {
+      "label": "Operations Manager",
+      "value": "Operations Manager"
+    },
+    {
+      "label": "Owner",
+      "value": "Owner"
+    },
+    {
+      "label": "Partnerships Manager",
+      "value": "Partnerships Manager"
+    },
+    {
+      "label": "People Operations Manager",
+      "value": "People Operations Manager"
+    },
+    {
+      "label": "Performance Marketing Manager",
+      "value": "Performance Marketing Manager"
+    },
+    {
+      "label": "PR Manager",
+      "value": "PR Manager"
+    },
+    {
+      "label": "President",
+      "value": "President"
+    },
+    {
+      "label": "Principal",
+      "value": "Principal"
+    },
+    {
+      "label": "Procurement Manager",
+      "value": "Procurement Manager"
+    },
+    {
+      "label": "Product Designer",
+      "value": "Product Designer"
+    },
+    {
+      "label": "Product Manager",
+      "value": "Product Manager"
+    },
+    {
+      "label": "Product Marketing Manager",
+      "value": "Product Marketing Manager"
+    },
+    {
+      "label": "Product Owner",
+      "value": "Product Owner"
+    },
+    {
+      "label": "Professional Services Manager",
+      "value": "Professional Services Manager"
+    },
+    {
+      "label": "Program Manager",
+      "value": "Program Manager"
+    },
+    {
+      "label": "Project Manager",
+      "value": "Project Manager"
+    },
+    {
+      "label": "QA Engineer",
+      "value": "QA Engineer"
+    },
+    {
+      "label": "Recruiter",
+      "value": "Recruiter"
+    },
+    {
+      "label": "Regional Sales Manager",
+      "value": "Regional Sales Manager"
+    },
+    {
+      "label": "Researcher",
+      "value": "Researcher"
+    },
+    {
+      "label": "Sales Development Representative",
+      "value": "Sales Development Representative"
+    },
+    {
+      "label": "Sales Director",
+      "value": "Sales Director"
+    },
+    {
+      "label": "Sales Executive",
+      "value": "Sales Executive"
+    },
+    {
+      "label": "Sales Manager",
+      "value": "Sales Manager"
+    },
+    {
+      "label": "Scrum Master",
+      "value": "Scrum Master"
+    },
+    {
+      "label": "Security Engineer",
+      "value": "Security Engineer"
+    },
+    {
+      "label": "SEM Specialist",
+      "value": "SEM Specialist"
+    },
+    {
+      "label": "Senior Consultant",
+      "value": "Senior Consultant"
+    },
+    {
+      "label": "Senior Director",
+      "value": "Senior Director"
+    },
+    {
+      "label": "Senior Manager",
+      "value": "Senior Manager"
+    },
+    {
+      "label": "Senior Product Manager",
+      "value": "Senior Product Manager"
+    },
+    {
+      "label": "Senior Software Engineer",
+      "value": "Senior Software Engineer"
+    },
+    {
+      "label": "Senior Vice President",
+      "value": "Senior Vice President"
+    },
+    {
+      "label": "SEO Specialist",
+      "value": "SEO Specialist"
+    },
+    {
+      "label": "Service Delivery Manager",
+      "value": "Service Delivery Manager"
+    },
+    {
+      "label": "Site Reliability Engineer",
+      "value": "Site Reliability Engineer"
+    },
+    {
+      "label": "Social Media Manager",
+      "value": "Social Media Manager"
+    },
+    {
+      "label": "Software Engineer",
+      "value": "Software Engineer"
+    },
+    {
+      "label": "Solutions Architect",
+      "value": "Solutions Architect"
+    },
+    {
+      "label": "Strategy Consultant",
+      "value": "Strategy Consultant"
+    },
+    {
+      "label": "Systems Administrator",
+      "value": "Systems Administrator"
+    },
+    {
+      "label": "Talent Acquisition Manager",
+      "value": "Talent Acquisition Manager"
+    },
+    {
+      "label": "Team Lead",
+      "value": "Team Lead"
+    },
+    {
+      "label": "Tech Lead",
+      "value": "Tech Lead"
+    },
+    {
+      "label": "Territory Manager",
+      "value": "Territory Manager"
+    },
+    {
+      "label": "Test Engineer",
+      "value": "Test Engineer"
+    },
+    {
+      "label": "UI Designer",
+      "value": "UI Designer"
+    },
+    {
+      "label": "UX Designer",
+      "value": "UX Designer"
+    },
+    {
+      "label": "UX Researcher",
+      "value": "UX Researcher"
+    },
+    {
+      "label": "Vice President",
+      "value": "Vice President"
+    }
+  ],
+  "productsServices": [
+    {
+      "label": "Advertising",
+      "value": "Advertising"
+    },
+    {
+      "label": "Branding",
+      "value": "Branding"
+    },
+    {
+      "label": "Coaching",
+      "value": "Coaching"
+    },
+    {
+      "label": "Construction",
+      "value": "Construction"
+    },
+    {
+      "label": "Consulting",
+      "value": "Consulting"
+    },
+    {
+      "label": "Design",
+      "value": "Design"
+    },
+    {
+      "label": "Digital marketing",
+      "value": "Digital marketing"
+    },
+    {
+      "label": "Education",
+      "value": "Education"
+    },
+    {
+      "label": "Email marketing",
+      "value": "Email marketing"
+    },
+    {
+      "label": "Events",
+      "value": "Events"
+    },
+    {
+      "label": "Graphic design",
+      "value": "Graphic design"
+    },
+    {
+      "label": "Innovation",
+      "value": "Innovation"
+    },
+    {
+      "label": "Marketing",
+      "value": "Marketing"
+    },
+    {
+      "label": "Photography",
+      "value": "Photography"
+    },
+    {
+      "label": "Project management",
+      "value": "Project management"
+    },
+    {
+      "label": "Real estate",
+      "value": "Real estate"
+    },
+    {
+      "label": "Seo",
+      "value": "Seo"
+    },
+    {
+      "label": "Social media",
+      "value": "Social media"
+    },
+    {
+      "label": "Social media marketing",
+      "value": "Social media marketing"
+    },
+    {
+      "label": "Software development",
+      "value": "Software development"
+    },
+    {
+      "label": "Strategy",
+      "value": "Strategy"
+    },
+    {
+      "label": "Technology",
+      "value": "Technology"
+    },
+    {
+      "label": "Training",
+      "value": "Training"
+    },
+    {
+      "label": "Web design",
+      "value": "Web design"
+    },
+    {
+      "label": "Web development",
+      "value": "Web development"
+    }
+  ],
+  "socialMedia": [
+    {
+      "label": "Facebook",
+      "value": "FACEBOOK"
+    },
+    {
+      "label": "Instagram",
+      "value": "INSTAGRAM"
+    },
+    {
+      "label": "Linkedin",
+      "value": "LINKEDIN"
+    },
+    {
+      "label": "Twitter",
+      "value": "TWITTER"
+    }
+  ],
+  "keywordSources": [
+    {
+      "label": "Award",
+      "value": "AWARD"
+    },
+    {
+      "label": "Certification",
+      "value": "CERTIFICATION"
+    },
+    {
+      "label": "Course",
+      "value": "COURSE"
+    },
+    {
+      "label": "Education Description",
+      "value": "EDUCATION_DESCRIPTION"
+    },
+    {
+      "label": "Headline",
+      "value": "HEADLINE"
+    },
+    {
+      "label": "Language Skill",
+      "value": "LANGUAGE_SKILL"
+    },
+    {
+      "label": "Organization",
+      "value": "ORGANIZATION"
+    },
+    {
+      "label": "Patent",
+      "value": "PATENT"
+    },
+    {
+      "label": "Projects",
+      "value": "PROJECTS"
+    },
+    {
+      "label": "Publication",
+      "value": "PUBLICATION"
+    },
+    {
+      "label": "Skill",
+      "value": "SKILL"
+    },
+    {
+      "label": "Summary",
+      "value": "SUMMARY"
+    },
+    {
+      "label": "Test Score",
+      "value": "TEST_SCORE"
+    },
+    {
+      "label": "Volunteering",
+      "value": "VOLUNTEERING"
+    },
+    {
+      "label": "Work History Description",
+      "value": "WORK_HISTORY_DESCRIPTION"
+    }
+  ],
+  "degree": [
+    {
+      "label": "Associate of Applied Science",
+      "value": "Associate of Applied Science"
+    },
+    {
+      "label": "Associate of Arts",
+      "value": "Associate of Arts"
+    },
+    {
+      "label": "Associate of Engineering",
+      "value": "Associate of Engineering"
+    },
+    {
+      "label": "Associate of Science",
+      "value": "Associate of Science"
+    },
+    {
+      "label": "Associates Degree",
+      "value": "Associates Degree"
+    },
+    {
+      "label": "Ba",
+      "value": "Ba"
+    },
+    {
+      "label": "Bachelor of Applied Science",
+      "value": "Bachelor of Applied Science"
+    },
+    {
+      "label": "Bachelor of Applied Science Basc",
+      "value": "Bachelor of Applied Science Basc"
+    },
+    {
+      "label": "Bachelor of Architecture",
+      "value": "Bachelor of Architecture"
+    },
+    {
+      "label": "Bachelor of Arts",
+      "value": "Bachelor of Arts"
+    },
+    {
+      "label": "Bachelor of Arts Ba",
+      "value": "Bachelor of Arts Ba"
+    },
+    {
+      "label": "Bachelor of Business Administration",
+      "value": "Bachelor of Business Administration"
+    },
+    {
+      "label": "Bachelor of Civil Law",
+      "value": "Bachelor of Civil Law"
+    },
+    {
+      "label": "Bachelor of Commerce",
+      "value": "Bachelor of Commerce"
+    },
+    {
+      "label": "Bachelor of Computer Applications",
+      "value": "Bachelor of Computer Applications"
+    },
+    {
+      "label": "Bachelor of Computer Science",
+      "value": "Bachelor of Computer Science"
+    },
+    {
+      "label": "Bachelor of Dental Surgery",
+      "value": "Bachelor of Dental Surgery"
+    },
+    {
+      "label": "Bachelor of Design",
+      "value": "Bachelor of Design"
+    },
+    {
+      "label": "Bachelor of Education",
+      "value": "Bachelor of Education"
+    },
+    {
+      "label": "Bachelor of Engineering",
+      "value": "Bachelor of Engineering"
+    },
+    {
+      "label": "Bachelor of Engineering Be",
+      "value": "Bachelor of Engineering Be"
+    },
+    {
+      "label": "Bachelor of Fine Arts",
+      "value": "Bachelor of Fine Arts"
+    },
+    {
+      "label": "Bachelor of Health Science",
+      "value": "Bachelor of Health Science"
+    },
+    {
+      "label": "Bachelor of Journalism",
+      "value": "Bachelor of Journalism"
+    },
+    {
+      "label": "Bachelor of Laws",
+      "value": "Bachelor of Laws"
+    },
+    {
+      "label": "Bachelor of Laws Llb",
+      "value": "Bachelor of Laws Llb"
+    },
+    {
+      "label": "Bachelor of Liberal Arts",
+      "value": "Bachelor of Liberal Arts"
+    },
+    {
+      "label": "Bachelor of Management Studies",
+      "value": "Bachelor of Management Studies"
+    },
+    {
+      "label": "Bachelor of Medicine, Bachelor of Surgery",
+      "value": "Bachelor of Medicine, Bachelor of Surgery"
+    },
+    {
+      "label": "Bachelor of Music",
+      "value": "Bachelor of Music"
+    },
+    {
+      "label": "Bachelor of Nursing",
+      "value": "Bachelor of Nursing"
+    },
+    {
+      "label": "Bachelor of Pharmacy",
+      "value": "Bachelor of Pharmacy"
+    },
+    {
+      "label": "Bachelor of Philosophy",
+      "value": "Bachelor of Philosophy"
+    },
+    {
+      "label": "Bachelor of Science",
+      "value": "Bachelor of Science"
+    },
+    {
+      "label": "Bachelor of Science Bs",
+      "value": "Bachelor of Science Bs"
+    },
+    {
+      "label": "Bachelor of Social Work",
+      "value": "Bachelor of Social Work"
+    },
+    {
+      "label": "Bachelor of Technology",
+      "value": "Bachelor of Technology"
+    },
+    {
+      "label": "Bachelor of Technology Btech",
+      "value": "Bachelor of Technology Btech"
+    },
+    {
+      "label": "Bachelor of Theology",
+      "value": "Bachelor of Theology"
+    },
+    {
+      "label": "Bachelor’s Degree",
+      "value": "Bachelor’s Degree"
+    },
+    {
+      "label": "Bachelors Degree",
+      "value": "Bachelors Degree"
+    },
+    {
+      "label": "Bs",
+      "value": "Bs"
+    },
+    {
+      "label": "Certificate",
+      "value": "Certificate"
+    },
+    {
+      "label": "Diploma",
+      "value": "Diploma"
+    },
+    {
+      "label": "Doctor of Business Administration",
+      "value": "Doctor of Business Administration"
+    },
+    {
+      "label": "Doctor of Dental Medicine",
+      "value": "Doctor of Dental Medicine"
+    },
+    {
+      "label": "Doctor of Dental Surgery",
+      "value": "Doctor of Dental Surgery"
+    },
+    {
+      "label": "Doctor of Education",
+      "value": "Doctor of Education"
+    },
+    {
+      "label": "Doctor of Engineering",
+      "value": "Doctor of Engineering"
+    },
+    {
+      "label": "Doctor of Medicine",
+      "value": "Doctor of Medicine"
+    },
+    {
+      "label": "Doctor of Ministry",
+      "value": "Doctor of Ministry"
+    },
+    {
+      "label": "Doctor of Nursing Practice",
+      "value": "Doctor of Nursing Practice"
+    },
+    {
+      "label": "Doctor of Optometry",
+      "value": "Doctor of Optometry"
+    },
+    {
+      "label": "Doctor of Osteopathic Medicine",
+      "value": "Doctor of Osteopathic Medicine"
+    },
+    {
+      "label": "Doctor of Pharmacy",
+      "value": "Doctor of Pharmacy"
+    },
+    {
+      "label": "Doctor of Philosophy",
+      "value": "Doctor of Philosophy"
+    },
+    {
+      "label": "Doctor of Philosophy Phd",
+      "value": "Doctor of Philosophy Phd"
+    },
+    {
+      "label": "Doctor of Psychology",
+      "value": "Doctor of Psychology"
+    },
+    {
+      "label": "Doctor of Public Health",
+      "value": "Doctor of Public Health"
+    },
+    {
+      "label": "Doctor of Social Work",
+      "value": "Doctor of Social Work"
+    },
+    {
+      "label": "Doctor of Veterinary Medicine",
+      "value": "Doctor of Veterinary Medicine"
+    },
+    {
+      "label": "Engineer's Degree",
+      "value": "Engineer's Degree"
+    },
+    {
+      "label": "Foundation Degree",
+      "value": "Foundation Degree"
+    },
+    {
+      "label": "GED",
+      "value": "GED"
+    },
+    {
+      "label": "High School",
+      "value": "High School"
+    },
+    {
+      "label": "High School Diploma",
+      "value": "High School Diploma"
+    },
+    {
+      "label": "Higher National Certificate",
+      "value": "Higher National Certificate"
+    },
+    {
+      "label": "Higher National Diploma",
+      "value": "Higher National Diploma"
+    },
+    {
+      "label": "Honorary Doctorate",
+      "value": "Honorary Doctorate"
+    },
+    {
+      "label": "International Baccalaureate",
+      "value": "International Baccalaureate"
+    },
+    {
+      "label": "Juris Doctor",
+      "value": "Juris Doctor"
+    },
+    {
+      "label": "Licenciatura",
+      "value": "Licenciatura"
+    },
+    {
+      "label": "Master",
+      "value": "Master"
+    },
+    {
+      "label": "Master of Architecture",
+      "value": "Master of Architecture"
+    },
+    {
+      "label": "Master of Arts",
+      "value": "Master of Arts"
+    },
+    {
+      "label": "Master of Business Administration",
+      "value": "Master of Business Administration"
+    },
+    {
+      "label": "Master of Commerce",
+      "value": "Master of Commerce"
+    },
+    {
+      "label": "Master of Computer Applications",
+      "value": "Master of Computer Applications"
+    },
+    {
+      "label": "Master of Design",
+      "value": "Master of Design"
+    },
+    {
+      "label": "Master of Education",
+      "value": "Master of Education"
+    },
+    {
+      "label": "Master of Engineering",
+      "value": "Master of Engineering"
+    },
+    {
+      "label": "Master of Fine Arts",
+      "value": "Master of Fine Arts"
+    },
+    {
+      "label": "Master of Laws",
+      "value": "Master of Laws"
+    },
+    {
+      "label": "Master of Library Science",
+      "value": "Master of Library Science"
+    },
+    {
+      "label": "Master of Music",
+      "value": "Master of Music"
+    },
+    {
+      "label": "Master of Philosophy",
+      "value": "Master of Philosophy"
+    },
+    {
+      "label": "Master of Public Administration",
+      "value": "Master of Public Administration"
+    },
+    {
+      "label": "Master of Public Health",
+      "value": "Master of Public Health"
+    },
+    {
+      "label": "Master of Research",
+      "value": "Master of Research"
+    },
+    {
+      "label": "Master of Science",
+      "value": "Master of Science"
+    },
+    {
+      "label": "Master of Science Ms",
+      "value": "Master of Science Ms"
+    },
+    {
+      "label": "Master of Social Work",
+      "value": "Master of Social Work"
+    },
+    {
+      "label": "Master of Studies",
+      "value": "Master of Studies"
+    },
+    {
+      "label": "Master of Surgery",
+      "value": "Master of Surgery"
+    },
+    {
+      "label": "Master of Technology",
+      "value": "Master of Technology"
+    },
+    {
+      "label": "Masters Degree",
+      "value": "Masters Degree"
+    },
+    {
+      "label": "Mba",
+      "value": "Mba"
+    },
+    {
+      "label": "Medical Doctor",
+      "value": "Medical Doctor"
+    },
+    {
+      "label": "Postgraduate Certificate",
+      "value": "Postgraduate Certificate"
+    },
+    {
+      "label": "Postgraduate Diploma",
+      "value": "Postgraduate Diploma"
+    },
+    {
+      "label": "Professional Certificate",
+      "value": "Professional Certificate"
+    },
+    {
+      "label": "Specialist Degree",
+      "value": "Specialist Degree"
+    },
+    {
+      "label": "Vocational Qualification",
+      "value": "Vocational Qualification"
+    }
+  ],
+  "fieldOfStudy": [
+    {
+      "label": "Accounting",
+      "value": "Accounting"
+    },
+    {
+      "label": "Accounting And Finance",
+      "value": "Accounting And Finance"
+    },
+    {
+      "label": "Actuarial Science",
+      "value": "Actuarial Science"
+    },
+    {
+      "label": "Aerospace Engineering",
+      "value": "Aerospace Engineering"
+    },
+    {
+      "label": "Anthropology",
+      "value": "Anthropology"
+    },
+    {
+      "label": "Archaeology",
+      "value": "Archaeology"
+    },
+    {
+      "label": "Architectural Engineering",
+      "value": "Architectural Engineering"
+    },
+    {
+      "label": "Architecture",
+      "value": "Architecture"
+    },
+    {
+      "label": "Art History",
+      "value": "Art History"
+    },
+    {
+      "label": "Astronomy",
+      "value": "Astronomy"
+    },
+    {
+      "label": "Bioinformatics",
+      "value": "Bioinformatics"
+    },
+    {
+      "label": "Biology",
+      "value": "Biology"
+    },
+    {
+      "label": "Biomedical Engineering",
+      "value": "Biomedical Engineering"
+    },
+    {
+      "label": "Biotechnology",
+      "value": "Biotechnology"
+    },
+    {
+      "label": "Business Administration",
+      "value": "Business Administration"
+    },
+    {
+      "label": "Business Administration And Management",
+      "value": "Business Administration And Management"
+    },
+    {
+      "label": "Business Analytics",
+      "value": "Business Analytics"
+    },
+    {
+      "label": "Business And Commerce",
+      "value": "Business And Commerce"
+    },
+    {
+      "label": "Business Management And Marketing",
+      "value": "Business Management And Marketing"
+    },
+    {
+      "label": "Chemical Engineering",
+      "value": "Chemical Engineering"
+    },
+    {
+      "label": "Chemical Science",
+      "value": "Chemical Science"
+    },
+    {
+      "label": "Chemistry",
+      "value": "Chemistry"
+    },
+    {
+      "label": "Civil Engineering",
+      "value": "Civil Engineering"
+    },
+    {
+      "label": "Communication Studies",
+      "value": "Communication Studies"
+    },
+    {
+      "label": "Computational Mathematics",
+      "value": "Computational Mathematics"
+    },
+    {
+      "label": "Computer Engineering",
+      "value": "Computer Engineering"
+    },
+    {
+      "label": "Computer Science",
+      "value": "Computer Science"
+    },
+    {
+      "label": "Creative Writing",
+      "value": "Creative Writing"
+    },
+    {
+      "label": "Criminal Justice",
+      "value": "Criminal Justice"
+    },
+    {
+      "label": "Data Science",
+      "value": "Data Science"
+    },
+    {
+      "label": "Dental Hygiene",
+      "value": "Dental Hygiene"
+    },
+    {
+      "label": "E-Commerce",
+      "value": "E-Commerce"
+    },
+    {
+      "label": "Economics",
+      "value": "Economics"
+    },
+    {
+      "label": "Education",
+      "value": "Education"
+    },
+    {
+      "label": "Electrical And Electronics Engineering",
+      "value": "Electrical And Electronics Engineering"
+    },
+    {
+      "label": "English Literature",
+      "value": "English Literature"
+    },
+    {
+      "label": "Entrepreneurship",
+      "value": "Entrepreneurship"
+    },
+    {
+      "label": "Environmental Science",
+      "value": "Environmental Science"
+    },
+    {
+      "label": "Fashion Design",
+      "value": "Fashion Design"
+    },
+    {
+      "label": "Film Studies",
+      "value": "Film Studies"
+    },
+    {
+      "label": "Finance",
+      "value": "Finance"
+    },
+    {
+      "label": "Fine Arts",
+      "value": "Fine Arts"
+    },
+    {
+      "label": "Foreign Languages",
+      "value": "Foreign Languages"
+    },
+    {
+      "label": "Forensic Science",
+      "value": "Forensic Science"
+    },
+    {
+      "label": "Gender And Women's Studies",
+      "value": "Gender And Women's Studies"
+    },
+    {
+      "label": "General Studies",
+      "value": "General Studies"
+    },
+    {
+      "label": "Geography",
+      "value": "Geography"
+    },
+    {
+      "label": "Geology",
+      "value": "Geology"
+    },
+    {
+      "label": "Global Studies",
+      "value": "Global Studies"
+    },
+    {
+      "label": "Graphic Design",
+      "value": "Graphic Design"
+    },
+    {
+      "label": "Health Science",
+      "value": "Health Science"
+    },
+    {
+      "label": "Healthcare Administration",
+      "value": "Healthcare Administration"
+    },
+    {
+      "label": "History",
+      "value": "History"
+    },
+    {
+      "label": "Hospitality Management",
+      "value": "Hospitality Management"
+    },
+    {
+      "label": "Human Resources Management",
+      "value": "Human Resources Management"
+    },
+    {
+      "label": "Industrial Engineering",
+      "value": "Industrial Engineering"
+    },
+    {
+      "label": "Information Technology",
+      "value": "Information Technology"
+    },
+    {
+      "label": "Interior Design",
+      "value": "Interior Design"
+    },
+    {
+      "label": "International Business",
+      "value": "International Business"
+    },
+    {
+      "label": "International Relations",
+      "value": "International Relations"
+    },
+    {
+      "label": "Journalism",
+      "value": "Journalism"
+    },
+    {
+      "label": "Kinesiology",
+      "value": "Kinesiology"
+    },
+    {
+      "label": "Law",
+      "value": "Law"
+    },
+    {
+      "label": "Linguistics",
+      "value": "Linguistics"
+    },
+    {
+      "label": "Management",
+      "value": "Management"
+    },
+    {
+      "label": "Marine Biology",
+      "value": "Marine Biology"
+    },
+    {
+      "label": "Marketing",
+      "value": "Marketing"
+    },
+    {
+      "label": "Materials Science And Engineering",
+      "value": "Materials Science And Engineering"
+    },
+    {
+      "label": "Mathematics",
+      "value": "Mathematics"
+    },
+    {
+      "label": "Mechanical Engineering",
+      "value": "Mechanical Engineering"
+    },
+    {
+      "label": "Microbiology",
+      "value": "Microbiology"
+    },
+    {
+      "label": "Mining Engineering",
+      "value": "Mining Engineering"
+    },
+    {
+      "label": "Music",
+      "value": "Music"
+    },
+    {
+      "label": "Neuroscience",
+      "value": "Neuroscience"
+    },
+    {
+      "label": "Nuclear Engineering",
+      "value": "Nuclear Engineering"
+    },
+    {
+      "label": "Nutrition And Dietetics",
+      "value": "Nutrition And Dietetics"
+    },
+    {
+      "label": "Occupational Therapy",
+      "value": "Occupational Therapy"
+    },
+    {
+      "label": "Ocean Engineering",
+      "value": "Ocean Engineering"
+    },
+    {
+      "label": "Organizational Leadership",
+      "value": "Organizational Leadership"
+    },
+    {
+      "label": "Petroleum Engineering",
+      "value": "Petroleum Engineering"
+    },
+    {
+      "label": "Philosophy",
+      "value": "Philosophy"
+    },
+    {
+      "label": "Photography",
+      "value": "Photography"
+    },
+    {
+      "label": "Physical Therapy",
+      "value": "Physical Therapy"
+    },
+    {
+      "label": "Physics",
+      "value": "Physics"
+    },
+    {
+      "label": "Political Science",
+      "value": "Political Science"
+    },
+    {
+      "label": "Pre-Medicine",
+      "value": "Pre-Medicine"
+    },
+    {
+      "label": "Project Management",
+      "value": "Project Management"
+    },
+    {
+      "label": "Psychology",
+      "value": "Psychology"
+    },
+    {
+      "label": "Public Administration",
+      "value": "Public Administration"
+    },
+    {
+      "label": "Public Health",
+      "value": "Public Health"
+    },
+    {
+      "label": "Real Estate",
+      "value": "Real Estate"
+    },
+    {
+      "label": "Registered Nursing",
+      "value": "Registered Nursing"
+    },
+    {
+      "label": "Religious Studies",
+      "value": "Religious Studies"
+    },
+    {
+      "label": "Risk Management And Insurance",
+      "value": "Risk Management And Insurance"
+    },
+    {
+      "label": "Science",
+      "value": "Science"
+    },
+    {
+      "label": "Sociology",
+      "value": "Sociology"
+    },
+    {
+      "label": "Software Engineering",
+      "value": "Software Engineering"
+    },
+    {
+      "label": "Speech-Language Pathology",
+      "value": "Speech-Language Pathology"
+    },
+    {
+      "label": "Sport Management",
+      "value": "Sport Management"
+    },
+    {
+      "label": "Statistics",
+      "value": "Statistics"
+    },
+    {
+      "label": "Supply Chain Management",
+      "value": "Supply Chain Management"
+    },
+    {
+      "label": "Theater Arts",
+      "value": "Theater Arts"
+    },
+    {
+      "label": "Urban Planning",
+      "value": "Urban Planning"
+    },
+    {
+      "label": "Veterinary Science",
+      "value": "Veterinary Science"
+    },
+    {
+      "label": "Zoology",
+      "value": "Zoology"
+    }
+  ],
+  "personLanguages": [
+    {
+      "label": "Albanian",
+      "value": "albanian"
+    },
+    {
+      "label": "Arabic",
+      "value": "arabic"
+    },
+    {
+      "label": "Armenian",
+      "value": "armenian"
+    },
+    {
+      "label": "Bengali",
+      "value": "bengali"
+    },
+    {
+      "label": "Bosnian",
+      "value": "bosnian"
+    },
+    {
+      "label": "Burmese",
+      "value": "burmese"
+    },
+    {
+      "label": "Chinese",
+      "value": "chinese"
+    },
+    {
+      "label": "Croatian",
+      "value": "croatian"
+    },
+    {
+      "label": "Czech",
+      "value": "czech"
+    },
+    {
+      "label": "Danish",
+      "value": "danish"
+    },
+    {
+      "label": "Dutch",
+      "value": "dutch"
+    },
+    {
+      "label": "English",
+      "value": "english"
+    },
+    {
+      "label": "Finnish",
+      "value": "finnish"
+    },
+    {
+      "label": "French",
+      "value": "french"
+    },
+    {
+      "label": "German",
+      "value": "german"
+    },
+    {
+      "label": "Greek",
+      "value": "greek"
+    },
+    {
+      "label": "Hindi",
+      "value": "hindi"
+    },
+    {
+      "label": "Hungarian",
+      "value": "hungarian"
+    },
+    {
+      "label": "Icelandic",
+      "value": "icelandic"
+    },
+    {
+      "label": "Indonesian",
+      "value": "indonesian"
+    },
+    {
+      "label": "Italian",
+      "value": "italian"
+    },
+    {
+      "label": "Japanese",
+      "value": "japanese"
+    },
+    {
+      "label": "Javanese",
+      "value": "javanese"
+    },
+    {
+      "label": "Kannada",
+      "value": "kannada"
+    },
+    {
+      "label": "Korean",
+      "value": "korean"
+    },
+    {
+      "label": "Latvian",
+      "value": "latvian"
+    },
+    {
+      "label": "Lithuanian",
+      "value": "lithuanian"
+    },
+    {
+      "label": "Malay",
+      "value": "malay"
+    },
+    {
+      "label": "Malayalam",
+      "value": "malayalam"
+    },
+    {
+      "label": "Marathi",
+      "value": "marathi"
+    },
+    {
+      "label": "Norwegian",
+      "value": "norwegian"
+    },
+    {
+      "label": "Panjabi",
+      "value": "panjabi"
+    },
+    {
+      "label": "Persian",
+      "value": "persian"
+    },
+    {
+      "label": "Polish",
+      "value": "polish"
+    },
+    {
+      "label": "Portuguese",
+      "value": "portuguese"
+    },
+    {
+      "label": "Romanian",
+      "value": "romanian"
+    },
+    {
+      "label": "Russian",
+      "value": "russian"
+    },
+    {
+      "label": "Serbian",
+      "value": "serbian"
+    },
+    {
+      "label": "Slovak",
+      "value": "slovak"
+    },
+    {
+      "label": "Spanish",
+      "value": "spanish"
+    },
+    {
+      "label": "Swedish",
+      "value": "swedish"
+    },
+    {
+      "label": "Tagalog",
+      "value": "tagalog"
+    },
+    {
+      "label": "Tamil",
+      "value": "tamil"
+    },
+    {
+      "label": "Telugu",
+      "value": "telugu"
+    },
+    {
+      "label": "Thai",
+      "value": "thai"
+    },
+    {
+      "label": "Turkish",
+      "value": "turkish"
+    },
+    {
+      "label": "Ukrainian",
+      "value": "ukrainian"
+    },
+    {
+      "label": "Vietnamese",
+      "value": "vietnamese"
+    }
+  ],
+  "companyLanguages": [
+    {
+      "label": "Albanian",
+      "value": "albanian"
+    },
+    {
+      "label": "Arabic",
+      "value": "arabic"
+    },
+    {
+      "label": "Armenian",
+      "value": "armenian"
+    },
+    {
+      "label": "Bengali",
+      "value": "bengali"
+    },
+    {
+      "label": "Bosnian",
+      "value": "bosnian"
+    },
+    {
+      "label": "Burmese",
+      "value": "burmese"
+    },
+    {
+      "label": "Chinese",
+      "value": "chinese"
+    },
+    {
+      "label": "Croatian",
+      "value": "croatian"
+    },
+    {
+      "label": "Czech",
+      "value": "czech"
+    },
+    {
+      "label": "Danish",
+      "value": "danish"
+    },
+    {
+      "label": "Dutch",
+      "value": "dutch"
+    },
+    {
+      "label": "English",
+      "value": "english"
+    },
+    {
+      "label": "Finnish",
+      "value": "finnish"
+    },
+    {
+      "label": "French",
+      "value": "french"
+    },
+    {
+      "label": "German",
+      "value": "german"
+    },
+    {
+      "label": "Greek",
+      "value": "greek"
+    },
+    {
+      "label": "Hindi",
+      "value": "hindi"
+    },
+    {
+      "label": "Hungarian",
+      "value": "hungarian"
+    },
+    {
+      "label": "Icelandic",
+      "value": "icelandic"
+    },
+    {
+      "label": "Indonesian",
+      "value": "indonesian"
+    },
+    {
+      "label": "Italian",
+      "value": "italian"
+    },
+    {
+      "label": "Japanese",
+      "value": "japanese"
+    },
+    {
+      "label": "Javanese",
+      "value": "javanese"
+    },
+    {
+      "label": "Kannada",
+      "value": "kannada"
+    },
+    {
+      "label": "Korean",
+      "value": "korean"
+    },
+    {
+      "label": "Latvian",
+      "value": "latvian"
+    },
+    {
+      "label": "Lithuanian",
+      "value": "lithuanian"
+    },
+    {
+      "label": "Malay",
+      "value": "malay"
+    },
+    {
+      "label": "Malayalam",
+      "value": "malayalam"
+    },
+    {
+      "label": "Marathi",
+      "value": "marathi"
+    },
+    {
+      "label": "Norwegian",
+      "value": "norwegian"
+    },
+    {
+      "label": "Panjabi",
+      "value": "panjabi"
+    },
+    {
+      "label": "Persian",
+      "value": "persian"
+    },
+    {
+      "label": "Polish",
+      "value": "polish"
+    },
+    {
+      "label": "Portuguese",
+      "value": "portuguese"
+    },
+    {
+      "label": "Romanian",
+      "value": "romanian"
+    },
+    {
+      "label": "Russian",
+      "value": "russian"
+    },
+    {
+      "label": "Serbian",
+      "value": "serbian"
+    },
+    {
+      "label": "Slovak",
+      "value": "slovak"
+    },
+    {
+      "label": "Spanish",
+      "value": "spanish"
+    },
+    {
+      "label": "Swedish",
+      "value": "swedish"
+    },
+    {
+      "label": "Tagalog",
+      "value": "tagalog"
+    },
+    {
+      "label": "Tamil",
+      "value": "tamil"
+    },
+    {
+      "label": "Telugu",
+      "value": "telugu"
+    },
+    {
+      "label": "Thai",
+      "value": "thai"
+    },
+    {
+      "label": "Turkish",
+      "value": "turkish"
+    },
+    {
+      "label": "Ukrainian",
+      "value": "ukrainian"
+    },
+    {
+      "label": "Vietnamese",
+      "value": "vietnamese"
+    }
+  ],
+  "headcountJobFunctions": [
+    {
+      "label": "Accounting",
+      "value": "accounting"
+    },
+    {
+      "label": "Administrative",
+      "value": "administrative"
+    },
+    {
+      "label": "Arts And Design",
+      "value": "arts_and_design"
+    },
+    {
+      "label": "Business Development",
+      "value": "business_development"
+    },
+    {
+      "label": "Community And Social Services",
+      "value": "community_and_social_services"
+    },
+    {
+      "label": "Consulting",
+      "value": "consulting"
+    },
+    {
+      "label": "Customer Success And Support",
+      "value": "customer_success_and_support"
+    },
+    {
+      "label": "Education",
+      "value": "education"
+    },
+    {
+      "label": "Engineering",
+      "value": "engineering"
+    },
+    {
+      "label": "Entrepreneurship",
+      "value": "entrepreneurship"
+    },
+    {
+      "label": "Finance",
+      "value": "finance"
+    },
+    {
+      "label": "Healthcare Services",
+      "value": "healthcare_services"
+    },
+    {
+      "label": "Human Resources",
+      "value": "human_resources"
+    },
+    {
+      "label": "Information Technology",
+      "value": "information_technology"
+    },
+    {
+      "label": "Legal",
+      "value": "legal"
+    },
+    {
+      "label": "Marketing",
+      "value": "marketing"
+    },
+    {
+      "label": "Media And Communication",
+      "value": "media_and_communication"
+    },
+    {
+      "label": "Military And Protective Services",
+      "value": "military_and_protective_services"
+    },
+    {
+      "label": "Operations",
+      "value": "operations"
+    },
+    {
+      "label": "Product Management",
+      "value": "product_management"
+    },
+    {
+      "label": "Program And Project Management",
+      "value": "program_and_project_management"
+    },
+    {
+      "label": "Purchasing",
+      "value": "purchasing"
+    },
+    {
+      "label": "Quality Assurance",
+      "value": "quality_assurance"
+    },
+    {
+      "label": "Real Estate",
+      "value": "real_estate"
+    },
+    {
+      "label": "Research",
+      "value": "research"
+    },
+    {
+      "label": "Sales",
+      "value": "sales"
+    },
+    {
+      "label": "Support",
+      "value": "support"
+    }
+  ],
+  "departmentJobFunctions": [
+    {
+      "label": "Accounting",
+      "value": "accounting"
+    },
+    {
+      "label": "Administrative",
+      "value": "administrative"
+    },
+    {
+      "label": "Arts And Design",
+      "value": "arts_and_design"
+    },
+    {
+      "label": "Business Development",
+      "value": "business_development"
+    },
+    {
+      "label": "Community And Social Services",
+      "value": "community_and_social_services"
+    },
+    {
+      "label": "Consulting",
+      "value": "consulting"
+    },
+    {
+      "label": "Customer Success And Support",
+      "value": "customer_success_and_support"
+    },
+    {
+      "label": "Education",
+      "value": "education"
+    },
+    {
+      "label": "Engineering",
+      "value": "engineering"
+    },
+    {
+      "label": "Entrepreneurship",
+      "value": "entrepreneurship"
+    },
+    {
+      "label": "Finance",
+      "value": "finance"
+    },
+    {
+      "label": "Healthcare Services",
+      "value": "healthcare_services"
+    },
+    {
+      "label": "Human Resources",
+      "value": "human_resources"
+    },
+    {
+      "label": "Information Technology",
+      "value": "information_technology"
+    },
+    {
+      "label": "Legal",
+      "value": "legal"
+    },
+    {
+      "label": "Marketing",
+      "value": "marketing"
+    },
+    {
+      "label": "Media And Communication",
+      "value": "media_and_communication"
+    },
+    {
+      "label": "Military And Protective Services",
+      "value": "military_and_protective_services"
+    },
+    {
+      "label": "Operations",
+      "value": "operations"
+    },
+    {
+      "label": "Product Management",
+      "value": "product_management"
+    },
+    {
+      "label": "Program And Project Management",
+      "value": "program_and_project_management"
+    },
+    {
+      "label": "Purchasing",
+      "value": "purchasing"
+    },
+    {
+      "label": "Quality Assurance",
+      "value": "quality_assurance"
+    },
+    {
+      "label": "Real Estate",
+      "value": "real_estate"
+    },
+    {
+      "label": "Research",
+      "value": "research"
+    },
+    {
+      "label": "Sales",
+      "value": "sales"
+    },
+    {
+      "label": "Support",
+      "value": "support"
+    }
+  ],
+  "headcountTimeFrames": [
+    {
+      "label": "One",
+      "value": "ONE"
+    },
+    {
+      "label": "Six",
+      "value": "SIX"
+    },
+    {
+      "label": "Three",
+      "value": "THREE"
+    },
+    {
+      "label": "Twelve",
+      "value": "TWELVE"
+    },
+    {
+      "label": "Twenty Four",
+      "value": "TWENTY_FOUR"
+    }
+  ],
+  "employeeSize": [
+    {
+      "label": "1-10",
+      "value": "1-10",
+      "start": 1,
+      "end": 10
+    },
+    {
+      "label": "10001+",
+      "value": "10001+",
+      "start": 10001,
+      "end": 9007199254740991
+    },
+    {
+      "label": "1001-2000",
+      "value": "1001-2000",
+      "start": 1001,
+      "end": 2000
+    },
+    {
+      "label": "101-200",
+      "value": "101-200",
+      "start": 101,
+      "end": 200
+    },
+    {
+      "label": "11-20",
+      "value": "11-20",
+      "start": 11,
+      "end": 20
+    },
+    {
+      "label": "2001-5000",
+      "value": "2001-5000",
+      "start": 2001,
+      "end": 5000
+    },
+    {
+      "label": "201-500",
+      "value": "201-500",
+      "start": 201,
+      "end": 500
+    },
+    {
+      "label": "21-50",
+      "value": "21-50",
+      "start": 21,
+      "end": 50
+    },
+    {
+      "label": "5001-10000",
+      "value": "5001-10000",
+      "start": 5001,
+      "end": 10000
+    },
+    {
+      "label": "501-1000",
+      "value": "501-1000",
+      "start": 501,
+      "end": 1000
+    },
+    {
+      "label": "51-100",
+      "value": "51-100",
+      "start": 51,
+      "end": 100
+    }
+  ],
+  "annualRevenue": [
+    {
+      "label": "$0 - $0.1M",
+      "value": "1-99999",
+      "start": 1,
+      "end": 99999
+    },
+    {
+      "label": "$0.1M - $0.5M",
+      "value": "100000-499999",
+      "start": 100000,
+      "end": 499999
+    },
+    {
+      "label": "$0.5M - $1M",
+      "value": "500000-999999",
+      "start": 500000,
+      "end": 999999
+    },
+    {
+      "label": "$100M - $500M",
+      "value": "100000000-499999999",
+      "start": 100000000,
+      "end": 499999999
+    },
+    {
+      "label": "$10B+",
+      "value": "10000000000+",
+      "start": 10000000000,
+      "end": 9007199254740991
+    },
+    {
+      "label": "$10M - $25M",
+      "value": "10000000-24999999",
+      "start": 10000000,
+      "end": 24999999
+    },
+    {
+      "label": "$1B - $5B",
+      "value": "1000000000-4999999999",
+      "start": 1000000000,
+      "end": 4999999999
+    },
+    {
+      "label": "$1M - $5M",
+      "value": "1000000-4999999",
+      "start": 1000000,
+      "end": 4999999
+    },
+    {
+      "label": "$25M - $50M",
+      "value": "25000000-49999999",
+      "start": 25000000,
+      "end": 49999999
+    },
+    {
+      "label": "$500M - $1B",
+      "value": "500000000-999999999",
+      "start": 500000000,
+      "end": 999999999
+    },
+    {
+      "label": "$50M - $100M",
+      "value": "50000000-99999999",
+      "start": 50000000,
+      "end": 99999999
+    },
+    {
+      "label": "$5B - $10B",
+      "value": "5000000000-9999999999",
+      "start": 5000000000,
+      "end": 9999999999
+    },
+    {
+      "label": "$5M - $10M",
+      "value": "5000000-9999999",
+      "start": 5000000,
+      "end": 9999999
+    }
+  ],
+  "companyPresets": [
+    {
+      "label": "Amazon",
+      "value": "Amazon"
+    },
+    {
+      "label": "Apple",
+      "value": "Apple"
+    },
+    {
+      "label": "Microsoft",
+      "value": "Microsoft"
+    },
+    {
+      "label": "Sendr",
+      "value": "Sendr"
+    }
+  ],
+  "domainPresets": [
+    {
+      "label": "Amazon",
+      "value": "amazon.com"
+    },
+    {
+      "label": "Apple",
+      "value": "apple.com"
+    },
+    {
+      "label": "Microsoft",
+      "value": "microsoft.com"
+    },
+    {
+      "label": "Sendr",
+      "value": "sendr.io"
+    }
+  ]
+}

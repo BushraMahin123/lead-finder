@@ -225,16 +225,31 @@ const domainPresets = normalizeOptions(
 
 const locationRegions = buildLocationRegions();
 
+const GENERATED_HEADER =
+  "/* eslint-disable */\n/** Auto-generated from lead-search-filters.json — do not edit manually. */\n\n";
+
+function emitJsonFile(filename, data) {
+  fs.writeFileSync(
+    path.join(outDir, filename),
+    JSON.stringify(data, null, 2) + "\n",
+    "utf8",
+  );
+}
+
 function emitTsFile(filename, body) {
-  const header = `/* eslint-disable */\n/** Auto-generated from lead-search-filters.json — do not edit manually. */\n\n`;
-  fs.writeFileSync(path.join(outDir, filename), header + body, "utf8");
+  fs.writeFileSync(path.join(outDir, filename), GENERATED_HEADER + body, "utf8");
 }
 
 fs.mkdirSync(outDir, { recursive: true });
 
+// JSON payloads keep TypeScript memory low during `next build` type-checking.
+emitJsonFile("filter-catalog.json", catalogEntries);
+
 emitTsFile(
   "filter-catalog.ts",
-  `export interface CatalogSubFilter {
+  `import catalogData from "./filter-catalog.json";
+
+export interface CatalogSubFilter {
   id: string;
   name: string;
   formFields: string[];
@@ -256,15 +271,43 @@ export interface CatalogFilter {
   subFilters: CatalogSubFilter[];
 }
 
-export const FILTER_CATALOG: CatalogFilter[] = ${JSON.stringify(catalogEntries, null, 2)};
+export const FILTER_CATALOG = catalogData as CatalogFilter[];
 
-export const FILTER_ORDER: string[] = ${JSON.stringify(catalogEntries.map((f) => f.id))};
+export const FILTER_ORDER: string[] = FILTER_CATALOG.map((filter) => filter.id);
 `,
 );
 
+const filterOptionsPayload = {
+  industry,
+  seniority,
+  companyType,
+  linkedInBadge,
+  funding,
+  technology,
+  jobTitle,
+  productsServices,
+  socialMedia,
+  keywordSources,
+  degree,
+  fieldOfStudy,
+  personLanguages,
+  companyLanguages,
+  headcountJobFunctions,
+  departmentJobFunctions,
+  headcountTimeFrames,
+  employeeSize,
+  annualRevenue,
+  companyPresets,
+  domainPresets,
+};
+
+emitJsonFile("filter-options-data.json", filterOptionsPayload);
+
 emitTsFile(
   "filter-options-data.ts",
-  `export interface FilterOption {
+  `import optionsData from "./filter-options-data.json";
+
+export interface FilterOption {
   label: string;
   value: string;
 }
@@ -274,55 +317,38 @@ export interface RangeFilterOption extends FilterOption {
   end: number;
 }
 
-export const INDUSTRY_OPTIONS: FilterOption[] = ${JSON.stringify(industry, null, 2)};
-
-export const SENIORITY_OPTIONS: FilterOption[] = ${JSON.stringify(seniority, null, 2)};
-
-export const COMPANY_TYPE_OPTIONS: FilterOption[] = ${JSON.stringify(companyType, null, 2)};
-
-export const LINKEDIN_BADGE_OPTIONS: FilterOption[] = ${JSON.stringify(linkedInBadge, null, 2)};
-
-export const FUNDING_OPTIONS: FilterOption[] = ${JSON.stringify(funding, null, 2)};
-
-export const TECHNOLOGY_OPTIONS: FilterOption[] = ${JSON.stringify(technology, null, 2)};
-
-export const JOB_TITLE_OPTIONS: FilterOption[] = ${JSON.stringify(jobTitle, null, 2)};
-
-export const PRODUCTS_SERVICES_OPTIONS: FilterOption[] = ${JSON.stringify(productsServices, null, 2)};
-
-export const SOCIAL_MEDIA_OPTIONS: FilterOption[] = ${JSON.stringify(socialMedia, null, 2)};
-
-export const KEYWORD_SOURCE_OPTIONS: FilterOption[] = ${JSON.stringify(keywordSources, null, 2)};
-
-export const DEGREE_OPTIONS: FilterOption[] = ${JSON.stringify(degree, null, 2)};
-
-export const FIELD_OF_STUDY_OPTIONS: FilterOption[] = ${JSON.stringify(fieldOfStudy, null, 2)};
-
-export const PERSON_LANGUAGE_OPTIONS: FilterOption[] = ${JSON.stringify(personLanguages, null, 2)};
-
-export const COMPANY_LANGUAGE_OPTIONS: FilterOption[] = ${JSON.stringify(companyLanguages, null, 2)};
-
-export const HEADCOUNT_JOB_FUNCTION_OPTIONS: FilterOption[] = ${JSON.stringify(headcountJobFunctions, null, 2)};
-
-export const DEPARTMENT_JOB_FUNCTION_OPTIONS: FilterOption[] = ${JSON.stringify(departmentJobFunctions, null, 2)};
-
-export const HEADCOUNT_TIME_FRAME_OPTIONS: FilterOption[] = ${JSON.stringify(headcountTimeFrames, null, 2)};
-
-export const EMPLOYEE_SIZE_OPTIONS: RangeFilterOption[] = ${JSON.stringify(employeeSize, null, 2)};
-
-export const ANNUAL_REVENUE_OPTIONS: RangeFilterOption[] = ${JSON.stringify(annualRevenue, null, 2)};
-
-export const COMPANY_PRESET_OPTIONS: FilterOption[] = ${JSON.stringify(companyPresets, null, 2)};
-
-export const DOMAIN_PRESET_OPTIONS: FilterOption[] = ${JSON.stringify(domainPresets, null, 2)};
+export const INDUSTRY_OPTIONS = optionsData.industry as FilterOption[];
+export const SENIORITY_OPTIONS = optionsData.seniority as FilterOption[];
+export const COMPANY_TYPE_OPTIONS = optionsData.companyType as FilterOption[];
+export const LINKEDIN_BADGE_OPTIONS = optionsData.linkedInBadge as FilterOption[];
+export const FUNDING_OPTIONS = optionsData.funding as FilterOption[];
+export const TECHNOLOGY_OPTIONS = optionsData.technology as FilterOption[];
+export const JOB_TITLE_OPTIONS = optionsData.jobTitle as FilterOption[];
+export const PRODUCTS_SERVICES_OPTIONS = optionsData.productsServices as FilterOption[];
+export const SOCIAL_MEDIA_OPTIONS = optionsData.socialMedia as FilterOption[];
+export const KEYWORD_SOURCE_OPTIONS = optionsData.keywordSources as FilterOption[];
+export const DEGREE_OPTIONS = optionsData.degree as FilterOption[];
+export const FIELD_OF_STUDY_OPTIONS = optionsData.fieldOfStudy as FilterOption[];
+export const PERSON_LANGUAGE_OPTIONS = optionsData.personLanguages as FilterOption[];
+export const COMPANY_LANGUAGE_OPTIONS = optionsData.companyLanguages as FilterOption[];
+export const HEADCOUNT_JOB_FUNCTION_OPTIONS = optionsData.headcountJobFunctions as FilterOption[];
+export const DEPARTMENT_JOB_FUNCTION_OPTIONS = optionsData.departmentJobFunctions as FilterOption[];
+export const HEADCOUNT_TIME_FRAME_OPTIONS = optionsData.headcountTimeFrames as FilterOption[];
+export const EMPLOYEE_SIZE_OPTIONS = optionsData.employeeSize as RangeFilterOption[];
+export const ANNUAL_REVENUE_OPTIONS = optionsData.annualRevenue as RangeFilterOption[];
+export const COMPANY_PRESET_OPTIONS = optionsData.companyPresets as FilterOption[];
+export const DOMAIN_PRESET_OPTIONS = optionsData.domainPresets as FilterOption[];
 `,
 );
+
+emitJsonFile("location-regions-data.json", locationRegions);
 
 emitTsFile(
   "location-regions-data.ts",
   `import type { LocationRegion } from "@/lib/location-regions-types";
+import regionsData from "./location-regions-data.json";
 
-export const GENERATED_LOCATION_REGIONS: LocationRegion[] = ${JSON.stringify(locationRegions, null, 2)};
+export const GENERATED_LOCATION_REGIONS = regionsData as LocationRegion[];
 `,
 );
 
