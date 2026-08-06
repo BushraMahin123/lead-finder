@@ -19082,6 +19082,15 @@ export const GENERATED_LOCATION_REGIONS: LocationRegion[] = [
         "value": "North Dakota",
         "label": "North Dakota"
       },
+      
+      {
+        "value": "Oklahoma",
+        "label": "Oklahoma"
+      },
+      {
+        "value": "Oregon",
+        "label": "Oregon"
+      },
       {
         "value": "Ohio",
         "label": "Ohio",
@@ -19091,14 +19100,6 @@ export const GENERATED_LOCATION_REGIONS: LocationRegion[] = [
             "label": "Columbus"
           }
         ]
-      },
-      {
-        "value": "Oklahoma",
-        "label": "Oklahoma"
-      },
-      {
-        "value": "Oregon",
-        "label": "Oregon"
       },
       {
         "value": "Pennsylvania",

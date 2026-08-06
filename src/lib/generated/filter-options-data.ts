@@ -3719,13 +3719,14 @@ export const SENIORITY_OPTIONS: FilterOption[] = [
     "label": "Manager",
     "value": "manager"
   },
-  {
-    "label": "Managing Member",
-    "value": "managing_member"
-  },
+  
   {
     "label": "Mid-Level",
     "value": "mid-level"
+  },
+  {
+    "label": "Managing Member",
+    "value": "managing_member"
   },
   {
     "label": "Owner",
@@ -4433,6 +4434,10 @@ export const JOB_TITLE_OPTIONS: FilterOption[] = [
   {
     "label": "Manager",
     "value": "Manager"
+  },
+  {
+    "label": "Managing Member",
+    "value": "Managing Member"
   },
   {
     "label": "Marketing Director",
