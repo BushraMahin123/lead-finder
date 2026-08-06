@@ -173,10 +173,10 @@ export const CALLING_PACKS: CallingPack[] = [
     description:
       "This package is $38.99. Calling is actually $35/month — you also pay $4 one-time for your phone number.",
     features: [
-      "$35/month Unlimited calling minutes",
+      "$35/month calling — up to 3500 minutes",
       "$4 one-time phone number fee",
       "Call recording & transcripts included",
-      "Then $35/month after the first payment",
+      "Minutes reset each billing month (no rollover)",
     ],
     stripePriceEnvKey: "STRIPE_PRICE_CALLING_UNLIMITED",
     stripeNumberFeePriceEnvKey: "STRIPE_PRICE_CALLING_NUMBER_FEE",

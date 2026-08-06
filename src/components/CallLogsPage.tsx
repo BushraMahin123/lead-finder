@@ -1,6 +1,7 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { IconSearch } from "@/components/icons";
 import { ApiError, fetchJson } from "@/lib/fetch-json";
 import type { CallLog, TranscriptionStatus } from "@/types/dialer";
 
@@ -73,6 +74,7 @@ function transcriptionBadge(
 
 export default function CallLogsPage() {
   const [calls, setCalls] = useState<CallLog[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -105,6 +107,41 @@ export default function CallLogsPage() {
   useEffect(() => {
     void loadCalls();
   }, [loadCalls]);
+
+  const filteredCalls = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) return calls;
+
+    const digitsQuery = query.replace(/\D/g, "");
+
+    return calls.filter((call) => {
+      const haystack = [
+        call.personName,
+        call.toNumber,
+        call.fromNumber,
+        call.status,
+        call.disposition,
+        call.transcript,
+        call.errorMessage,
+        statusLabel(call),
+      ]
+        .filter(Boolean)
+        .join(" ")
+        .toLowerCase();
+
+      if (haystack.includes(query)) return true;
+
+      if (digitsQuery.length >= 3) {
+        const phoneDigits = `${call.toNumber ?? ""}${call.fromNumber ?? ""}`.replace(
+          /\D/g,
+          "",
+        );
+        if (phoneDigits.includes(digitsQuery)) return true;
+      }
+
+      return false;
+    });
+  }, [calls, searchQuery]);
 
   async function toggleExpand(call: CallLog) {
     if (expandedId === call.id) {
@@ -189,7 +226,30 @@ export default function CallLogsPage() {
         </p>
       ) : null}
 
-      <section className="card-flat mt-8 overflow-hidden">
+      {!loading && calls.length > 0 ? (
+        <div className="mt-6 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-slate-500">
+            {searchQuery.trim()
+              ? `${filteredCalls.length} of ${calls.length} call${calls.length === 1 ? "" : "s"}`
+              : `${calls.length} call${calls.length === 1 ? "" : "s"}`}
+          </p>
+          <label className="w-full sm:w-72 lg:w-80">
+            <span className="sr-only">Search call logs</span>
+            <div className="flex items-center gap-2.5 rounded-xl border border-slate-300 bg-white px-3 py-2 shadow-sm transition focus-within:border-indigo-500 focus-within:ring-2 focus-within:ring-indigo-100">
+              <IconSearch className="h-4 w-4 shrink-0 text-slate-400" />
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Search name, number, status…"
+                className="min-w-0 flex-1 border-0 bg-transparent py-1.5 text-sm text-slate-900 outline-none placeholder:text-slate-400"
+              />
+            </div>
+          </label>
+        </div>
+      ) : null}
+
+      <section className={`card-flat overflow-hidden ${calls.length > 0 && !loading ? "mt-4" : "mt-8"}`}>
         {loading ? (
           <p className="px-6 py-10 text-sm text-slate-500">Loading call logs…</p>
         ) : calls.length === 0 ? (
@@ -199,9 +259,16 @@ export default function CallLogsPage() {
               Place a call from the dialer and recordings will show up here.
             </p>
           </div>
+        ) : filteredCalls.length === 0 ? (
+          <div className="px-6 py-12 text-center">
+            <p className="text-sm font-medium text-slate-900">No matching calls</p>
+            <p className="mt-1 text-sm text-slate-500">
+              Try a different name, phone number, or status.
+            </p>
+          </div>
         ) : (
           <ul className="divide-y divide-slate-100">
-            {calls.map((call) => {
+            {filteredCalls.map((call) => {
               const open = expandedId === call.id;
               const detail = details[call.id];
               const hasRecording = Boolean(call.recordingPath);

@@ -18,6 +18,7 @@ export default function AppHeader() {
           <AppNav />
         </Suspense>
         <div className="flex items-center gap-2 xl:gap-3">
+          <ManualDialButton />
           <CreditBalance />
           <UserMenu />
         </div>

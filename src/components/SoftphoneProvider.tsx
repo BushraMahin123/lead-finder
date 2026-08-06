@@ -524,10 +524,18 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
         if (!isCurrentDial()) return;
 
         if (!tokenResponse.ok || !tokenData.token) {
+          if (tokenData.code === "CALL_MINUTES_REQUIRED") {
+            setIsOpen(true);
+            setStatus("error");
+            setError(
+              tokenData.error ??
+                "Your monthly calling limit of 3500 minutes is exceeded. Minutes reset on your next billing date.",
+            );
+            return;
+          }
           if (
             tokenData.code === "CALLING_SUBSCRIPTION_REQUIRED" ||
-            tokenData.code === "CALL_MINUTES_REQUIRED" ||
-            /Unlimited calling|calling minutes/i.test(tokenData.error ?? "")
+            /Unlimited calling/i.test(tokenData.error ?? "")
           ) {
             setIsOpen(false);
             setStatus("idle");
@@ -569,10 +577,18 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
         if (!isCurrentDial()) return;
 
         if (!callResponse.ok || !callData.call?.id) {
+          if (callData.code === "CALL_MINUTES_REQUIRED") {
+            setIsOpen(true);
+            setStatus("error");
+            setError(
+              callData.error ??
+                "Your monthly calling limit of 3500 minutes is exceeded. Minutes reset on your next billing date.",
+            );
+            return;
+          }
           if (
             callData.code === "CALLING_SUBSCRIPTION_REQUIRED" ||
-            callData.code === "CALL_MINUTES_REQUIRED" ||
-            /Unlimited calling|calling minutes/i.test(callData.error ?? "")
+            /Unlimited calling/i.test(callData.error ?? "")
           ) {
             setIsOpen(false);
             setStatus("idle");
@@ -927,12 +943,33 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
                   Close
                 </button>
               </div>
-              <div className="relative mt-5 rounded-2xl border border-white/10 bg-black/25 px-4 py-4 backdrop-blur-sm">
-                <p className="min-h-[1.75rem] text-center font-mono text-2xl tracking-[0.12em] text-white">
-                  {manualNumber || (
-                    <span className="text-white/35">Enter number</span>
-                  )}
-                </p>
+              <div className="relative mt-5 rounded-2xl border border-white/10 bg-black/25 px-4 py-3 backdrop-blur-sm">
+                <label className="sr-only" htmlFor="softphone-manual-number">
+                  Phone number
+                </label>
+                <input
+                  id="softphone-manual-number"
+                  type="tel"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  autoFocus
+                  value={manualNumber}
+                  onChange={(event) => {
+                    const next = event.target.value
+                      .replace(/[^\d+*#]/g, "")
+                      .slice(0, 16);
+                    setManualNumber(next);
+                    if (manualError) setManualError(null);
+                  }}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter") {
+                      event.preventDefault();
+                      void placeManualCall();
+                    }
+                  }}
+                  placeholder="Enter number"
+                  className="w-full rounded-xl border-0 bg-black/40 px-2 py-2 text-center font-mono text-2xl tracking-[0.12em] text-white caret-emerald-300 outline-none placeholder:text-white/35 focus:bg-black/55 [&:-webkit-autofill]:shadow-[inset_0_0_0_1000px_rgb(0,0,0)] [&:-webkit-autofill]:[-webkit-text-fill-color:#fff]"
+                />
               </div>
             </div>
 
@@ -1063,7 +1100,7 @@ export function SoftphoneProvider({ children }: { children: ReactNode }) {
                       Get your included number
                     </a>
                   ) : null}
-                  {/calling minutes|Unlimited calling|Subscribe to Unlimited/i.test(
+                  {/Subscribe to Unlimited|Unlimited calling required/i.test(
                     error,
                   ) ? (
                     <a
