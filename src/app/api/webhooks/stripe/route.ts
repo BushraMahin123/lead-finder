@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import type Stripe from "stripe";
-import { creditCallMinutes } from "@/lib/billing/call-minutes";
+import { resetCallMinutesToAllotment } from "@/lib/billing/call-minutes";
 import { fulfillCheckoutSession } from "@/lib/billing/fulfill-checkout";
 import { getCallingPackById, getPlanById, type PlanId } from "@/lib/billing/plans";
 import { getStripe } from "@/lib/billing/stripe";
@@ -79,11 +79,11 @@ async function handleInvoicePaid(invoice: Stripe.Invoice) {
       callingSubscriptionStatus: subscription.status,
     });
 
-    await creditCallMinutes({
+    await resetCallMinutesToAllotment({
       userId,
-      amount: pack.minutes,
+      allotment: pack.minutes,
       type: "calling_subscription_renewal",
-      description: `${pack.name} monthly renewal`,
+      description: `${pack.name} monthly renewal (reset to ${pack.minutes} minutes)`,
       metadata: { packId: pack.id, invoiceId: invoice.id },
       idempotencyKey: `${invoice.id}:calling:${pack.id}`,
       stripeEventId: invoice.id,

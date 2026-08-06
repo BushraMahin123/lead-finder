@@ -6,7 +6,7 @@ import {
   getTopUpById,
   type PlanId,
 } from "@/lib/billing/plans";
-import { creditCallMinutes, getCallMinuteBalance } from "@/lib/billing/call-minutes";
+import { getCallMinuteBalance, resetCallMinutesToAllotment } from "@/lib/billing/call-minutes";
 import { getStripe } from "@/lib/billing/stripe";
 import {
   creditTokens,
@@ -183,22 +183,25 @@ export async function fulfillCheckoutSession(
     });
 
     const balanceBefore = await getCallMinuteBalance(userId);
-    const callMinuteBalance = await creditCallMinutes({
+    const callMinuteBalance = await resetCallMinutesToAllotment({
       userId,
-      amount: pack.minutes,
+      allotment: pack.minutes,
       type: "calling_subscription_grant",
-      description: `${pack.name} calling subscription`,
+      description: `${pack.name} calling subscription (${pack.minutes} minutes)`,
       metadata: { packId: pack.id, sessionId: session.id },
       idempotencyKey: `checkout_calling:${session.id}`,
       stripeEventId: session.id,
     });
 
+    const alreadyFulfilled =
+      balanceBefore === pack.minutes && callMinuteBalance === pack.minutes;
+
     return {
       checkoutType: "calling",
       tokensGranted: 0,
-      minutesGranted: callMinuteBalance > balanceBefore ? pack.minutes : 0,
+      minutesGranted: alreadyFulfilled ? 0 : pack.minutes,
       callMinuteBalance,
-      alreadyFulfilled: callMinuteBalance === balanceBefore,
+      alreadyFulfilled,
     };
   }
 

@@ -7,7 +7,7 @@ export class InsufficientCallMinutesError extends Error {
 
   constructor(balance: number, required: number) {
     super(
-      `Insufficient calling minutes. Need ${required}, have ${balance}. Buy the Unlimited calling package on Pricing, or contact us for Custom.`,
+      "Your monthly calling limit of 3500 minutes is exceeded. Calling unlocks again on your next billing date — unused minutes do not roll over.",
     );
     this.name = "InsufficientCallMinutesError";
     this.balance = balance;
@@ -133,6 +133,48 @@ export async function debitCallMinutes(input: {
   const result = await applyCallMinuteChange({
     ...input,
     amount: -input.amount,
+  });
+  return result.balance;
+}
+
+/**
+ * Set the user's call-minute balance exactly to `allotment` (e.g. 3500).
+ * Leftover minutes from the previous period are discarded — no rollover.
+ */
+export async function resetCallMinutesToAllotment(input: {
+  userId: string;
+  allotment: number;
+  type: string;
+  description?: string;
+  metadata?: Record<string, unknown>;
+  idempotencyKey?: string;
+  stripeEventId?: string;
+}): Promise<number> {
+  if (input.allotment < 0) {
+    throw new Error("Allotment must be non-negative");
+  }
+
+  await ensureCallMinuteBalanceRow(input.userId);
+  const current = await getCallMinuteBalance(input.userId);
+  const delta = input.allotment - current;
+
+  if (delta === 0) {
+    return current;
+  }
+
+  const result = await applyCallMinuteChange({
+    userId: input.userId,
+    amount: delta,
+    type: input.type,
+    description: input.description,
+    metadata: {
+      ...input.metadata,
+      allotment: input.allotment,
+      previousBalance: current,
+      reset: true,
+    },
+    idempotencyKey: input.idempotencyKey,
+    stripeEventId: input.stripeEventId,
   });
   return result.balance;
 }
